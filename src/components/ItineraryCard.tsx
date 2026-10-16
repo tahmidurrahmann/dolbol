@@ -37,12 +37,13 @@ export function ItineraryCard({
   labels,
 }: ItineraryCardProps) {
   return (
-    <div className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
       <div className="space-y-1">
-        <h2 className="text-lg font-bold text-[var(--color-fg)]">
-          {labels.itineraryTitle}
+        <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
+          <span>📅</span>
+          <span>{labels.itineraryTitle}</span>
         </h2>
-        <p className="text-sm text-[var(--color-fg-muted)]">
+        <p className="text-xs sm:text-sm text-[var(--color-fg-muted)]">
           {labels.itinerarySubtitle}
         </p>
       </div>
@@ -51,17 +52,18 @@ export function ItineraryCard({
       {!isLocked ? (
         <form
           action={addItineraryItemAction}
-          className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3.5"
+          className="space-y-3.5 rounded-xl border border-[var(--color-border)] bg-white p-4 shadow-2xs"
         >
           <input type="hidden" name="slug" value={slug} />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label
                 htmlFor="it-day"
-                className="block text-xs font-semibold text-[var(--color-fg)]"
+                className="block text-xs font-bold text-[var(--color-fg)]"
               >
-                {labels.dayNumberLabel}
+                {labels.dayNumberLabel}{" "}
+                <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 id="it-day"
@@ -70,14 +72,14 @@ export function ItineraryCard({
                 inputMode="numeric"
                 required
                 defaultValue="1"
-                className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-base font-semibold text-[var(--color-fg)]"
+                className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2 text-base font-bold text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
 
             <div className="space-y-1">
               <label
                 htmlFor="it-time"
-                className="block text-xs font-semibold text-[var(--color-fg)]"
+                className="block text-xs font-bold text-[var(--color-fg)]"
               >
                 {labels.timeLabel}
               </label>
@@ -87,7 +89,7 @@ export function ItineraryCard({
                 type="text"
                 maxLength={20}
                 placeholder={labels.timePlaceholder}
-                className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-base text-[var(--color-fg)]"
+                className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
           </div>
@@ -95,9 +97,10 @@ export function ItineraryCard({
           <div className="space-y-1">
             <label
               htmlFor="it-title"
-              className="block text-xs font-semibold text-[var(--color-fg)]"
+              className="block text-xs font-bold text-[var(--color-fg)]"
             >
-              {labels.activityTitleLabel}
+              {labels.activityTitleLabel}{" "}
+              <span className="text-red-500 font-bold">*</span>
             </label>
             <input
               id="it-title"
@@ -106,14 +109,14 @@ export function ItineraryCard({
               required
               maxLength={120}
               placeholder={labels.activityTitlePlaceholder}
-              className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)]"
+              className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2 text-base font-medium text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
             />
           </div>
 
           <div className="space-y-1">
             <label
               htmlFor="it-notes"
-              className="block text-xs font-semibold text-[var(--color-fg)]"
+              className="block text-xs font-bold text-[var(--color-fg)]"
             >
               {labels.activityNotesLabel}
             </label>
@@ -123,11 +126,11 @@ export function ItineraryCard({
               type="text"
               maxLength={300}
               placeholder={labels.activityNotesPlaceholder}
-              className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3.5 py-2 text-sm text-[var(--color-fg)]"
+              className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2 text-sm text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
             />
           </div>
 
-          <Button type="submit" variant="secondary">
+          <Button type="submit" variant="primary">
             {labels.addItineraryButton}
           </Button>
         </form>

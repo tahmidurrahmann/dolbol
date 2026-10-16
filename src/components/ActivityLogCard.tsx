@@ -108,12 +108,13 @@ export function ActivityLogCard({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+    <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
       <div className="space-y-0.5">
-        <h2 className="text-lg font-bold text-[var(--color-fg)]">
-          {labels.activityLogTitle}
+        <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
+          <span>📜</span>
+          <span>{labels.activityLogTitle}</span>
         </h2>
-        <p className="text-xs text-[var(--color-fg-muted)]">
+        <p className="text-xs sm:text-sm text-[var(--color-fg-muted)]">
           {labels.activityLogSubtitle}
         </p>
       </div>

@@ -51,9 +51,10 @@ export function PerDayExpensesView({
   const memberById = new Map(members.map((m) => [m.id, m]));
 
   return (
-    <div className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-      <h2 className="text-lg font-bold text-[var(--color-fg)]">
-        {labels.perDayTitle}
+    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+      <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
+        <span>🧾</span>
+        <span>{labels.perDayTitle}</span>
       </h2>
 
       {dayGroups.length === 0 ? (

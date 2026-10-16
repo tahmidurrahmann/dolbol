@@ -44,12 +44,13 @@ export function DestinationVotingCard({
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
       <div className="space-y-1">
-        <h2 className="text-lg font-bold text-[var(--color-fg)]">
-          {labels.votingTitle}
+        <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
+          <span>🗳️</span>
+          <span>{labels.votingTitle}</span>
         </h2>
-        <p className="text-sm text-[var(--color-fg-muted)]">
+        <p className="text-xs sm:text-sm text-[var(--color-fg-muted)]">
           {labels.votingSubtitle}
         </p>
       </div>
@@ -64,11 +65,11 @@ export function DestinationVotingCard({
             required
             maxLength={80}
             placeholder={labels.optionPlaceholder}
-            className="min-h-[44px] flex-1 rounded-lg border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
+            className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
           />
           <button
             type="submit"
-            className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-primary-fg)] hover:bg-[var(--color-primary-hover)]"
+            className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
           >
             {labels.addOptionButton}
           </button>

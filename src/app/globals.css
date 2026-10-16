@@ -1,15 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #f8faf9;
+  --color-bg: #f5f7f6;
   --color-surface: #ffffff;
-  --color-surface-muted: #eef3f0;
-  --color-fg: #111c16;
-  --color-fg-muted: #4a5d52;
-  --color-primary: #0f6b4a;
-  --color-primary-hover: #0b5239;
+  --color-surface-muted: #ebf1ee;
+  --color-surface-elevated: #ffffff;
+  --color-fg: #0f1c15;
+  --color-fg-muted: #41544a;
+  --color-primary: #0b724f;
+  --color-primary-hover: #085a3e;
+  --color-primary-light: #e8f5ef;
   --color-primary-fg: #ffffff;
-  --color-border: #d5e0da;
+  --color-border: #d4e0d9;
+  --color-border-subtle: #e5ede8;
+  --color-accent: #f59e0b;
 }
 
 @theme inline {
@@ -21,6 +25,7 @@ html {
   background-color: var(--color-bg);
   color: var(--color-fg);
   color-scheme: light;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -32,6 +37,29 @@ body {
   color: var(--color-fg);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Polished date input styling across browsers */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.65;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.15s ease-in-out;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: var(--color-surface-muted);
+}
+
+/* Hide scrollbar for clean horizontal tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
