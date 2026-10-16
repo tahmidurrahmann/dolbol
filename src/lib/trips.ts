@@ -64,6 +64,14 @@ export const positiveTakaString = z
     message: "invalid_amount",
   });
 
+export const dayNumberString = z
+  .string()
+  .trim()
+  .transform((val) => Number(banglaToAsciiDigits(val.trim())))
+  .refine((n) => Number.isInteger(n) && n >= 1 && n <= 60, {
+    message: "invalid_day_number",
+  });
+
 export const createTripFormSchema = z.object({
   name: z.string().trim().min(2, "trip_name_short").max(80, "trip_name_long"),
   destination: z
@@ -157,3 +165,30 @@ export const settlementFormSchema = z
   .refine((data) => data.fromMemberId !== data.toMemberId, {
     message: "same_member_settlement",
   });
+
+export const destinationOptionFormSchema = z.object({
+  slug: z.string().trim().min(8).max(64),
+  name: z
+    .string()
+    .trim()
+    .min(1, "option_name_required")
+    .max(80, "option_name_long"),
+});
+
+export const itineraryItemFormSchema = z.object({
+  slug: z.string().trim().min(8).max(64),
+  dayNumber: dayNumberString,
+  time: z
+    .string()
+    .trim()
+    .max(20)
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  title: z.string().trim().min(1, "title_required").max(120, "title_long"),
+  notes: z
+    .string()
+    .trim()
+    .max(300)
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+});

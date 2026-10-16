@@ -18,6 +18,7 @@ import {
   type PercentShareInput,
   type ShareOutput,
 } from "@/lib/money";
+import { hasDuplicateDestinationOption } from "@/lib/planning";
 import {
   assertTripWritable,
   assertValidExpenseSharesForTrip,
@@ -33,7 +34,9 @@ import {
 import {
   addGuestFormSchema,
   createTripFormSchema,
+  destinationOptionFormSchema,
   expenseFormSchema,
+  itineraryItemFormSchema,
   joinTripFormSchema,
   reclaimMemberFormSchema,
   renameMemberFormSchema,
@@ -538,7 +541,6 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
     redirect("/trips/join?error=trip_not_found");
   }
 
-  // Step 4 Guard 1: Locked trips block every write route
   try {
     assertTripWritable(trip);
   } catch {
@@ -553,7 +555,6 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
   const validMemberIds = new Set(trip.members.map((m) => m.id));
   const expenseDate = parseDhakaExpenseDate(parsed.data.expenseDate);
 
-  // Step 4 Guard 4: Duplicate-entry warning check (unless user checked confirmDuplicate)
   const confirmDuplicate = formData.get("confirmDuplicate") === "true";
   if (!confirmDuplicate) {
     const duplicate = findDuplicateExpenseCandidate(
@@ -630,7 +631,6 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
       });
     }
 
-    // Step 4 Guard 2: Verify share amounts add up to expense amount and belong to trip members
     assertValidExpenseSharesForTrip({
       expenseAmount: parsed.data.amount,
       paidById: parsed.data.paidById,
@@ -642,7 +642,6 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
   }
 
   if (parsed.data.expenseId) {
-    // Update existing expense + write ActivityLog in the same transaction
     const existingExpense = await db.expense.findUnique({
       where: { id: parsed.data.expenseId },
       include: { shares: true },
@@ -710,7 +709,6 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
       });
     });
   } else {
-    // Create new expense + write ActivityLog in the same transaction
     await db.$transaction(async (tx) => {
       const created = await tx.expense.create({
         data: {
@@ -784,7 +782,6 @@ export async function deleteExpenseAction(formData: FormData): Promise<void> {
     redirect(`/trips/${trip.slug}`);
   }
 
-  // Soft delete only (deletedAt), never hard delete, with ActivityLog in the same transaction
   const deletedAt = new Date();
   await db.$transaction(async (tx) => {
     await tx.expense.update({
@@ -932,7 +929,6 @@ export async function deleteSettlementAction(
     redirect(`/trips/${trip.slug}`);
   }
 
-  // Soft delete only (deletedAt), never hard delete, with ActivityLog in the same transaction
   const deletedAt = new Date();
   await db.$transaction(async (tx) => {
     await tx.settlement.update({
@@ -966,10 +962,86 @@ export async function deleteSettlementAction(
   redirect(`/trips/${trip.slug}`);
 }
 
-/**
- * Step 4 Guard 3 Server Action: Verifies vote option belongs to the exact same trip
- * and blocks locked trips before upserting a member's destination vote.
- */
+// ---- Step 5: Destination Voting & Day-by-Day Itinerary Actions -----------
+
+export async function proposeDestinationOptionAction(
+  formData: FormData,
+): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const parsed = destinationOptionFormSchema.safeParse({
+    slug,
+    name: formData.get("name") ?? "",
+  });
+
+  if (!parsed.success) {
+    redirect(`/trips/${encodeURIComponent(slug)}?error=invalid_input`);
+  }
+
+  const trip = await db.trip.findUnique({
+    where: { slug: parsed.data.slug },
+    include: { options: true },
+  });
+
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  if (hasDuplicateDestinationOption(parsed.data.name, trip.options)) {
+    redirect(`/trips/${trip.slug}?error=duplicate_option`);
+  }
+
+  await db.$transaction(async (tx) => {
+    const option = await tx.destinationOption.create({
+      data: {
+        tripId: trip.id,
+        name: parsed.data.name,
+        proposedById: currentMember.id,
+      },
+    });
+
+    // Automatically cast the proposer's vote for their newly proposed option
+    await tx.vote.upsert({
+      where: {
+        tripId_memberId: {
+          tripId: trip.id,
+          memberId: currentMember.id,
+        },
+      },
+      update: { optionId: option.id },
+      create: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        optionId: option.id,
+      },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "destination",
+        entityId: option.id,
+        action: "create",
+        after: { name: option.name },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
 export async function castDestinationVoteAction(
   formData: FormData,
 ): Promise<void> {
@@ -1036,9 +1108,257 @@ export async function castDestinationVoteAction(
         entityType: "vote",
         entityId: vote.id,
         action: "upsert",
+        after: { name: option!.name },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+export async function setTripDestinationFromOptionAction(
+  formData: FormData,
+): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const optionId = String(formData.get("optionId") ?? "").trim();
+
+  const trip = await db.trip.findUnique({ where: { slug } });
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember || currentMember.id !== trip.creatorMemberId) {
+    redirect(`/trips/${trip.slug}?error=not_creator`);
+  }
+
+  const option = await db.destinationOption.findUnique({
+    where: { id: optionId },
+  });
+
+  try {
+    assertVoteOptionBelongsToTrip({
+      tripId: trip.id,
+      member: currentMember,
+      option,
+    });
+  } catch {
+    redirect(`/trips/${trip.slug}?error=cross_trip_option`);
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.trip.update({
+      where: { id: trip.id },
+      data: { destination: option!.name },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "trip",
+        entityId: trip.id,
+        action: "set_destination",
+        before: { destination: trip.destination },
+        after: { destination: option!.name },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+export async function addItineraryItemAction(
+  formData: FormData,
+): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const parsed = itineraryItemFormSchema.safeParse({
+    slug,
+    dayNumber: formData.get("dayNumber") ?? "1",
+    time: formData.get("time") ?? undefined,
+    title: formData.get("title") ?? "",
+    notes: formData.get("notes") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    redirect(`/trips/${encodeURIComponent(slug)}?error=invalid_input`);
+  }
+
+  const trip = await db.trip.findUnique({
+    where: { slug: parsed.data.slug },
+  });
+
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  await db.$transaction(async (tx) => {
+    const existingForDay = await tx.itineraryItem.findMany({
+      where: {
+        tripId: trip.id,
+        dayNumber: parsed.data.dayNumber,
+      },
+      orderBy: { position: "desc" },
+      take: 1,
+    });
+
+    const nextPosition = (existingForDay[0]?.position ?? 0) + 1;
+
+    const item = await tx.itineraryItem.create({
+      data: {
+        tripId: trip.id,
+        dayNumber: parsed.data.dayNumber,
+        time: parsed.data.time ?? null,
+        title: parsed.data.title,
+        notes: parsed.data.notes ?? null,
+        position: nextPosition,
+        createdById: currentMember.id,
+      },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "itinerary",
+        entityId: item.id,
+        action: "create",
         after: {
-          name: option!.name,
+          title: item.title,
         },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+export async function moveItineraryItemAction(
+  formData: FormData,
+): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  const direction = String(formData.get("direction") ?? "").trim();
+
+  const trip = await db.trip.findUnique({ where: { slug } });
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  const target = await db.itineraryItem.findUnique({
+    where: { id: itemId },
+  });
+
+  if (!target || target.tripId !== trip.id) {
+    redirect(`/trips/${trip.slug}`);
+  }
+
+  const dayItems = await db.itineraryItem.findMany({
+    where: {
+      tripId: trip.id,
+      dayNumber: target.dayNumber,
+    },
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+  });
+
+  const idx = dayItems.findIndex((i) => i.id === target.id);
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  const neighbor = dayItems[swapIdx];
+
+  if (idx >= 0 && neighbor) {
+    await db.$transaction(async (tx) => {
+      // Normalize positions sequentially and swap idx with swapIdx
+      for (let i = 0; i < dayItems.length; i++) {
+        let newPos = i + 1;
+        if (i === idx) newPos = swapIdx + 1;
+        else if (i === swapIdx) newPos = idx + 1;
+
+        await tx.itineraryItem.update({
+          where: { id: dayItems[i]!.id },
+          data: { position: newPos },
+        });
+      }
+    });
+  }
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+export async function deleteItineraryItemAction(
+  formData: FormData,
+): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const itemId = String(formData.get("itemId") ?? "").trim();
+
+  const trip = await db.trip.findUnique({ where: { slug } });
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  const existing = await db.itineraryItem.findUnique({
+    where: { id: itemId },
+  });
+
+  if (!existing || existing.tripId !== trip.id) {
+    redirect(`/trips/${trip.slug}`);
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.itineraryItem.delete({
+      where: { id: existing.id },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "itinerary",
+        entityId: existing.id,
+        action: "delete",
+        before: { title: existing.title },
       },
     });
   });

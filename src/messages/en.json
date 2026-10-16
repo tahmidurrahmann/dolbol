@@ -78,8 +78,8 @@
     "lockTripButton": "Lock trip",
     "unlockTripButton": "Unlock trip",
     "lockTripHint": "Locking prevents new members, guests, or edits.",
-    "nextStepsTitle": "Destination Voting & Itinerary (Step 5)",
-    "nextStepsBody": "Destination voting and day-by-day itinerary planning come in Step 5."
+    "nextStepsTitle": "AI Expense Parser & Share Card (Steps 6–7)",
+    "nextStepsBody": "AI text parsing and downloadable daily cost sheets come in Steps 6–7."
   },
   "money": {
     "addExpenseTitle": "Add an Expense",
@@ -161,6 +161,33 @@
     "act_trip_lock": "locked the trip",
     "act_trip_unlock": "unlocked the trip"
   },
+  "planning": {
+    "votingTitle": "Destination Voting",
+    "votingSubtitle": "Where should the group go? Propose options and vote (1 vote per member)",
+    "noOptionsYet": "No destination options proposed yet.",
+    "optionPlaceholder": "e.g., Sajek Valley / Saint Martin",
+    "addOptionButton": "Add option",
+    "voteButton": "Vote",
+    "votedBadge": "✓ Your vote",
+    "topPickBadge": "🏆 Top pick",
+    "proposedByPrefix": "Proposed by:",
+    "votesCountSuffix": "votes",
+    "setAsDestinationButton": "Set as final trip destination",
+    "itineraryTitle": "Day-by-Day Itinerary",
+    "itinerarySubtitle": "Simple daily plan of activities for the trip",
+    "noItineraryYet": "No itinerary items added yet.",
+    "dayNumberLabel": "Day *",
+    "timeLabel": "Time (optional)",
+    "timePlaceholder": "e.g., 09:30",
+    "activityTitleLabel": "Activity *",
+    "activityTitlePlaceholder": "e.g., Nilgiri visit & lunch",
+    "activityNotesLabel": "Notes (optional)",
+    "activityNotesPlaceholder": "e.g., Everyone ready by 8 AM",
+    "addItineraryButton": "Add to itinerary",
+    "moveUp": "↑",
+    "moveDown": "↓",
+    "deleteItem": "Delete"
+  },
   "errors": {
     "invalid_input": "Please fill in the required fields properly.",
     "invalid_pin": "PIN must be 4 to 6 digits.",
@@ -174,6 +201,7 @@
     "same_member_settlement": "Payer and receiver cannot be the same member.",
     "unauthorized": "Please join or select your name on this trip first.",
     "duplicate_expense_warning": "A matching expense with the same amount on the same day already exists! Check 'I confirm this is a separate expense' in the form to save anyway.",
-    "cross_trip_option": "That destination vote option does not belong to this trip."
+    "cross_trip_option": "That destination vote option does not belong to this trip.",
+    "duplicate_option": "That destination option is already on the list!"
   }
 }

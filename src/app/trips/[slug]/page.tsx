@@ -11,11 +11,13 @@ import {
 import { ActivityLogCard } from "@/components/ActivityLogCard";
 import { BalancesCard } from "@/components/BalancesCard";
 import { Button } from "@/components/Button";
+import { DestinationVotingCard } from "@/components/DestinationVotingCard";
 import {
   type EditableExpenseData,
   type ExistingExpenseSummary,
   ExpenseFormCard,
 } from "@/components/ExpenseFormCard";
+import { ItineraryCard } from "@/components/ItineraryCard";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
 import { SettlementsCard } from "@/components/SettlementsCard";
 import { ShareLinkCard } from "@/components/ShareLinkCard";
@@ -31,6 +33,7 @@ import {
   simplifyDebts,
   type SplitTypeValue,
 } from "@/lib/money";
+import { groupItineraryByDay, summarizeDestinationVotes } from "@/lib/planning";
 import type { ActivityLogRecordInput, ActivityLogSnapshot } from "@/lib/safety";
 import { getCurrentMemberForTrip } from "@/lib/session";
 import { dayKey } from "@/lib/time";
@@ -54,7 +57,8 @@ type ErrorKey =
   | "same_member_settlement"
   | "unauthorized"
   | "duplicate_expense_warning"
-  | "cross_trip_option";
+  | "cross_trip_option"
+  | "duplicate_option";
 
 const ERROR_KEYS = new Set<ErrorKey>([
   "invalid_input",
@@ -70,6 +74,7 @@ const ERROR_KEYS = new Set<ErrorKey>([
   "unauthorized",
   "duplicate_expense_warning",
   "cross_trip_option",
+  "duplicate_option",
 ]);
 
 function asSnapshot(val: unknown): ActivityLogSnapshot | null {
@@ -102,6 +107,17 @@ export default async function TripPage({
         where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
       },
+      options: {
+        orderBy: { createdAt: "asc" },
+      },
+      votes: true,
+      itinerary: {
+        orderBy: [
+          { dayNumber: "asc" },
+          { position: "asc" },
+          { createdAt: "asc" },
+        ],
+      },
       activityLogs: {
         orderBy: { createdAt: "desc" },
         take: 60,
@@ -117,6 +133,7 @@ export default async function TripPage({
   const tWho = await getTranslations("whoAreYou");
   const tTrip = await getTranslations("tripPage");
   const tMoney = await getTranslations("money");
+  const tPlan = await getTranslations("planning");
   const tErr = await getTranslations("errors");
 
   const errorMessage =
@@ -316,7 +333,7 @@ export default async function TripPage({
     );
   }
 
-  // 2. Signed-in Trip Hub View + Step 3 Money Core + Step 4 Safety Layer
+  // 2. Signed-in Trip Hub View + Step 3 Money Core + Step 4 Safety + Step 5 Voting & Itinerary
   const isCreator = currentMember.id === trip.creatorMemberId;
   const memberCountLabel =
     locale === "bn"
@@ -401,6 +418,19 @@ export default async function TripPage({
     tripEndDate: trip.endDate,
     locale,
     otherDatesLabel: tMoney("otherDatesLabel"),
+  });
+
+  const voteSummary = summarizeDestinationVotes({
+    options: trip.options,
+    votes: trip.votes,
+    members: memberInputs,
+    currentMemberId: currentMember.id,
+  });
+
+  const itineraryDayGroups = groupItineraryByDay({
+    items: trip.itinerary,
+    tripStartDate: trip.startDate,
+    locale,
   });
 
   const targetEditExpense = editExpense
@@ -604,6 +634,52 @@ export default async function TripPage({
         }}
       />
 
+      {/* Step 5.1: Destination Voting (1 vote per member) */}
+      <DestinationVotingCard
+        slug={trip.slug}
+        locale={locale}
+        isLocked={isLocked}
+        isCreator={isCreator}
+        currentTripDestination={trip.destination}
+        options={voteSummary.options}
+        labels={{
+          votingTitle: tPlan("votingTitle"),
+          votingSubtitle: tPlan("votingSubtitle"),
+          noOptionsYet: tPlan("noOptionsYet"),
+          optionPlaceholder: tPlan("optionPlaceholder"),
+          addOptionButton: tPlan("addOptionButton"),
+          voteButton: tPlan("voteButton"),
+          votedBadge: tPlan("votedBadge"),
+          topPickBadge: tPlan("topPickBadge"),
+          proposedByPrefix: tPlan("proposedByPrefix"),
+          votesCountSuffix: tPlan("votesCountSuffix"),
+          setAsDestinationButton: tPlan("setAsDestinationButton"),
+        }}
+      />
+
+      {/* Step 5.2: Day-by-Day Itinerary */}
+      <ItineraryCard
+        slug={trip.slug}
+        isLocked={isLocked}
+        dayGroups={itineraryDayGroups}
+        labels={{
+          itineraryTitle: tPlan("itineraryTitle"),
+          itinerarySubtitle: tPlan("itinerarySubtitle"),
+          noItineraryYet: tPlan("noItineraryYet"),
+          dayNumberLabel: tPlan("dayNumberLabel"),
+          timeLabel: tPlan("timeLabel"),
+          timePlaceholder: tPlan("timePlaceholder"),
+          activityTitleLabel: tPlan("activityTitleLabel"),
+          activityTitlePlaceholder: tPlan("activityTitlePlaceholder"),
+          activityNotesLabel: tPlan("activityNotesLabel"),
+          activityNotesPlaceholder: tPlan("activityNotesPlaceholder"),
+          addItineraryButton: tPlan("addItineraryButton"),
+          moveUp: tPlan("moveUp"),
+          moveDown: tPlan("moveDown"),
+          deleteItem: tPlan("deleteItem"),
+        }}
+      />
+
       {/* Step 4: Activity Log & Dispute-Protection Audit Trail */}
       <ActivityLogCard
         locale={locale}
@@ -795,7 +871,7 @@ export default async function TripPage({
         </div>
       ) : null}
 
-      {/* Placeholder for Step 5 features */}
+      {/* Placeholder for Step 6–7 features */}
       <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-center">
         <h3 className="text-base font-semibold text-[var(--color-fg)]">
           {tTrip("nextStepsTitle")}
