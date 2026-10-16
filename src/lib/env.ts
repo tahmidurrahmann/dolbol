@@ -26,7 +26,10 @@ export type ServerEnv = z.infer<typeof envSchema>;
 
 function parseServerEnv(): ServerEnv {
   const parsed = envSchema.safeParse({
-    DATABASE_URL: process.env.DATABASE_URL,
+    DATABASE_URL:
+      process.env.DATABASE_URL ??
+      process.env.POSTGRES_PRISMA_URL ??
+      process.env.POSTGRES_URL,
     NODE_ENV: process.env.NODE_ENV,
   });
 
