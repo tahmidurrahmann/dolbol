@@ -204,6 +204,24 @@
     "moveDown": "↓",
     "deleteItem": "Delete"
   },
+  "shareExport": {
+    "cardTitle": "Share Card & Daily Cost Sheet",
+    "cardSubtitle": "Share a public read-only trip summary or download the full daily cost sheet",
+    "publicSummaryTitle": "Public Read-Only Summary Page (No Money Details)",
+    "publicSummaryHint": "Shows only the destination, member names, and itinerary—never exposes expenses or balances.",
+    "openPublicSummaryButton": "Open Public Summary",
+    "copyPublicLinkButton": "Copy Summary Link",
+    "copiedPublicLink": "Summary Link Copied!",
+    "shareImageHeading": "Shareable Summary Image Card",
+    "downloadShareImageButton": "Download Summary Image (PNG)",
+    "costSheetTitle": "Downloadable Daily Cost Sheet",
+    "costSheetHint": "Includes per-day totals, per-person daily & overall totals, and simplified who-owes-whom:",
+    "downloadCsvButton": "Download CSV (Excel)",
+    "openPrintableSheetButton": "Open Printable / PDF View",
+    "publicSummaryBadge": "Public Read-Only Summary (Money details hidden)",
+    "openFullTripHub": "Open Full Trip Hub",
+    "privacyNotice": "For privacy, no expense or balance details are shown on this public summary page."
+  },
   "errors": {
     "invalid_input": "Please fill in the required fields properly.",
     "invalid_pin": "PIN must be 4 to 6 digits.",

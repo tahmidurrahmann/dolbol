@@ -21,6 +21,7 @@ import {
 import { ItineraryCard } from "@/components/ItineraryCard";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
 import { SettlementsCard } from "@/components/SettlementsCard";
+import { ShareAndExportCard } from "@/components/ShareAndExportCard";
 import { ShareLinkCard } from "@/components/ShareLinkCard";
 import { TripTabsContainer } from "@/components/TripTabsContainer";
 import { db } from "@/lib/db";
@@ -142,6 +143,7 @@ export default async function TripPage({
   const tMoney = await getTranslations("money");
   const tAi = await getTranslations("aiParser");
   const tPlan = await getTranslations("planning");
+  const tShare = await getTranslations("shareExport");
   const tErr = await getTranslations("errors");
 
   const errorMessage =
@@ -996,15 +998,26 @@ export default async function TripPage({
               }}
             />
 
-            {/* Placeholder for Step 7 features */}
-            <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-center">
-              <h3 className="text-sm font-bold text-[var(--color-fg)]">
-                {tTrip("nextStepsTitle")}
-              </h3>
-              <p className="mt-1 text-xs text-[var(--color-fg-muted)]">
-                {tTrip("nextStepsBody")}
-              </p>
-            </div>
+            {/* Step 7: Share Card, Public Read-Only Summary & Downloadable Daily Cost Sheet */}
+            <ShareAndExportCard
+              slug={trip.slug}
+              tripName={trip.name}
+              labels={{
+                cardTitle: tShare("cardTitle"),
+                cardSubtitle: tShare("cardSubtitle"),
+                publicSummaryTitle: tShare("publicSummaryTitle"),
+                publicSummaryHint: tShare("publicSummaryHint"),
+                openPublicSummaryButton: tShare("openPublicSummaryButton"),
+                copyPublicLinkButton: tShare("copyPublicLinkButton"),
+                copiedPublicLink: tShare("copiedPublicLink"),
+                shareImageHeading: tShare("shareImageHeading"),
+                downloadShareImageButton: tShare("downloadShareImageButton"),
+                costSheetTitle: tShare("costSheetTitle"),
+                costSheetHint: tShare("costSheetHint"),
+                downloadCsvButton: tShare("downloadCsvButton"),
+                openPrintableSheetButton: tShare("openPrintableSheetButton"),
+              }}
+            />
           </>
         }
       />
