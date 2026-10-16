@@ -23,6 +23,15 @@ export interface EditableExpenseData {
   shares: ShareOutput[];
 }
 
+export interface ExistingExpenseSummary {
+  id: string;
+  title: string;
+  amount: number;
+  category: ExpenseCategoryValue;
+  expenseDateYyyyMmDd: string;
+  paidById: string;
+}
+
 export interface ExpenseFormLabels {
   addExpenseTitle: string;
   editExpenseTitle: string;
@@ -47,6 +56,9 @@ export interface ExpenseFormLabels {
   notePlaceholder: string;
   saveExpenseButton: string;
   updateExpenseButton: string;
+  duplicateWarningTitle: string;
+  duplicateWarningBody: string;
+  confirmDuplicateLabel: string;
   categories: Record<ExpenseCategoryValue, string>;
 }
 
@@ -56,6 +68,8 @@ interface ExpenseFormCardProps {
   currentMemberId: string;
   defaultDateYyyyMmDd: string;
   editingExpense: EditableExpenseData | null;
+  existingExpenses: ExistingExpenseSummary[];
+  forceShowDuplicateConfirm?: boolean;
   labels: ExpenseFormLabels;
 }
 
@@ -70,19 +84,35 @@ function toAsciiNumber(raw: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function normalizeTitle(s: string): string {
+  return s.normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export function ExpenseFormCard({
   slug,
   members,
   currentMemberId,
   defaultDateYyyyMmDd,
   editingExpense,
+  existingExpenses,
+  forceShowDuplicateConfirm = false,
   labels,
 }: ExpenseFormCardProps) {
+  const [titleStr, setTitleStr] = useState<string>(editingExpense?.title ?? "");
   const [splitType, setSplitType] = useState<SplitTypeValue>(
     editingExpense?.splitType ?? "EQUAL",
   );
   const [amountStr, setAmountStr] = useState<string>(
     editingExpense ? String(editingExpense.amount) : "",
+  );
+  const [categoryVal, setCategoryVal] = useState<ExpenseCategoryValue>(
+    editingExpense?.category ?? "FOOD",
+  );
+  const [dateStr, setDateStr] = useState<string>(
+    editingExpense?.expenseDateYyyyMmDd ?? defaultDateYyyyMmDd,
+  );
+  const [paidByVal, setPaidByVal] = useState<string>(
+    editingExpense?.paidById ?? currentMemberId,
   );
 
   const initialSelectedIds = editingExpense
@@ -122,6 +152,32 @@ export function ExpenseFormCard({
     (sum, m) => sum + toAsciiNumber(percentValues[m.id] ?? ""),
     0,
   );
+
+  // Live client-side duplicate detection matching findDuplicateExpenseCandidate
+  const candidateNormTitle = normalizeTitle(titleStr);
+  const matchingDuplicate =
+    totalAmount > 0
+      ? (existingExpenses.find((exp) => {
+          if (editingExpense && exp.id === editingExpense.id) {
+            return false;
+          }
+          if (exp.amount !== totalAmount) {
+            return false;
+          }
+          if (exp.expenseDateYyyyMmDd !== dateStr) {
+            return false;
+          }
+          const sameTitle =
+            candidateNormTitle.length > 0 &&
+            normalizeTitle(exp.title) === candidateNormTitle;
+          const samePayerAndCat =
+            exp.paidById === paidByVal && exp.category === categoryVal;
+          return sameTitle || samePayerAndCat;
+        }) ?? null)
+      : null;
+
+  const showDuplicateWarning =
+    Boolean(matchingDuplicate) || forceShowDuplicateConfirm;
 
   function toggleParticipant(memberId: string): void {
     setSelectedIds((prev) =>
@@ -167,7 +223,8 @@ export function ExpenseFormCard({
             type="text"
             required
             maxLength={100}
-            defaultValue={editingExpense?.title ?? ""}
+            value={titleStr}
+            onChange={(e) => setTitleStr(e.target.value)}
             placeholder={labels.titlePlaceholder}
             className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
           />
@@ -204,7 +261,10 @@ export function ExpenseFormCard({
             <select
               id="exp-category"
               name="category"
-              defaultValue={editingExpense?.category ?? "FOOD"}
+              value={categoryVal}
+              onChange={(e) =>
+                setCategoryVal(e.target.value as ExpenseCategoryValue)
+              }
               className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
             >
               {(Object.keys(labels.categories) as ExpenseCategoryValue[]).map(
@@ -231,9 +291,8 @@ export function ExpenseFormCard({
               name="expenseDate"
               type="date"
               required
-              defaultValue={
-                editingExpense?.expenseDateYyyyMmDd ?? defaultDateYyyyMmDd
-              }
+              value={dateStr}
+              onChange={(e) => setDateStr(e.target.value)}
               className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
             />
           </div>
@@ -248,7 +307,8 @@ export function ExpenseFormCard({
             <select
               id="exp-paidBy"
               name="paidById"
-              defaultValue={editingExpense?.paidById ?? currentMemberId}
+              value={paidByVal}
+              onChange={(e) => setPaidByVal(e.target.value)}
               className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
             >
               {members.map((m) => (
@@ -445,6 +505,32 @@ export function ExpenseFormCard({
             className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
           />
         </div>
+
+        {/* Step 4: Duplicate-entry Warning Banner & Confirm Override Checkbox */}
+        {showDuplicateWarning ? (
+          <div className="space-y-2 rounded-xl border border-amber-400 bg-amber-50 p-3 text-amber-950">
+            <p className="text-sm font-bold">{labels.duplicateWarningTitle}</p>
+            {matchingDuplicate ? (
+              <p className="text-xs">
+                {labels.duplicateWarningBody}{" "}
+                <strong>
+                  &ldquo;{matchingDuplicate.title}&rdquo; (৳
+                  {matchingDuplicate.amount})
+                </strong>
+              </p>
+            ) : null}
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-2 pt-1 text-sm font-semibold">
+              <input
+                type="checkbox"
+                name="confirmDuplicate"
+                value="true"
+                required
+                className="h-4 w-4 accent-amber-700"
+              />
+              <span>{labels.confirmDuplicateLabel}</span>
+            </label>
+          </div>
+        ) : null}
 
         <Button type="submit" variant="primary">
           {editingExpense

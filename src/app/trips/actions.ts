@@ -14,10 +14,17 @@ import { db } from "@/lib/db";
 import {
   computeExpenseShares,
   type ExactShareInput,
+  type ExpenseCategoryValue,
   type PercentShareInput,
   type ShareOutput,
-  verifySharesSum,
 } from "@/lib/money";
+import {
+  assertTripWritable,
+  assertValidExpenseSharesForTrip,
+  assertVoteOptionBelongsToTrip,
+  findDuplicateExpenseCandidate,
+  SafetyViolationError,
+} from "@/lib/safety";
 import {
   clearMemberDeviceSession,
   createMemberDeviceSession,
@@ -114,7 +121,7 @@ export async function createTripAction(formData: FormData): Promise<void> {
         after: {
           name: updatedTrip.name,
           destination: updatedTrip.destination,
-          creatorDisplayName: creator.displayName,
+          displayName: creator.displayName,
         },
       },
     });
@@ -173,7 +180,9 @@ export async function joinTripAction(formData: FormData): Promise<void> {
     redirect("/trips/join?error=trip_not_found");
   }
 
-  if (trip.lockedAt) {
+  try {
+    assertTripWritable(trip);
+  } catch {
     redirect(`/trips/${trip.slug}?error=trip_locked`);
   }
 
@@ -305,7 +314,9 @@ export async function addGuestMemberAction(formData: FormData): Promise<void> {
     redirect("/trips/join?error=trip_not_found");
   }
 
-  if (trip.lockedAt) {
+  try {
+    assertTripWritable(trip);
+  } catch {
     redirect(`/trips/${trip.slug}?error=trip_locked`);
   }
 
@@ -351,7 +362,6 @@ export async function addGuestMemberAction(formData: FormData): Promise<void> {
         after: {
           displayName: guest.displayName,
           emoji: guest.emoji,
-          isGuest: true,
         },
       },
     });
@@ -382,7 +392,9 @@ export async function renameMemberAction(formData: FormData): Promise<void> {
     redirect("/trips/join?error=trip_not_found");
   }
 
-  if (trip.lockedAt) {
+  try {
+    assertTripWritable(trip);
+  } catch {
     redirect(`/trips/${trip.slug}?error=trip_locked`);
   }
 
@@ -488,7 +500,7 @@ export async function toggleTripLockAction(formData: FormData): Promise<void> {
   redirect(`/trips/${trip.slug}`);
 }
 
-// ---- Step 3: Money Core Server Actions (Expenses & Settlements) ----------
+// ---- Step 3 & Step 4: Money Core + Safety Layer Server Actions -----------
 
 export async function saveExpenseAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
@@ -514,14 +526,22 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
 
   const trip = await db.trip.findUnique({
     where: { slug: parsed.data.slug },
-    include: { members: true },
+    include: {
+      members: true,
+      expenses: {
+        where: { deletedAt: null },
+      },
+    },
   });
 
   if (!trip) {
     redirect("/trips/join?error=trip_not_found");
   }
 
-  if (trip.lockedAt) {
+  // Step 4 Guard 1: Locked trips block every write route
+  try {
+    assertTripWritable(trip);
+  } catch {
     redirect(`/trips/${trip.slug}?error=trip_locked`);
   }
 
@@ -531,8 +551,36 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
   }
 
   const validMemberIds = new Set(trip.members.map((m) => m.id));
-  if (!validMemberIds.has(parsed.data.paidById)) {
-    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  const expenseDate = parseDhakaExpenseDate(parsed.data.expenseDate);
+
+  // Step 4 Guard 4: Duplicate-entry warning check (unless user checked confirmDuplicate)
+  const confirmDuplicate = formData.get("confirmDuplicate") === "true";
+  if (!confirmDuplicate) {
+    const duplicate = findDuplicateExpenseCandidate(
+      {
+        title: parsed.data.title,
+        amount: parsed.data.amount,
+        category: parsed.data.category,
+        expenseDate,
+        paidById: parsed.data.paidById,
+        excludeExpenseId: parsed.data.expenseId,
+      },
+      trip.expenses.map((e) => ({
+        id: e.id,
+        title: e.title,
+        amount: e.amount,
+        category: e.category as ExpenseCategoryValue,
+        expenseDate: e.expenseDate,
+        paidById: e.paidById,
+        deletedAt: e.deletedAt,
+      })),
+    );
+
+    if (duplicate) {
+      redirect(
+        `/trips/${trip.slug}?error=duplicate_expense_warning#expense-form`,
+      );
+    }
   }
 
   let shares: ShareOutput[];
@@ -582,15 +630,19 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
       });
     }
 
-    verifySharesSum(shares, parsed.data.amount);
+    // Step 4 Guard 2: Verify share amounts add up to expense amount and belong to trip members
+    assertValidExpenseSharesForTrip({
+      expenseAmount: parsed.data.amount,
+      paidById: parsed.data.paidById,
+      shares,
+      validTripMemberIds: validMemberIds,
+    });
   } catch {
     redirect(`/trips/${trip.slug}?error=invalid_shares`);
   }
 
-  const expenseDate = parseDhakaExpenseDate(parsed.data.expenseDate);
-
   if (parsed.data.expenseId) {
-    // Update existing expense
+    // Update existing expense + write ActivityLog in the same transaction
     const existingExpense = await db.expense.findUnique({
       where: { id: parsed.data.expenseId },
       include: { shares: true },
@@ -658,7 +710,7 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
       });
     });
   } else {
-    // Create new expense
+    // Create new expense + write ActivityLog in the same transaction
     await db.$transaction(async (tx) => {
       const created = await tx.expense.create({
         data: {
@@ -712,7 +764,10 @@ export async function deleteExpenseAction(formData: FormData): Promise<void> {
   if (!trip) {
     redirect("/trips/join?error=trip_not_found");
   }
-  if (trip.lockedAt) {
+
+  try {
+    assertTripWritable(trip);
+  } catch {
     redirect(`/trips/${trip.slug}?error=trip_locked`);
   }
 
@@ -729,6 +784,7 @@ export async function deleteExpenseAction(formData: FormData): Promise<void> {
     redirect(`/trips/${trip.slug}`);
   }
 
+  // Soft delete only (deletedAt), never hard delete, with ActivityLog in the same transaction
   const deletedAt = new Date();
   await db.$transaction(async (tx) => {
     await tx.expense.update({
@@ -748,7 +804,11 @@ export async function deleteExpenseAction(formData: FormData): Promise<void> {
           amount: existing.amount,
           paidById: existing.paidById,
         },
-        after: { deletedAt: deletedAt.toISOString() },
+        after: {
+          title: existing.title,
+          amount: existing.amount,
+          deletedAt: deletedAt.toISOString(),
+        },
       },
     });
   });
@@ -791,7 +851,10 @@ export async function createSettlementAction(
   if (!trip) {
     redirect("/trips/join?error=trip_not_found");
   }
-  if (trip.lockedAt) {
+
+  try {
+    assertTripWritable(trip);
+  } catch {
     redirect(`/trips/${trip.slug}?error=trip_locked`);
   }
 
@@ -849,7 +912,10 @@ export async function deleteSettlementAction(
   if (!trip) {
     redirect("/trips/join?error=trip_not_found");
   }
-  if (trip.lockedAt) {
+
+  try {
+    assertTripWritable(trip);
+  } catch {
     redirect(`/trips/${trip.slug}?error=trip_locked`);
   }
 
@@ -866,6 +932,7 @@ export async function deleteSettlementAction(
     redirect(`/trips/${trip.slug}`);
   }
 
+  // Soft delete only (deletedAt), never hard delete, with ActivityLog in the same transaction
   const deletedAt = new Date();
   await db.$transaction(async (tx) => {
     await tx.settlement.update({
@@ -885,7 +952,93 @@ export async function deleteSettlementAction(
           toMemberId: existing.toMemberId,
           amount: existing.amount,
         },
-        after: { deletedAt: deletedAt.toISOString() },
+        after: {
+          fromMemberId: existing.fromMemberId,
+          toMemberId: existing.toMemberId,
+          amount: existing.amount,
+          deletedAt: deletedAt.toISOString(),
+        },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+/**
+ * Step 4 Guard 3 Server Action: Verifies vote option belongs to the exact same trip
+ * and blocks locked trips before upserting a member's destination vote.
+ */
+export async function castDestinationVoteAction(
+  formData: FormData,
+): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const optionId = String(formData.get("optionId") ?? "").trim();
+
+  const trip = await db.trip.findUnique({ where: { slug } });
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  const option = await db.destinationOption.findUnique({
+    where: { id: optionId },
+    select: { id: true, tripId: true, name: true },
+  });
+
+  try {
+    assertVoteOptionBelongsToTrip({
+      tripId: trip.id,
+      member: currentMember,
+      option,
+    });
+  } catch (err) {
+    if (
+      err instanceof SafetyViolationError &&
+      err.code === "cross_trip_option"
+    ) {
+      redirect(`/trips/${trip.slug}?error=cross_trip_option`);
+    }
+    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  }
+
+  await db.$transaction(async (tx) => {
+    const vote = await tx.vote.upsert({
+      where: {
+        tripId_memberId: {
+          tripId: trip.id,
+          memberId: currentMember.id,
+        },
+      },
+      update: { optionId: option!.id },
+      create: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        optionId: option!.id,
+      },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "vote",
+        entityId: vote.id,
+        action: "upsert",
+        after: {
+          name: option!.name,
+        },
       },
     });
   });

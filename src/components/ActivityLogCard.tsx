@@ -1,0 +1,163 @@
+import { formatDate, formatTaka, type SupportedLocale } from "@/lib/format";
+import type { MemberInput } from "@/lib/money";
+import type { ActivityLogRecordInput } from "@/lib/safety";
+
+export interface ActivityLogCardLabels {
+  activityLogTitle: string;
+  activityLogSubtitle: string;
+  noActivityYet: string;
+  act_expense_create: string;
+  act_expense_update: string;
+  act_expense_delete: string;
+  act_settlement_create: string;
+  act_settlement_delete: string;
+  act_member_join: string;
+  act_member_create_guest: string;
+  act_member_update: string;
+  act_trip_create: string;
+  act_trip_lock: string;
+  act_trip_unlock: string;
+}
+
+interface ActivityLogCardProps {
+  locale: SupportedLocale;
+  members: MemberInput[];
+  activityLogs: ActivityLogRecordInput[];
+  labels: ActivityLogCardLabels;
+}
+
+export function ActivityLogCard({
+  locale,
+  members,
+  activityLogs,
+  labels,
+}: ActivityLogCardProps) {
+  const memberById = new Map(members.map((m) => [m.id, m]));
+
+  function describeLog(log: ActivityLogRecordInput): string {
+    const key = `${log.entityType}_${log.action}`;
+    switch (key) {
+      case "expense_create": {
+        const title = log.after?.title ?? "";
+        const amt =
+          typeof log.after?.amount === "number"
+            ? formatTaka(log.after.amount, locale)
+            : "";
+        return `${labels.act_expense_create} "${title}" (${amt})`;
+      }
+      case "expense_update": {
+        const beforeTitle = log.before?.title ?? "";
+        const afterTitle = log.after?.title ?? beforeTitle;
+        const beforeAmt =
+          typeof log.before?.amount === "number"
+            ? formatTaka(log.before.amount, locale)
+            : "";
+        const afterAmt =
+          typeof log.after?.amount === "number"
+            ? formatTaka(log.after.amount, locale)
+            : "";
+        return `${labels.act_expense_update} "${afterTitle}" (${beforeAmt} → ${afterAmt})`;
+      }
+      case "expense_delete": {
+        const title = log.before?.title ?? log.after?.title ?? "";
+        const amtVal = log.before?.amount ?? log.after?.amount;
+        const amt =
+          typeof amtVal === "number" ? formatTaka(amtVal, locale) : "";
+        return `${labels.act_expense_delete} "${title}" (${amt})`;
+      }
+      case "settlement_create": {
+        const from = log.after?.fromMemberId
+          ? memberById.get(log.after.fromMemberId)?.displayName
+          : "";
+        const to = log.after?.toMemberId
+          ? memberById.get(log.after.toMemberId)?.displayName
+          : "";
+        const amt =
+          typeof log.after?.amount === "number"
+            ? formatTaka(log.after.amount, locale)
+            : "";
+        return `${labels.act_settlement_create} ${from ?? ""} → ${to ?? ""} (${amt})`;
+      }
+      case "settlement_delete": {
+        const from = log.before?.fromMemberId
+          ? memberById.get(log.before.fromMemberId)?.displayName
+          : "";
+        const to = log.before?.toMemberId
+          ? memberById.get(log.before.toMemberId)?.displayName
+          : "";
+        const amtVal = log.before?.amount ?? log.after?.amount;
+        const amt =
+          typeof amtVal === "number" ? formatTaka(amtVal, locale) : "";
+        return `${labels.act_settlement_delete} ${from ?? ""} → ${to ?? ""} (${amt})`;
+      }
+      case "member_join":
+        return `${labels.act_member_join} ${log.after?.displayName ?? ""}`;
+      case "member_create_guest":
+        return `${labels.act_member_create_guest} ${log.after?.displayName ?? ""}`;
+      case "member_update":
+        return `${labels.act_member_update} ${log.before?.displayName ?? ""} → ${log.after?.displayName ?? ""}`;
+      case "trip_create":
+        return `${labels.act_trip_create} "${log.after?.name ?? ""}"`;
+      case "trip_lock":
+        return labels.act_trip_lock;
+      case "trip_unlock":
+        return labels.act_trip_unlock;
+      default:
+        return `${log.entityType} (${log.action})`;
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <div className="space-y-0.5">
+        <h2 className="text-lg font-bold text-[var(--color-fg)]">
+          {labels.activityLogTitle}
+        </h2>
+        <p className="text-xs text-[var(--color-fg-muted)]">
+          {labels.activityLogSubtitle}
+        </p>
+      </div>
+
+      {activityLogs.length === 0 ? (
+        <p className="rounded-lg bg-[var(--color-surface-muted)] px-3 py-3 text-sm text-[var(--color-fg-muted)]">
+          {labels.noActivityYet}
+        </p>
+      ) : (
+        <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
+          {activityLogs.map((log) => {
+            const actor = log.memberId
+              ? memberById.get(log.memberId)
+              : undefined;
+            const isDelete = log.action === "delete";
+            const isUpdate = log.action === "update";
+
+            return (
+              <li
+                key={log.id}
+                className={`rounded-lg border px-3 py-2 text-xs ${
+                  isDelete
+                    ? "border-red-200 bg-red-50/60 text-red-950"
+                    : isUpdate
+                      ? "border-amber-200 bg-amber-50/60 text-amber-950"
+                      : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-fg)]"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 font-semibold">
+                  <span>
+                    {actor
+                      ? `${actor.emoji ?? "🎒"} ${actor.displayName}`
+                      : "System"}
+                  </span>
+                  <span className="font-normal text-[var(--color-fg-muted)]">
+                    {formatDate(log.createdAt, locale)}
+                  </span>
+                </div>
+                <p className="mt-0.5">{describeLog(log)}</p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}

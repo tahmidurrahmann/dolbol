@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { deleteExpenseAction } from "@/app/trips/actions";
-import { formatTaka, type SupportedLocale } from "@/lib/format";
+import { formatDate, formatTaka, type SupportedLocale } from "@/lib/format";
 import {
   type DayExpenseGroup,
   type ExpenseCategoryValue,
@@ -8,6 +8,10 @@ import {
   type MemberInput,
   type SettlementRecordInput,
 } from "@/lib/money";
+import {
+  type ActivityLogRecordInput,
+  extractExpenseEditHistory,
+} from "@/lib/safety";
 
 interface PerDayExpensesViewLabels {
   perDayTitle: string;
@@ -16,6 +20,8 @@ interface PerDayExpensesViewLabels {
   perPersonDayCostLabel: string;
   paidByPrefix: string;
   editedAfterSettlementBadge: string;
+  editHistoryToggle: string;
+  editedByPrefix: string;
   editButton: string;
   deleteButton: string;
   categories: Record<ExpenseCategoryValue, string>;
@@ -28,6 +34,7 @@ interface PerDayExpensesViewProps {
   members: MemberInput[];
   dayGroups: DayExpenseGroup[];
   settlements: SettlementRecordInput[];
+  activityLogs: ActivityLogRecordInput[];
   labels: PerDayExpensesViewLabels;
 }
 
@@ -38,6 +45,7 @@ export function PerDayExpensesView({
   members,
   dayGroups,
   settlements,
+  activityLogs,
   labels,
 }: PerDayExpensesViewProps) {
   const memberById = new Map(members.map((m) => [m.id, m]));
@@ -99,10 +107,14 @@ export function PerDayExpensesView({
               <ul className="space-y-2.5 pt-1">
                 {group.expenses.map((exp) => {
                   const payer = memberById.get(exp.paidById);
-                  const editedAfterSettlement = isExpenseEditedAfterSettlement(
-                    exp,
+                  const editHistory = extractExpenseEditHistory({
+                    expenseId: exp.id,
+                    activityLogs,
                     settlements,
-                  );
+                  });
+                  const editedAfterSettlement =
+                    isExpenseEditedAfterSettlement(exp, settlements) ||
+                    editHistory.some((h) => h.editedAfterSettlement);
 
                   return (
                     <li
@@ -158,6 +170,60 @@ export function PerDayExpensesView({
                           );
                         })}
                       </div>
+
+                      {/* Step 4: Expandable Edit History Diff */}
+                      {editHistory.length > 0 ? (
+                        <details className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-xs">
+                          <summary className="cursor-pointer font-semibold text-[var(--color-fg)]">
+                            {labels.editHistoryToggle} ({editHistory.length})
+                          </summary>
+                          <ul className="mt-2 space-y-1.5 border-t border-[var(--color-border)] pt-2">
+                            {editHistory.map((h) => {
+                              const editor = h.editorMemberId
+                                ? memberById.get(h.editorMemberId)
+                                : undefined;
+                              return (
+                                <li
+                                  key={h.logId}
+                                  className="space-y-0.5 text-[var(--color-fg-muted)]"
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-1">
+                                    <span>
+                                      {labels.editedByPrefix}{" "}
+                                      <strong className="text-[var(--color-fg)]">
+                                        {editor
+                                          ? `${editor.emoji ?? "🎒"} ${editor.displayName}`
+                                          : "—"}
+                                      </strong>
+                                    </span>
+                                    <span>
+                                      {formatDate(h.editedAt, locale)}
+                                    </span>
+                                  </div>
+                                  <div className="font-medium text-[var(--color-fg)]">
+                                    {h.beforeTitle !== h.afterTitle &&
+                                    h.beforeTitle &&
+                                    h.afterTitle ? (
+                                      <span>
+                                        &ldquo;{h.beforeTitle}&rdquo; → &ldquo;
+                                        {h.afterTitle}&rdquo;{" "}
+                                      </span>
+                                    ) : null}
+                                    {typeof h.beforeAmount === "number" &&
+                                    typeof h.afterAmount === "number" &&
+                                    h.beforeAmount !== h.afterAmount ? (
+                                      <span>
+                                        {formatTaka(h.beforeAmount, locale)} →{" "}
+                                        {formatTaka(h.afterAmount, locale)}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </details>
+                      ) : null}
 
                       {!isLocked ? (
                         <div className="flex items-center justify-end gap-2 border-t border-[var(--color-border)] pt-2">

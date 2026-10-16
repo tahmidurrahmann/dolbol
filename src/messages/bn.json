@@ -140,7 +140,26 @@
     "dayTotalLabel": "দিনের মোট:",
     "perPersonDayCostLabel": "জনপ্রতি এই দিনের খরচ:",
     "paidByPrefix": "বিল দিয়েছে:",
-    "editedAfterSettlementBadge": "⚠️ লেনদেন নিষ্পত্তির পরে এডিট করা হয়েছে"
+    "editedAfterSettlementBadge": "⚠️ লেনদেন নিষ্পত্তির পরে এডিট করা হয়েছে",
+    "duplicateWarningTitle": "⚠️ সম্ভাব্য ডুপ্লিকেট খরচ!",
+    "duplicateWarningBody": "একই দিনে একই টাকার আরেকটি খরচ ইতিমধ্যে যোগ করা আছে:",
+    "confirmDuplicateLabel": "আমি নিশ্চিত, এটি আলাদা খরচ (তবুও সেভ করুন)",
+    "editHistoryToggle": "এডিট হিস্ট্রি দেখুন",
+    "editedByPrefix": "এডিট করেছেন:",
+    "activityLogTitle": "অ্যাক্টিভিটি লগ ও পরিবর্তন ইতিহাস (Safety Log)",
+    "activityLogSubtitle": "প্রতিটি খরচ, এডিট ও মুছে ফেলা তথ্যের অপরিবর্তনীয় রেকর্ড",
+    "noActivityYet": "এখনো কোনো কার্যক্রম রেকর্ড হয়নি।",
+    "act_expense_create": "নতুন খরচ যোগ করেছেন:",
+    "act_expense_update": "খরচ এডিট করেছেন:",
+    "act_expense_delete": "খরচ মুছে ফেলেছেন (Soft-deleted):",
+    "act_settlement_create": "পরিশোধ রেকর্ড করেছেন:",
+    "act_settlement_delete": "পরিশোধ মুছে ফেলেছেন (Soft-deleted):",
+    "act_member_join": "ট্রিপে যোগ দিয়েছেন:",
+    "act_member_create_guest": "গেস্ট সদস্য যোগ করেছেন:",
+    "act_member_update": "সদস্যের নাম/ইমোজি পরিবর্তন করেছেন:",
+    "act_trip_create": "ট্রিপ তৈরি করেছেন:",
+    "act_trip_lock": "ট্রিপ লক করেছেন",
+    "act_trip_unlock": "ট্রিপ আনলক করেছেন"
   },
   "errors": {
     "invalid_input": "তথ্যগুলো সঠিকভাবে পূরণ করুন।",
@@ -153,6 +172,8 @@
     "invalid_amount": "টাকার পরিমাণ অবশ্যই ১ বা তার বেশি পূর্ণ সংখ্যা হতে হবে।",
     "invalid_shares": "ভাগের হিসাব মেলেনি (সমান ভাগে অন্তত ১ জন, নির্দিষ্ট টাকায় মোট খরচের সমান, এবং শতাংশে মোট ১০০% হতে হবে)।",
     "same_member_settlement": "যিনি টাকা দিচ্ছেন এবং যিনি পাচ্ছেন তাঁরা একই ব্যক্তি হতে পারবেন না।",
-    "unauthorized": "খরচ যোগ করতে আগে নিজের নামে ট্রিপে প্রবেশ করুন।"
+    "unauthorized": "খরচ যোগ করতে আগে নিজের নামে ট্রিপে প্রবেশ করুন।",
+    "duplicate_expense_warning": "একই দিনে একই টাকার ও একই ধরনের একটি খরচ ইতিমধ্যে আছে! এটি আলাদা খরচ হলে ফর্মে 'আমি নিশ্চিত' টিক দিয়ে সেভ করুন।",
+    "cross_trip_option": "এই ভোট অপশনটি এই ট্রিপের নয়।"
   }
 }

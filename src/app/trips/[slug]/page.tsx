@@ -8,10 +8,12 @@ import {
   switchDeviceMemberAction,
   toggleTripLockAction,
 } from "@/app/trips/actions";
+import { ActivityLogCard } from "@/components/ActivityLogCard";
 import { BalancesCard } from "@/components/BalancesCard";
 import { Button } from "@/components/Button";
 import {
   type EditableExpenseData,
+  type ExistingExpenseSummary,
   ExpenseFormCard,
 } from "@/components/ExpenseFormCard";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
@@ -29,6 +31,7 @@ import {
   simplifyDebts,
   type SplitTypeValue,
 } from "@/lib/money";
+import type { ActivityLogRecordInput, ActivityLogSnapshot } from "@/lib/safety";
 import { getCurrentMemberForTrip } from "@/lib/session";
 import { dayKey } from "@/lib/time";
 import { MEMBER_EMOJIS } from "@/lib/trips";
@@ -49,7 +52,9 @@ type ErrorKey =
   | "invalid_amount"
   | "invalid_shares"
   | "same_member_settlement"
-  | "unauthorized";
+  | "unauthorized"
+  | "duplicate_expense_warning"
+  | "cross_trip_option";
 
 const ERROR_KEYS = new Set<ErrorKey>([
   "invalid_input",
@@ -63,7 +68,16 @@ const ERROR_KEYS = new Set<ErrorKey>([
   "invalid_shares",
   "same_member_settlement",
   "unauthorized",
+  "duplicate_expense_warning",
+  "cross_trip_option",
 ]);
+
+function asSnapshot(val: unknown): ActivityLogSnapshot | null {
+  if (val && typeof val === "object" && !Array.isArray(val)) {
+    return val as ActivityLogSnapshot;
+  }
+  return null;
+}
 
 export default async function TripPage({
   params,
@@ -87,6 +101,10 @@ export default async function TripPage({
       settlements: {
         where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
+      },
+      activityLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 60,
       },
     },
   });
@@ -298,7 +316,7 @@ export default async function TripPage({
     );
   }
 
-  // 2. Signed-in Trip Hub View + Step 3 Money Core Computed on Read
+  // 2. Signed-in Trip Hub View + Step 3 Money Core + Step 4 Safety Layer
   const isCreator = currentMember.id === trip.creatorMemberId;
   const memberCountLabel =
     locale === "bn"
@@ -331,6 +349,17 @@ export default async function TripPage({
     })),
   }));
 
+  const existingExpenseSummaries: ExistingExpenseSummary[] = expenseInputs.map(
+    (e) => ({
+      id: e.id,
+      title: e.title,
+      amount: e.amount,
+      category: e.category,
+      expenseDateYyyyMmDd: dayKey(e.expenseDate),
+      paidById: e.paidById,
+    }),
+  );
+
   const settlementInputs: SettlementRecordInput[] = trip.settlements.map(
     (s) => ({
       id: s.id,
@@ -340,6 +369,20 @@ export default async function TripPage({
       createdById: s.createdById,
       deletedAt: s.deletedAt,
       createdAt: s.createdAt,
+    }),
+  );
+
+  const activityLogInputs: ActivityLogRecordInput[] = trip.activityLogs.map(
+    (log) => ({
+      id: log.id,
+      tripId: log.tripId,
+      memberId: log.memberId,
+      entityType: log.entityType,
+      entityId: log.entityId,
+      action: log.action,
+      before: asSnapshot(log.before),
+      after: asSnapshot(log.after),
+      createdAt: log.createdAt,
     }),
   );
 
@@ -447,7 +490,7 @@ export default async function TripPage({
         </div>
       </div>
 
-      {/* Step 3.1: Manual Expense Entry / Edit Form */}
+      {/* Step 3.1 + Step 4: Manual Expense Form with Live Duplicate-Entry Warning */}
       {!isLocked ? (
         <div id="expense-form">
           <ExpenseFormCard
@@ -457,6 +500,8 @@ export default async function TripPage({
             currentMemberId={currentMember.id}
             defaultDateYyyyMmDd={defaultExpenseDate}
             editingExpense={editingExpenseData}
+            existingExpenses={existingExpenseSummaries}
+            forceShowDuplicateConfirm={error === "duplicate_expense_warning"}
             labels={{
               addExpenseTitle: tMoney("addExpenseTitle"),
               editExpenseTitle: tMoney("editExpenseTitle"),
@@ -481,6 +526,9 @@ export default async function TripPage({
               notePlaceholder: tMoney("notePlaceholder"),
               saveExpenseButton: tMoney("saveExpenseButton"),
               updateExpenseButton: tMoney("updateExpenseButton"),
+              duplicateWarningTitle: tMoney("duplicateWarningTitle"),
+              duplicateWarningBody: tMoney("duplicateWarningBody"),
+              confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
               categories: categoryLabels,
             }}
           />
@@ -510,7 +558,7 @@ export default async function TripPage({
         }}
       />
 
-      {/* Step 3.3: Per-Day View (Grouped by Asia/Dhaka Day + Other dates) */}
+      {/* Step 3.3 + Step 4: Per-Day View with Edit History & Post-Settlement Flagging */}
       <PerDayExpensesView
         slug={trip.slug}
         locale={locale}
@@ -518,6 +566,7 @@ export default async function TripPage({
         members={memberInputs}
         dayGroups={dayGroups}
         settlements={settlementInputs}
+        activityLogs={activityLogInputs}
         labels={{
           perDayTitle: tMoney("perDayTitle"),
           noExpensesYet: tMoney("noExpensesYet"),
@@ -525,6 +574,8 @@ export default async function TripPage({
           perPersonDayCostLabel: tMoney("perPersonDayCostLabel"),
           paidByPrefix: tMoney("paidByPrefix"),
           editedAfterSettlementBadge: tMoney("editedAfterSettlementBadge"),
+          editHistoryToggle: tMoney("editHistoryToggle"),
+          editedByPrefix: tMoney("editedByPrefix"),
           editButton: tMoney("editButton"),
           deleteButton: tMoney("deleteButton"),
           categories: categoryLabels,
@@ -550,6 +601,29 @@ export default async function TripPage({
           paidBackText: tMoney("paidBackText"),
           toText: tMoney("toText"),
           deleteButton: tMoney("deleteButton"),
+        }}
+      />
+
+      {/* Step 4: Activity Log & Dispute-Protection Audit Trail */}
+      <ActivityLogCard
+        locale={locale}
+        members={memberInputs}
+        activityLogs={activityLogInputs}
+        labels={{
+          activityLogTitle: tMoney("activityLogTitle"),
+          activityLogSubtitle: tMoney("activityLogSubtitle"),
+          noActivityYet: tMoney("noActivityYet"),
+          act_expense_create: tMoney("act_expense_create"),
+          act_expense_update: tMoney("act_expense_update"),
+          act_expense_delete: tMoney("act_expense_delete"),
+          act_settlement_create: tMoney("act_settlement_create"),
+          act_settlement_delete: tMoney("act_settlement_delete"),
+          act_member_join: tMoney("act_member_join"),
+          act_member_create_guest: tMoney("act_member_create_guest"),
+          act_member_update: tMoney("act_member_update"),
+          act_trip_create: tMoney("act_trip_create"),
+          act_trip_lock: tMoney("act_trip_lock"),
+          act_trip_unlock: tMoney("act_trip_unlock"),
         }}
       />
 

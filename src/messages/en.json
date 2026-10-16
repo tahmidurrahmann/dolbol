@@ -140,7 +140,26 @@
     "dayTotalLabel": "Day total:",
     "perPersonDayCostLabel": "Per-person cost this day:",
     "paidByPrefix": "Paid by:",
-    "editedAfterSettlementBadge": "⚠️ Edited after a settlement"
+    "editedAfterSettlementBadge": "⚠️ Edited after a settlement",
+    "duplicateWarningTitle": "⚠️ Possible Duplicate Expense!",
+    "duplicateWarningBody": "An expense with the same amount on the same day already exists:",
+    "confirmDuplicateLabel": "I confirm this is a separate expense (save anyway)",
+    "editHistoryToggle": "View edit history",
+    "editedByPrefix": "Edited by:",
+    "activityLogTitle": "Activity Log & Audit Trail",
+    "activityLogSubtitle": "Immutable record of every expense, settlement, edit, and soft-delete",
+    "noActivityYet": "No activity recorded yet.",
+    "act_expense_create": "added expense:",
+    "act_expense_update": "edited expense:",
+    "act_expense_delete": "soft-deleted expense:",
+    "act_settlement_create": "recorded repayment:",
+    "act_settlement_delete": "soft-deleted repayment:",
+    "act_member_join": "joined the trip:",
+    "act_member_create_guest": "added guest member:",
+    "act_member_update": "updated member name/emoji:",
+    "act_trip_create": "created trip:",
+    "act_trip_lock": "locked the trip",
+    "act_trip_unlock": "unlocked the trip"
   },
   "errors": {
     "invalid_input": "Please fill in the required fields properly.",
@@ -153,6 +172,8 @@
     "invalid_amount": "Amount must be a positive whole-taka integer.",
     "invalid_shares": "Split shares do not match (select at least 1 member for Equal, match exact total for Exact, or sum to 100% for Percent).",
     "same_member_settlement": "Payer and receiver cannot be the same member.",
-    "unauthorized": "Please join or select your name on this trip first."
+    "unauthorized": "Please join or select your name on this trip first.",
+    "duplicate_expense_warning": "A matching expense with the same amount on the same day already exists! Check 'I confirm this is a separate expense' in the form to save anyway.",
+    "cross_trip_option": "That destination vote option does not belong to this trip."
   }
 }
