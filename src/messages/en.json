@@ -1,15 +1,169 @@
 {
   "app": {
     "name": "Trip Hub",
+
     "tagline": "Plan group trips and split expenses with friends effortlessly",
+
     "createTrip": "Create a trip",
+
     "joinTrip": "Join a trip",
+
     "comingSoon": "Coming soon",
+
     "footer": "Built for friend groups in Bangladesh • All amounts in whole BDT (৳)"
   },
+
   "header": {
     "languageLabelBn": "বাংলা",
+
     "languageLabelEn": "English",
+
     "switchLanguageAria": "Switch language"
+  },
+
+  "createTrip": {
+    "title": "Create a new trip",
+
+    "subtitle": "Enter the trip name and your name, then share the link with friends",
+
+    "tripNameLabel": "Trip name *",
+
+    "tripNamePlaceholder": "e.g., Sundarbans Tour 2026",
+
+    "destinationLabel": "Destination (optional)",
+
+    "destinationPlaceholder": "e.g., Cox's Bazar / Sreemangal",
+
+    "startDateLabel": "Start date (optional)",
+
+    "endDateLabel": "End date (optional)",
+
+    "yourNameLabel": "Your name (Trip creator) *",
+
+    "yourNamePlaceholder": "e.g., Karim",
+
+    "emojiLabel": "Your emoji tag",
+
+    "pinLabel": "4–6 digit PIN (optional)",
+
+    "pinHint": "Helps you reclaim your name if you clear browser data or switch phones",
+
+    "submitButton": "Start trip",
+
+    "backHome": "← Back to home"
+  },
+
+  "joinByLink": {
+    "title": "Join a trip",
+
+    "subtitle": "Paste the shared trip link or slug code from your friend below",
+
+    "inputLabel": "Trip link or slug code *",
+
+    "inputPlaceholder": "https://.../trips/AbCdEf... or code",
+
+    "submitButton": "Find trip",
+
+    "backHome": "← Back to home"
+  },
+
+  "whoAreYou": {
+    "title": "Who are you?",
+
+    "subtitle": "Pick your existing name or join as a new member on this trip",
+
+    "reclaimTitle": "Already on this trip? Tap your name to rejoin",
+
+    "reclaimButton": "Continue as this member",
+
+    "pinProtected": "PIN protected",
+
+    "noPinSet": "One-tap rejoin (no PIN)",
+
+    "enterPinPlaceholder": "Enter 4–6 digit PIN",
+
+    "newMemberTitle": "Join as a new member",
+
+    "yourNameLabel": "Your name *",
+
+    "yourNamePlaceholder": "e.g., Tanvir",
+
+    "emojiLabel": "Emoji tag (helps tell same-named friends apart)",
+
+    "pinLabel": "4–6 digit PIN (optional)",
+
+    "pinPlaceholder": "e.g., 1234",
+
+    "joinButton": "Join trip",
+
+    "lockedNotice": "This trip is locked. New members cannot join, but existing members can still reclaim their name above."
+  },
+
+  "tripPage": {
+    "shareTitle": "Invite your friends",
+
+    "shareSubtitle": "Share this link on WhatsApp or Messenger (no login needed)",
+
+    "copyLink": "Copy link",
+
+    "copied": "Copied!",
+
+    "shareNative": "Share link",
+
+    "signedInAs": "Signed in as:",
+
+    "switchDevice": "Switch member / Test reclaim",
+
+    "lockedBadge": "🔒 Trip Locked",
+
+    "unlockedBadge": "🔓 Active",
+
+    "destinationPrefix": "Destination:",
+
+    "membersHeading": "Trip Members",
+
+    "creatorBadge": "Creator",
+
+    "guestBadge": "Guest",
+
+    "pinSetBadge": "PIN set",
+
+    "creatorControlsTitle": "Creator Controls",
+
+    "addGuestTitle": "Add a guest member (friend without the app)",
+
+    "guestNamePlaceholder": "Guest display name",
+
+    "addGuestButton": "Add guest",
+
+    "renameTitle": "Rename or update emoji for a member",
+
+    "renameSaveButton": "Save changes",
+
+    "lockTripButton": "Lock trip",
+
+    "unlockTripButton": "Unlock trip",
+
+    "lockTripHint": "Locking prevents new members, guests, or edits.",
+
+    "nextStepsTitle": "Expenses, Destination Voting & Itinerary",
+
+    "nextStepsBody": "Expense splitting, destination voting, and itinerary come in Steps 3–5."
+  },
+
+  "errors": {
+    "invalid_input": "Please fill in the required fields properly.",
+
+    "invalid_pin": "PIN must be 4 to 6 digits.",
+
+    "wrong_pin": "Incorrect PIN. Please try again.",
+
+    "duplicate_name": "Someone with this name is already on the trip! Reclaim your name from the list above or add a last initial.",
+
+    "trip_not_found": "No trip was found for that link or code.",
+
+    "trip_locked": "This trip is locked and cannot be modified.",
+
+    "not_creator": "Only the trip creator can perform this action."
   }
 }

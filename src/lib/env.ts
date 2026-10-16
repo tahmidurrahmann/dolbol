@@ -11,8 +11,7 @@ const envSchema = z.object({
     .string()
     .min(1, "DATABASE_URL is required.")
     .refine(
-      (val) =>
-        val.startsWith("postgresql://") || val.startsWith("postgres://"),
+      (val) => val.startsWith("postgresql://") || val.startsWith("postgres://"),
       {
         message:
           "DATABASE_URL must be a valid PostgreSQL URL starting with postgresql:// or postgres://.",
