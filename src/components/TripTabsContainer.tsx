@@ -28,12 +28,12 @@ export function TripTabsContainer({
     {
       id: "expenses" as const,
       icon: "💳",
-      label: locale === "bn" ? "খরচ ও এন্ট্রি" : "Expenses",
+      label: locale === "bn" ? "খরচ ও অপশনসমূহ" : "Expenses",
     },
     {
       id: "balances" as const,
-      icon: "📊",
-      label: locale === "bn" ? "হিসাব ও লেনদেন" : "Balances",
+      icon: "🧮",
+      label: locale === "bn" ? "ক্যালকুলেশন ও হিসাব" : "Calculations",
     },
     {
       id: "plan" as const,

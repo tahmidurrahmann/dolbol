@@ -490,9 +490,9 @@ export default async function TripPage({
     : null;
 
   const categoryLabels: Record<ExpenseCategoryValue, string> = {
-    TRANSPORT: tMoney("cat_TRANSPORT"),
     HOTEL: tMoney("cat_HOTEL"),
     FOOD: tMoney("cat_FOOD"),
+    TRANSPORT: tMoney("cat_TRANSPORT"),
     TICKET: tMoney("cat_TICKET"),
     OTHER: tMoney("cat_OTHER"),
   };

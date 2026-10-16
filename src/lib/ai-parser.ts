@@ -188,12 +188,12 @@ const CATEGORY_KEYWORDS: ReadonlyArray<{
   {
     category: "TICKET",
     pattern:
-      /(টিকিট|টিকেট|ticket|tickets|এন্ট্রি|entry\s*fee|পাস|জাদুঘর|পার্ক\s*ফি|সফারি)/i,
+      /(উপহার|গিফট|কেনাকাটা|শপিং|দরকারি|প্রয়োজনীয়|জিনিস|ওষুধ|মেডিসিন|সাবান|টিকিট|টিকেট|gift|gifts|necessary|items|item|shopping|medicine|soap|ticket|tickets|এন্ট্রি|entry\s*fee|পাস|জাদুঘর|পার্ক\s*ফি|সফারি)/i,
   },
   {
     category: "TRANSPORT",
     pattern:
-      /(বাস|ট্রেন|লঞ্চ|সিএনজি|অটো|রিকশা|ট্যাক্সি|উবার|পাঠাও|বোট|নৌকা|ট্রলার|জীপ|জিপ|চাঁদের\s*গাড়ি|ভাড়া|গাড়ি|ফ্লাইট|বিমান|ফেরি|স্পিডবোট|bus|train|launch|cng|auto|rickshaw|uber|pathao|boat|trawler|jeep|chander\s*gari|fare|bhara|vara|transport|flight|ferry|speedboat)/i,
+      /(রাইড|যাতায়াত|ভাড়া|বাস|ট্রেন|লঞ্চ|সিএনজি|অটো|রিকশা|ট্যাক্সি|উবার|পাঠাও|বোট|নৌকা|ট্রলার|জীপ|জিপ|চাঁদের\s*গাড়ি|গাড়ি|ফ্লাইট|বিমান|ফেরি|স্পিডবোট|ride|rides|uber|pathao|cng|bus|train|launch|auto|rickshaw|boat|trawler|jeep|chander\s*gari|fare|bhara|vara|transport|flight|ferry|speedboat)/i,
   },
   {
     category: "HOTEL",

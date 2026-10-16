@@ -289,77 +289,103 @@ export function ExpenseFormCard({
           ) : null}
         </div>
 
-        {/* Amount & Category */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* Amount (Required) */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="exp-amount"
-                className="block text-sm font-semibold text-[var(--color-fg)]"
-              >
-                {labels.amountLabel}
-                <span className="ml-1 font-bold text-red-500">*</span>
-              </label>
-              <span className="text-xs text-[var(--color-fg-muted)]">পূর্ণ টাকা</span>
-            </div>
-
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-[var(--color-primary)]">
-                ৳
-              </span>
-              <input
-                id="exp-amount"
-                name="amount"
-                type="text"
-                inputMode="numeric"
-                required
-                value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value)}
-                onBlur={() => setTouched((p) => ({ ...p, amount: true }))}
-                placeholder={labels.amountPlaceholder}
-                className={`min-h-[46px] w-full rounded-xl border bg-white pl-8 pr-3.5 py-2 text-base font-bold text-[var(--color-primary)] shadow-xs transition-all outline-none ${
-                  amountError
-                    ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
-                    : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                }`}
-              />
-            </div>
-
-            {amountError ? (
-              <p className="flex items-center gap-1 text-xs font-medium text-red-600">
-                <span>⚠️</span>
-                <span>{amountError}</span>
-              </p>
-            ) : null}
+        {/* Amount */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="exp-amount"
+              className="block text-sm font-semibold text-[var(--color-fg)]"
+            >
+              {labels.amountLabel}
+              <span className="ml-1 font-bold text-red-500">*</span>
+            </label>
+            <span className="text-xs text-[var(--color-fg-muted)]">পূর্ণ টাকা</span>
           </div>
 
-          {/* Category */}
-          <div className="space-y-1.5">
+          <div className="relative">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-[var(--color-primary)]">
+              ৳
+            </span>
+            <input
+              id="exp-amount"
+              name="amount"
+              type="text"
+              inputMode="numeric"
+              required
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
+              onBlur={() => setTouched((p) => ({ ...p, amount: true }))}
+              placeholder={labels.amountPlaceholder}
+              className={`min-h-[46px] w-full rounded-xl border bg-white pl-8 pr-3.5 py-2 text-base font-bold text-[var(--color-primary)] shadow-xs transition-all outline-none ${
+                amountError
+                  ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
+                  : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+              }`}
+            />
+          </div>
+
+          {amountError ? (
+            <p className="flex items-center gap-1 text-xs font-medium text-red-600">
+              <span>⚠️</span>
+              <span>{amountError}</span>
+            </p>
+          ) : null}
+        </div>
+
+        {/* 5 Expense Category Options */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
             <label
               htmlFor="exp-category"
               className="block text-sm font-semibold text-[var(--color-fg)]"
             >
               {labels.categoryLabel}
             </label>
-            <select
-              id="exp-category"
-              name="category"
-              value={categoryVal}
-              onChange={(e) =>
-                setCategoryVal(e.target.value as ExpenseCategoryValue)
-              }
-              className="min-h-[46px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base font-medium text-[var(--color-fg)] shadow-xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-            >
-              {(Object.keys(labels.categories) as ExpenseCategoryValue[]).map(
-                (cat) => (
-                  <option key={cat} value={cat}>
-                    {labels.categories[cat]}
-                  </option>
-                ),
-              )}
-            </select>
+            <span className="text-xs text-[var(--color-fg-muted)]">
+              ৫টি অপশন থেকে বেছে নিন
+            </span>
           </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {(Object.keys(labels.categories) as ExpenseCategoryValue[]).map(
+              (cat) => {
+                const isSelected = categoryVal === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategoryVal(cat)}
+                    className={`flex min-h-[46px] items-center justify-center rounded-xl border px-3 py-2 text-xs font-bold transition-all text-center ${
+                      isSelected
+                        ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)] shadow-xs scale-[1.02]"
+                        : "border-[var(--color-border)] bg-white text-[var(--color-fg)] hover:bg-[var(--color-surface-muted)]"
+                    }`}
+                  >
+                    <span>{labels.categories[cat]}</span>
+                  </button>
+                );
+              },
+            )}
+          </div>
+
+          <select
+            id="exp-category"
+            name="category"
+            value={categoryVal}
+            onChange={(e) =>
+              setCategoryVal(e.target.value as ExpenseCategoryValue)
+            }
+            className="sr-only"
+            aria-label={labels.categoryLabel}
+          >
+            {(Object.keys(labels.categories) as ExpenseCategoryValue[]).map(
+              (cat) => (
+                <option key={cat} value={cat}>
+                  {labels.categories[cat]}
+                </option>
+              ),
+            )}
+          </select>
         </div>
 
         {/* Date (using custom DatePickerField) & Payer */}
