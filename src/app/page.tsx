@@ -6,14 +6,12 @@ export default async function HomePage() {
   const locale = await getLocale();
   const bn = locale === "bn";
 
-  // Whole-taka formatter, Bangla digits when locale is bn
+  // Whole-taka formatter
   const fmt = new Intl.NumberFormat(bn ? "bn-BD" : "en-BD", {
     maximumFractionDigits: 0,
   });
   const taka = (n: number) => `৳${fmt.format(n)}`;
 
-  // Example data. 4 friends, 18,000 total, 4,500 each.
-  // Paid: Rahim 12,000 / Nusrat 3,200 / Tanvir 2,800 / Mim 0
   const people = {
     rahim: bn ? "রহিম" : "Rahim",
     nusrat: bn ? "নুসরাত" : "Nusrat",
@@ -29,206 +27,270 @@ export default async function HomePage() {
 
   const steps = [
     {
+      num: bn ? "১" : "1",
+      icon: "🌴",
       title: bn ? "ট্রিপ খুলুন" : "Create a trip",
       body: bn
-        ? "নাম আর বন্ধুদের নাম দিন। কোনো একাউন্ট লাগবে না।"
-        : "Add a name and your friends. No account needed.",
+        ? "ট্রিপের নাম আর বন্ধুদের নাম দিন। কোনো ইমেইল বা পাসওয়ার্ড লাগবে না।"
+        : "Add a trip name and your friends. No email or password needed.",
     },
     {
-      title: bn ? "লিংক শেয়ার করুন" : "Share the link",
+      num: bn ? "২" : "2",
+      icon: "🔗",
+      title: bn ? "লিংক শেয়ার করুন" : "Share the link",
       body: bn
-        ? "গ্রুপে লিংক পাঠান। যে খুলবে সে-ই ট্রিপে ঢুকে যাবে।"
-        : "Send it to the group chat. Anyone who opens it is in.",
+        ? "হোয়াটসঅ্যাপ বা মেসেঞ্জার গ্রুপে লিংক পাঠান। যে ক্লিক করবে সে-ই ট্রিপে যুক্ত হবে।"
+        : "Send the link to WhatsApp or Messenger. Anyone with the link is in.",
     },
     {
-      title: bn ? "খরচ লিখুন, হিসাব দেখুন" : "Add costs, see who pays whom",
+      num: bn ? "৩" : "3",
+      icon: "⚡",
+      title: bn ? "খরচ লিখুন, হিসাব শেষ" : "Add costs, see who pays whom",
       body: bn
-        ? "খরচ লিখলেই কে কাকে কত দেবে, সেটা সাথে সাথে দেখা যায়।"
-        : "Every cost updates the final settle-up straight away.",
+        ? "বাংলা বা বাংলিশে খরচ লিখলেই কে কাকে কত দেবে তা সাথে সাথে দেখতে পাবেন।"
+        : "Type costs in Bangla or Banglish, and fair settle-up debts update instantly.",
     },
   ];
 
-  const extras = [
+  const features = [
     {
-      title: bn ? "বাংলা ও বাংলিশে লিখুন" : "Type costs in Bangla or Banglish",
+      icon: "🤖",
+      title: bn ? "এআই মেসেজ পার্সার" : "AI Expense Parser",
       body: bn
-        ? "মেসেজ যেভাবে লেখেন সেভাবেই লিখুন, এআই খরচের এন্ট্রি বানিয়ে দেবে।"
-        : "Write it like a text message. AI turns it into a cost entry.",
+        ? "মেসেজের মতো বাংলা বা বাংলিশে লিখলেই এআই নিজে থেকেই খরচের এন্ট্রি ও ভাগ বানিয়ে দেয়।"
+        : "Write costs naturally like a text message in Bangla or Banglish. AI converts them instantly into split cards.",
     },
     {
-      title: bn ? "শুধু পূর্ণ টাকা" : "Whole taka only",
+      icon: "৳",
+      title: bn ? "পূর্ণ টাকার হিসাব" : "Whole BDT (৳) Fair Split",
       body: bn
-        ? "পয়সা বা ভগ্নাংশ নেই। ভাগ করলেও অঙ্কটা পরিষ্কার থাকে।"
-        : "No paisa, no fractions. Every share is a clean number.",
+        ? "পয়সা বা ভগ্নাংশের কোনো ঝামেলা নেই। বুদ্ধিমান রাউন্ডিংয়ের মাধ্যমে প্রতি টাকার হিসাব থাকে শতভাগ স্বচ্ছ।"
+        : "Zero paisa, zero fractions. Smart integer rounding ensures fair and perfectly balanced debts.",
     },
     {
-      title: bn ? "গন্তব্য ভোট" : "Vote on where to go",
+      icon: "🗳️",
+      title: bn ? "গন্তব্য ভোটিং" : "Destination Voting",
       body: bn
-        ? "সবাই ভোট দিন, সবচেয়ে বেশি ভোট পাওয়া জায়গাটাই ঠিক হবে।"
-        : "Everyone votes, the most-voted place wins.",
+        ? "বন্ধুরা সবাই পছন্দের জায়গায় ভোট দিন। শীর্ষ ভোট পাওয়া জায়গাটি ক্রিয়েটর এক ট্যাপে গন্তব্য হিসেবে সেট করতে পারেন।"
+        : "Democratic trip voting where friends vote on options, and the creator can set the top pick as destination.",
     },
     {
-      title: bn ? "দিনভিত্তিক সূচি" : "Day-by-day plan",
+      icon: "📊",
+      title: bn ? "ভ্রমণ সূচি ও শিট" : "Daily Itinerary & Cost Sheet",
       body: bn
-        ? "প্রতিদিনের কর্মসূচি এক জায়গায় রাখুন, সবাই একই পরিকল্পনা দেখবে।"
-        : "Keep each day's plan in one place so nobody asks twice.",
+        ? "দিনভিত্তিক ভ্রমণ পরিকল্পনা, আকর্ষণীয় শেয়ার ইমেজ কার্ড এবং এক্সেল/সিএসভি খরচের শিট এক ক্লিকেই ডাউনলোড।"
+        : "Day-by-day activity plan, downloadable shareable PNG card, and CSV cost sheets for the whole group.",
     },
   ];
-
-  const headingClass = bn ? "leading-[1.35]" : "leading-[1.08] tracking-tight";
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-14 py-6 sm:gap-20 sm:py-10">
-      {/* HERO */}
-      <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-14">
-        <div className="flex flex-col items-start gap-6">
-          <p className="text-sm font-semibold text-[var(--color-primary)]">
-            {t("name")}
-          </p>
+    <div className="mx-auto flex w-full max-w-[1208px] flex-col gap-12 py-4 sm:gap-16 sm:py-8">
+      {/* HERO SECTION */}
+      <section className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
+        {/* Left Column: Heading, Value Prop & Actions */}
+        <div className="flex flex-col items-start gap-5 lg:col-span-7">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/10 px-3.5 py-1.5 text-xs font-bold text-[var(--color-primary)] shadow-2xs">
+            <span>✨</span>
+            <span>
+              {bn
+                ? "বাংলাদেশের বন্ধুদের গ্রুপ ট্যুরের হিসাব"
+                : "Group Travel & Expense Splitter for Bangladesh"}
+            </span>
+          </div>
 
-          <h1
-            className={`text-4xl font-extrabold text-[var(--color-fg)] sm:text-5xl ${headingClass}`}
-          >
-            {bn
-              ? "ট্যুরের খরচ ভাগ করুন, ঝগড়া ছাড়াই।"
-              : "Split trip costs with friends. Skip the arguments."}
+          <h1 className="text-3xl font-black tracking-tight text-[var(--color-fg)] sm:text-5xl lg:text-[46px] leading-[1.18]">
+            {bn ? (
+              <>
+                ট্যুরের খরচ ভাগ করুন,{" "}
+                <span className="text-[var(--color-primary)]">ঝগড়া ছাড়াই।</span>
+              </>
+            ) : (
+              <>
+                Split trip costs with friends.{" "}
+                <span className="text-[var(--color-primary)]">
+                  Skip the arguments.
+                </span>
+              </>
+            )}
           </h1>
 
-          <p className="max-w-md text-base leading-relaxed text-[var(--color-fg-muted)] sm:text-lg">
-            {t("tagline")}
+          <p className="max-w-xl text-base sm:text-lg text-[var(--color-fg-muted)] leading-relaxed">
+            {bn
+              ? "হোটেল, খাবার, গাড়ি ভাড়ার হিসাব রাখুন এক জায়গায়। বাংলা বা বাংলিশ মেসেজ লিখলেই এআই হিসাব বানিয়ে দেবে। পয়সা ছাড়া নিখুঁত পূর্ণ টাকার হিসাব।"
+              : "Track hotels, food, and transport in one shared place. Just type what you spent in natural Bangla or Banglish, and AI splits it fairly in whole BDT."}
           </p>
 
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          {/* Action Buttons */}
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row pt-1">
             <Link
               href="/trips/new"
-              className="inline-flex min-h-[52px] items-center justify-center rounded-xl bg-[var(--color-primary)] px-7 text-base font-bold text-white shadow-sm transition-[filter,transform] hover:brightness-110 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              className="group inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[var(--color-primary)] to-emerald-700 px-7 text-base font-bold text-white shadow-md transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
             >
-              {t("createTrip")}
+              <span>➕</span>
+              <span>{t("createTrip")}</span>
+              <span className="transition-transform group-hover:translate-x-1">
+                →
+              </span>
             </Link>
+
             <Link
               href="/trips/join"
-              className="inline-flex min-h-[52px] items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-7 text-base font-bold text-[var(--color-fg)] transition-colors hover:bg-[var(--color-surface-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-7 text-base font-bold text-[var(--color-fg)] shadow-xs transition-all hover:bg-[var(--color-surface-muted)] hover:border-[var(--color-primary)]/40 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
             >
-              {t("joinTrip")}
+              <span>🔗</span>
+              <span>{t("joinTrip")}</span>
             </Link>
           </div>
 
-          <p className="text-sm text-[var(--color-fg-muted)]">
-            {bn
-              ? "লগইন লাগবে না। শুধু লিংক শেয়ার করুন।"
-              : "No login. Just share the link."}
-          </p>
+          {/* Trust points */}
+          <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-[var(--color-fg-muted)] pt-1">
+            <span className="inline-flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>
+                {bn ? "লগইন ঝামেলাহীন" : "No login needed"}
+              </span>
+            </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span>৳</span>
+              <span>
+                {bn ? "পূর্ণ টাকার হিসাব" : "Whole BDT only"}
+              </span>
+            </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span>🤖</span>
+              <span>
+                {bn ? "এআই মেসেজ পার্সার" : "Bangla/Banglish AI"}
+              </span>
+            </span>
+          </div>
         </div>
 
-        {/* LIVE EXAMPLE: shows the product instead of describing it */}
-        <div
-          role="img"
-          aria-label={
-            bn
-              ? "উদাহরণ: একটি মেসেজ থেকে খরচের এন্ট্রি এবং কে কাকে কত দেবে তার হিসাব"
-              : "Example: a typed message becomes a cost entry, then a settle-up showing who pays whom"
-          }
-          className="w-full rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
-        >
-          <p className="text-xs font-medium text-[var(--color-fg-muted)]">
-            {bn
-              ? "যেভাবে মেসেজ করেন সেভাবেই লিখুন"
-              : "Type it like a text message"}
-          </p>
-
-          <div className="mt-2 w-fit max-w-full rounded-2xl rounded-bl-md bg-[var(--color-surface-muted)] px-4 py-3 text-sm font-medium text-[var(--color-fg)]">
-            {bn
-              ? "হোটেল ১২০০০ রহিম দিছে, সবাই ভাগ"
-              : "hotel 12000 rahim dilo, sobai bhag"}
-          </div>
-
-          {/* parsed entry */}
-          <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/10 px-4 py-3">
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-[var(--color-fg)]">
-                {bn ? "হোটেল" : "Hotel"}
-              </p>
-              <p className="text-xs text-[var(--color-fg-muted)]">
-                {bn
-                  ? `${people.rahim} দিয়েছেন, ৪ জনে ভাগ`
-                  : `Paid by ${people.rahim}, split 4 ways`}
-              </p>
-            </div>
-            <p className="text-base font-extrabold tabular-nums text-[var(--color-fg)]">
-              {taka(12000)}
-            </p>
-          </div>
-
-          {/* settle up */}
-          <div className="mt-6 border-t border-[var(--color-border)] pt-5">
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm font-bold text-[var(--color-fg)]">
-                {bn ? "কে কাকে দেবে" : "Who pays whom"}
-              </p>
-              <p className="text-xs text-[var(--color-fg-muted)]">
-                {bn
-                  ? `মোট ${taka(18000)}, জনপ্রতি ${taka(4500)}`
-                  : `${taka(18000)} total, ${taka(4500)} each`}
-              </p>
-            </div>
-
-            <ul className="mt-3 divide-y divide-[var(--color-border)]">
-              {settlements.map((s) => (
-                <li
-                  key={s.from}
-                  className="flex items-center justify-between gap-3 py-3"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span
-                      aria-hidden="true"
-                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-muted)] text-sm font-bold text-[var(--color-fg)]"
-                    >
-                      {s.from.charAt(0)}
-                    </span>
-                    <p className="truncate text-sm text-[var(--color-fg)]">
-                      {bn ? (
-                        <>
-                          <strong>{s.from}</strong> দেবে <strong>{s.to}</strong>{" "}
-                          কে
-                        </>
-                      ) : (
-                        <>
-                          <strong>{s.from}</strong> pays <strong>{s.to}</strong>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <p className="text-sm font-bold tabular-nums text-[var(--color-primary)]">
-                    {taka(s.amount)}
+        {/* Right Column: Live Mockup Snapshot Preview */}
+        <div className="w-full lg:col-span-5">
+          <div className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-md transition-all hover:shadow-lg">
+            {/* Top header badge */}
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🌴</span>
+                <div>
+                  <p className="text-sm font-extrabold text-[var(--color-fg)]">
+                    {bn ? "সাজেক ভ্যালি ট্যুর ২০২৬" : "Sajek Tour 2026"}
                   </p>
-                </li>
-              ))}
-            </ul>
+                  <p className="text-[11px] text-[var(--color-fg-muted)]">
+                    {bn ? "৪ জন সদস্য • পূর্ণ টাকা" : "4 members • Whole BDT"}
+                  </p>
+                </div>
+              </div>
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-300">
+                🟢 {bn ? "লাইভ ডেমো" : "Live Demo"}
+              </span>
+            </div>
+
+            {/* Chat message input snippet */}
+            <div className="mt-4 space-y-1.5">
+              <span className="text-[11px] font-semibold text-[var(--color-fg-muted)] uppercase tracking-wider block">
+                {bn ? "১. গ্রুপে মেসেজ দিন" : "1. Type naturally"}
+              </span>
+              <div className="flex items-start gap-2 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-sm font-medium text-[var(--color-fg)] border border-[var(--color-border)]">
+                <span className="text-base">💬</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-[var(--color-fg)]">
+                    {bn
+                      ? '"হোটেল ১২০০০ রহিম দিছে, সবাই ভাগ"'
+                      : '"hotel 12000 rahim dilo, sobai bhag"'}
+                  </p>
+                  <span className="text-[10px] text-[var(--color-primary)] font-bold mt-0.5 block">
+                    🤖 {bn ? "এআই নিমেষেই পার্স করেছে" : "AI auto-parsed"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Auto-created expense card */}
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-[var(--color-primary)]/30 bg-[var(--color-primary-light)]/40 px-3.5 py-2.5">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-[var(--color-fg)] flex items-center gap-1.5">
+                  <span>🏨</span>
+                  <span>{bn ? "হোটেল রুম" : "Hotel Room"}</span>
+                </p>
+                <p className="text-[11px] text-[var(--color-fg-muted)]">
+                  {bn
+                    ? `${people.rahim} দিয়েছেন • ৪ জনে সমান ভাগ`
+                    : `Paid by ${people.rahim} • 4 equal shares`}
+                </p>
+              </div>
+              <p className="text-base font-black text-[var(--color-primary)] shrink-0">
+                {taka(12000)}
+              </p>
+            </div>
+
+            {/* Simplified Settle-up transfers */}
+            <div className="mt-4 border-t border-[var(--color-border)] pt-3.5">
+              <div className="flex items-baseline justify-between gap-2 mb-2">
+                <p className="text-xs font-bold text-[var(--color-fg)] flex items-center gap-1">
+                  <span>🤝</span>
+                  <span>{bn ? "কে কাকে কত দেবে (সহজ হিসাব)" : "Who owes whom (simplified)"}</span>
+                </p>
+                <span className="text-[11px] font-semibold text-[var(--color-primary)]">
+                  {bn ? `মোট ${taka(18000)}` : `${taka(18000)} total`}
+                </span>
+              </div>
+
+              <ul className="space-y-1.5">
+                {settlements.map((s) => (
+                  <li
+                    key={s.from}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-xs shadow-2xs"
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-[var(--color-fg)]">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-surface-muted)] text-[10px]">
+                        👤
+                      </span>
+                      <span>{s.from}</span>
+                      <span className="text-[10px] text-[var(--color-fg-muted)] font-normal">
+                        → {bn ? "দেবে" : "pays"} →
+                      </span>
+                      <span>{s.to}</span>
+                    </div>
+                    <span className="font-extrabold text-[var(--color-primary)]">
+                      {taka(s.amount)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* HOW IT WORKS: a real sequence, so numbering is justified */}
-      <section aria-labelledby="how-heading" className="flex flex-col gap-6">
-        <h2
-          id="how-heading"
-          className="text-2xl font-bold text-[var(--color-fg)] sm:text-3xl"
-        >
-          {bn ? "তিন ধাপে শেষ" : "Three steps, done"}
-        </h2>
+      {/* 3-STEP HOW IT WORKS */}
+      <section className="flex flex-col gap-6 pt-4">
+        <div className="text-center sm:text-left space-y-1">
+          <h2 className="text-2xl font-black tracking-tight text-[var(--color-fg)] sm:text-3xl">
+            {bn ? "তিন ধাপে সহজ হিসাব" : "Three simple steps"}
+          </h2>
+          <p className="text-sm text-[var(--color-fg-muted)]">
+            {bn
+              ? "কোনো জটিল সেটআপ ছাড়া বন্ধুদের সাথে যেভাবে ট্যুর শুরু করবেন"
+              : "How to run fair group trip accounts without complex setup"}
+          </p>
+        </div>
 
-        <ol className="grid gap-4 sm:grid-cols-3">
-          {steps.map((step, i) => (
-            <li
+        <div className="grid gap-4 sm:grid-cols-3">
+          {steps.map((step) => (
+            <div
               key={step.title}
-              className="flex gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:flex-col"
+              className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs transition-all hover:shadow-md hover:border-[var(--color-primary)]/30"
             >
-              <span
-                aria-hidden="true"
-                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-sm font-bold text-white"
-              >
-                {bn ? ["১", "২", "৩"][i] : i + 1}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-sm font-bold text-white shadow-xs">
+                  {step.num}
+                </span>
+                <span className="text-2xl">{step.icon}</span>
+              </div>
               <div className="flex flex-col gap-1">
                 <h3 className="text-base font-bold text-[var(--color-fg)]">
                   {step.title}
@@ -237,50 +299,72 @@ export default async function HomePage() {
                   {step.body}
                 </p>
               </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {/* EXTRAS: plain list, not another wall of cards */}
-      <section aria-labelledby="extras-heading" className="flex flex-col gap-4">
-        <h2
-          id="extras-heading"
-          className="text-2xl font-bold text-[var(--color-fg)] sm:text-3xl"
-        >
-          {bn ? "প্রতিটি ট্রিপে যা পাবেন" : "In every trip"}
-        </h2>
-
-        <dl className="divide-y divide-[var(--color-border)] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5">
-          {extras.map((item) => (
-            <div
-              key={item.title}
-              className="flex flex-col gap-1 py-4 sm:flex-row sm:items-baseline sm:gap-8"
-            >
-              <dt className="text-sm font-bold text-[var(--color-fg)] sm:w-64 sm:shrink-0">
-                {item.title}
-              </dt>
-              <dd className="text-sm leading-relaxed text-[var(--color-fg-muted)]">
-                {item.body}
-              </dd>
             </div>
           ))}
-        </dl>
+        </div>
       </section>
 
-      {/* CLOSING CTA: so users who scrolled don't have to scroll back up */}
-      <section className="flex flex-col items-start justify-between gap-5 rounded-3xl bg-[var(--color-primary)] p-6 text-white sm:flex-row sm:items-center sm:p-8">
-        <p className="max-w-md text-xl font-bold leading-snug sm:text-2xl">
-          {bn
-            ? "পরের ট্যুরের হিসাব এখনই শুরু করুন।"
-            : "Start the next trip's accounts now."}
-        </p>
-        <Link
-          href="/trips/new"
-          className="inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-white px-7 text-base font-bold text-[var(--color-primary)] transition-[filter,transform] hover:brightness-95 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto"
-        >
-          {t("createTrip")}
-        </Link>
+      {/* KEY FEATURES GRID */}
+      <section className="flex flex-col gap-6 pt-4">
+        <div className="text-center sm:text-left space-y-1">
+          <h2 className="text-2xl font-black tracking-tight text-[var(--color-fg)] sm:text-3xl">
+            {bn ? "প্রতিটি ট্রিপে যা পাবেন" : "What is included in every trip"}
+          </h2>
+          <p className="text-sm text-[var(--color-fg-muted)]">
+            {bn
+              ? "বাংলাদেশের ট্যুরের বাস্তব অভিজ্ঞতার আলোকে তৈরি বিশেষ সুবিধাসমূহ"
+              : "Built specifically for realistic travel dynamics in Bangladesh"}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {features.map((item) => (
+            <div
+              key={item.title}
+              className="flex flex-col items-start gap-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs transition-all hover:shadow-md hover:border-[var(--color-primary)]/30"
+            >
+              <span className="text-3xl">{item.icon}</span>
+              <h3 className="text-base font-bold text-[var(--color-fg)]">
+                {item.title}
+              </h3>
+              <p className="text-xs leading-relaxed text-[var(--color-fg-muted)]">
+                {item.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* BOTTOM CALL-TO-ACTION BANNER */}
+      <section className="flex flex-col items-start justify-between gap-6 rounded-3xl bg-gradient-to-br from-emerald-800 via-[var(--color-primary)] to-emerald-950 p-6 text-white shadow-lg sm:flex-row sm:items-center sm:p-8">
+        <div className="space-y-1.5 max-w-lg">
+          <h2 className="text-2xl font-black leading-snug sm:text-3xl">
+            {bn
+              ? "পরের ট্যুরের হিসাব এখনই শুরু করুন।"
+              : "Start the next trip's accounts now."}
+          </h2>
+          <p className="text-sm text-emerald-100/90 leading-relaxed">
+            {bn
+              ? "কোনো পাসওয়ার্ড বা সাইন-আপ লাগবে না। লিংক শেয়ার করলেই বন্ধুরা যুক্ত হয়ে যাবে।"
+              : "No passwords or signups. Share the link and your friends are in."}
+          </p>
+        </div>
+
+        <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row shrink-0">
+          <Link
+            href="/trips/new"
+            className="inline-flex min-h-[52px] items-center justify-center rounded-2xl bg-white px-7 text-base font-bold text-[var(--color-primary)] shadow-md transition-all hover:brightness-95 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            ➕ {t("createTrip")}
+          </Link>
+
+          <Link
+            href="/trips/join"
+            className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-white/30 bg-white/10 px-6 text-base font-bold text-white transition-all hover:bg-white/20 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            🔗 {t("joinTrip")}
+          </Link>
+        </div>
       </section>
     </div>
   );
