@@ -15,7 +15,7 @@ export default async function JoinTripByLinkPage({
   const tErr = await getTranslations("errors");
 
   return (
-    <section className="mx-auto max-w-xl space-y-5 py-4 w-full">
+    <section className="mx-auto max-w-xl lg:max-w-2xl space-y-5 py-4 w-full">
       <div>
         <Link
           href="/"

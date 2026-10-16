@@ -102,7 +102,7 @@ export default async function PublicTripSummaryPage({
       : String(summary.memberCount);
 
   return (
-    <section className="mx-auto max-w-xl space-y-5 py-4 w-full">
+    <section className="mx-auto max-w-[1208px] space-y-5 py-4 w-full">
       {/* Public Read-Only Banner */}
       <div className="flex items-center justify-between gap-2 rounded-2xl border border-[var(--color-primary)]/30 bg-[var(--color-primary-light)]/40 px-4 py-3 text-xs sm:text-sm font-bold text-[var(--color-primary)] shadow-2xs">
         <span className="flex items-center gap-1.5">
@@ -117,139 +117,147 @@ export default async function PublicTripSummaryPage({
         </Link>
       </div>
 
-      {/* Trip Overview Card */}
-      <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🌴</span>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
-            {summary.name}
-          </h1>
-        </div>
+      <div className="space-y-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0 lg:items-start">
+        {/* Left Column (Overview, Share Image, CTA) */}
+        <div className="space-y-5 lg:col-span-5">
+          {/* Trip Overview Card */}
+          <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🌴</span>
+              <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
+                {summary.name}
+              </h1>
+            </div>
 
-        {summary.destination ? (
-          <p className="text-base font-bold text-[var(--color-primary)] flex items-center gap-1.5">
-            <span>📍</span>
-            <span>{tTrip("destinationPrefix")} {summary.destination}</span>
-          </p>
-        ) : summary.topVotedDestination ? (
-          <p className="text-base font-bold text-[var(--color-primary)] flex items-center gap-1.5">
-            <span>🏆</span>
-            <span>{tPlan("topPickBadge")}: {summary.topVotedDestination}</span>
-          </p>
-        ) : null}
+            {summary.destination ? (
+              <p className="text-base font-bold text-[var(--color-primary)] flex items-center gap-1.5">
+                <span>📍</span>
+                <span>{tTrip("destinationPrefix")} {summary.destination}</span>
+              </p>
+            ) : summary.topVotedDestination ? (
+              <p className="text-base font-bold text-[var(--color-primary)] flex items-center gap-1.5">
+                <span>🏆</span>
+                <span>{tPlan("topPickBadge")}: {summary.topVotedDestination}</span>
+              </p>
+            ) : null}
 
-        {summary.dateRangeLabel ? (
-          <p className="text-sm font-medium text-[var(--color-fg-muted)] flex items-center gap-1.5">
-            <span>🗓️</span>
-            <span>{summary.dateRangeLabel}</span>
-          </p>
-        ) : null}
-      </div>
-
-      {/* Shareable Summary Image Preview & Download */}
-      <div className="space-y-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
-        <h2 className="text-base font-bold text-[var(--color-fg)] flex items-center gap-2">
-          <span>🖼️</span>
-          <span>{tShare("shareImageHeading")}</span>
-        </h2>
-        <Image
-          src={`/api/trips/${summary.slug}/share-image`}
-          alt={summary.name}
-          width={1200}
-          height={630}
-          unoptimized
-          className="h-auto w-full rounded-xl border border-[var(--color-border)] shadow-2xs"
-        />
-        <a
-          href={`/api/trips/${summary.slug}/share-image?download=1`}
-          className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
-        >
-          <span>📥</span>
-          <span>{tShare("downloadShareImageButton")}</span>
-        </a>
-      </div>
-
-      {/* Members List (No PIN or money details) */}
-      <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
-        <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
-          <span>👥</span>
-          <span>{tTrip("membersHeading")} ({memberCountLabel})</span>
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {summary.members.map((m) => (
-            <span
-              key={m.displayName}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm font-bold text-[var(--color-fg)] shadow-2xs"
-            >
-              <span>{m.emoji}</span>
-              <span>{m.displayName}</span>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Day-by-Day Itinerary */}
-      <div className="space-y-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
-        <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
-          <span>📅</span>
-          <span>{tPlan("itineraryTitle")}</span>
-        </h2>
-
-        {summary.itineraryDays.length === 0 ? (
-          <p className="rounded-xl bg-white border border-[var(--color-border)] px-4 py-3 text-center text-sm text-[var(--color-fg-muted)] shadow-2xs">
-            {tPlan("noItineraryYet")}
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {summary.itineraryDays.map((group) => (
-              <div
-                key={group.dayNumber}
-                className="space-y-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3.5"
-              >
-                <h3 className="border-b border-[var(--color-border)] pb-1.5 text-base font-bold text-[var(--color-primary)]">
-                  {group.label}
-                </h3>
-                <ol className="space-y-2">
-                  {group.items.map((item) => (
-                    <li
-                      key={item.id}
-                      className="rounded-xl border border-[var(--color-border)] bg-white p-3 shadow-2xs"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        {item.time ? (
-                          <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-0.5 font-mono text-xs font-semibold text-[var(--color-primary)]">
-                            🕘 {item.time}
-                          </span>
-                        ) : null}
-                        <span className="font-bold text-[var(--color-fg)]">
-                          {item.title}
-                        </span>
-                      </div>
-                      {item.notes ? (
-                        <p className="mt-1 text-xs text-[var(--color-fg-muted)]">
-                          {item.notes}
-                        </p>
-                      ) : null}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ))}
+            {summary.dateRangeLabel ? (
+              <p className="text-sm font-medium text-[var(--color-fg-muted)] flex items-center gap-1.5">
+                <span>🗓️</span>
+                <span>{summary.dateRangeLabel}</span>
+              </p>
+            ) : null}
           </div>
-        )}
-      </div>
 
-      {/* CTA to join / open full trip hub */}
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-center shadow-xs">
-        <p className="mb-3 text-xs sm:text-sm text-[var(--color-fg-muted)]">
-          {tShare("privacyNotice")}
-        </p>
-        <Link
-          href={`/trips/${summary.slug}`}
-          className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[var(--color-primary)] px-5 py-3 text-base font-bold text-white shadow-md hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
-        >
-          {tShare("openFullTripHub")}
-        </Link>
+          {/* Shareable Summary Image Preview & Download */}
+          <div className="space-y-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+            <h2 className="text-base font-bold text-[var(--color-fg)] flex items-center gap-2">
+              <span>🖼️</span>
+              <span>{tShare("shareImageHeading")}</span>
+            </h2>
+            <Image
+              src={`/api/trips/${summary.slug}/share-image`}
+              alt={summary.name}
+              width={1200}
+              height={630}
+              unoptimized
+              className="h-auto w-full rounded-xl border border-[var(--color-border)] shadow-2xs"
+            />
+            <a
+              href={`/api/trips/${summary.slug}/share-image?download=1`}
+              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
+            >
+              <span>📥</span>
+              <span>{tShare("downloadShareImageButton")}</span>
+            </a>
+          </div>
+
+          {/* CTA to join / open full trip hub */}
+          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-center shadow-xs">
+            <p className="mb-3 text-xs sm:text-sm text-[var(--color-fg-muted)]">
+              {tShare("privacyNotice")}
+            </p>
+            <Link
+              href={`/trips/${summary.slug}`}
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[var(--color-primary)] px-5 py-3 text-base font-bold text-white shadow-md hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
+            >
+              {tShare("openFullTripHub")}
+            </Link>
+          </div>
+        </div>
+
+        {/* Right Column (Members, Itinerary) */}
+        <div className="space-y-5 lg:col-span-7">
+          {/* Members List (No PIN or money details) */}
+          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+            <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
+              <span>👥</span>
+              <span>{tTrip("membersHeading")} ({memberCountLabel})</span>
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {summary.members.map((m) => (
+                <span
+                  key={m.displayName}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm font-bold text-[var(--color-fg)] shadow-2xs"
+                >
+                  <span>{m.emoji}</span>
+                  <span>{m.displayName}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Day-by-Day Itinerary */}
+          <div className="space-y-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+            <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
+              <span>📅</span>
+              <span>{tPlan("itineraryTitle")}</span>
+            </h2>
+
+            {summary.itineraryDays.length === 0 ? (
+              <p className="rounded-xl bg-white border border-[var(--color-border)] px-4 py-3 text-center text-sm text-[var(--color-fg-muted)] shadow-2xs">
+                {tPlan("noItineraryYet")}
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {summary.itineraryDays.map((group) => (
+                  <div
+                    key={group.dayNumber}
+                    className="space-y-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3.5"
+                  >
+                    <h3 className="border-b border-[var(--color-border)] pb-1.5 text-base font-bold text-[var(--color-primary)]">
+                      {group.label}
+                    </h3>
+                    <ol className="space-y-2">
+                      {group.items.map((item) => (
+                        <li
+                          key={item.id}
+                          className="rounded-xl border border-[var(--color-border)] bg-white p-3 shadow-2xs"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            {item.time ? (
+                              <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-0.5 font-mono text-xs font-semibold text-[var(--color-primary)]">
+                                🕘 {item.time}
+                              </span>
+                            ) : null}
+                            <span className="font-bold text-[var(--color-fg)]">
+                              {item.title}
+                            </span>
+                          </div>
+                          {item.notes ? (
+                            <p className="mt-1 text-xs text-[var(--color-fg-muted)]">
+                              {item.notes}
+                            </p>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );

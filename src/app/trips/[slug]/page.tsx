@@ -155,7 +155,7 @@ export default async function TripPage({
   // 1. If device has no active session for this trip, show the "Who are you?" screen
   if (!currentMember) {
     return (
-      <section className="space-y-6 py-4 max-w-xl mx-auto">
+      <section className="space-y-6 py-4 max-w-2xl mx-auto w-full">
         <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export default async function TripPage({
               </h3>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {reclaimableMembers.map((member) => {
                 const hasPin = Boolean(member.pinHash);
                 return (
@@ -316,7 +316,7 @@ export default async function TripPage({
                 <legend className="text-sm font-bold text-[var(--color-fg)]">
                   {tWho("emojiLabel")}
                 </legend>
-                <div className="grid grid-cols-6 gap-2 pt-1">
+                <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 pt-1">
                   {MEMBER_EMOJIS.map((emoji, index) => (
                     <label
                       key={emoji}
@@ -447,6 +447,7 @@ export default async function TripPage({
     settlements: settlementInputs,
   });
   const simplifiedDebts = simplifyDebts(balances);
+  const myBalance = balances.find((b) => b.memberId === currentMember.id);
 
   const dayGroups = groupExpensesByDhakaDay({
     expenses: expenseInputs,
@@ -560,14 +561,35 @@ export default async function TripPage({
           </form>
         </div>
 
-        {/* Quick summary stats bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2 border-t border-[var(--color-border)]">
+        {/* Quick summary stats bar (2 cols on mobile, 4 cols on tablet and desktop) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-[var(--color-border)]">
           <div className="rounded-xl bg-[var(--color-primary-light)]/40 p-3 border border-[var(--color-primary)]/15">
             <span className="text-xs font-semibold text-[var(--color-fg-muted)] block">
               {tMoney("totalTripSpend")}
             </span>
             <span className="text-xl sm:text-2xl font-black text-[var(--color-primary)]">
               {formatTaka(totalTripSpend, locale)}
+            </span>
+          </div>
+
+          <div className="rounded-xl bg-[var(--color-surface-muted)] p-3 border border-[var(--color-border)]">
+            <span className="text-xs font-semibold text-[var(--color-fg-muted)] block">
+              {locale === "bn" ? "আমার হিসাব" : "My Balance"}
+            </span>
+            <span
+              className={`text-lg sm:text-xl font-black ${
+                (myBalance?.netBalance ?? 0) > 0
+                  ? "text-[var(--color-primary)]"
+                  : (myBalance?.netBalance ?? 0) < 0
+                    ? "text-red-600"
+                    : "text-[var(--color-fg)]"
+              }`}
+            >
+              {(myBalance?.netBalance ?? 0) > 0
+                ? `+${formatTaka(myBalance!.netBalance, locale)}`
+                : (myBalance?.netBalance ?? 0) < 0
+                  ? formatTaka(myBalance!.netBalance, locale)
+                  : `৳${locale === "bn" ? "০" : "0"}`}
             </span>
           </div>
 
@@ -580,7 +602,7 @@ export default async function TripPage({
             </span>
           </div>
 
-          <div className="col-span-2 sm:col-span-1 rounded-xl bg-[var(--color-surface-muted)] p-3 border border-[var(--color-border)] flex flex-col justify-center">
+          <div className="rounded-xl bg-[var(--color-surface-muted)] p-3 border border-[var(--color-border)] flex flex-col justify-center">
             <span className="text-xs font-semibold text-[var(--color-fg-muted)] block">
               {tTrip("signedInAs")}
             </span>
@@ -596,116 +618,124 @@ export default async function TripPage({
         locale={locale}
         initialTab={editExpense ? "expenses" : "expenses"}
         expensesSlot={
-          <>
-            {/* Step 6: AI Expense Parser (Bangla + Banglish -> Confirm Card -> Save) */}
+          <div
+            className={
+              !isLocked
+                ? "space-y-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0 lg:items-start"
+                : "space-y-5"
+            }
+          >
             {!isLocked ? (
-              <AiExpenseParserCard
-                slug={trip.slug}
-                members={memberInputs}
-                defaultDateYyyyMmDd={defaultExpenseDate}
-                existingExpenses={existingExpenseSummaries}
-                labels={{
-                  cardTitle: tAi("cardTitle"),
-                  cardSubtitle: tAi("cardSubtitle"),
-                  inputPlaceholder: tAi("inputPlaceholder"),
-                  tryExamplesLabel: tAi("tryExamplesLabel"),
-                  parseButton: tAi("parseButton"),
-                  parsingButton: tAi("parsingButton"),
-                  confirmCardBadge: tAi("confirmCardBadge"),
-                  confirmCardNote: tAi("confirmCardNote"),
-                  rawInputLabel: tAi("rawInputLabel"),
-                  titleLabel: tMoney("titleLabel"),
-                  amountLabel: tMoney("amountLabel"),
-                  categoryLabel: tMoney("categoryLabel"),
-                  dateLabel: tMoney("dateLabel"),
-                  paidByLabel: tMoney("paidByLabel"),
-                  participantsLabel: tMoney("participantsLabel"),
-                  selectAll: tMoney("selectAll"),
-                  confirmSaveButton: tAi("confirmSaveButton"),
-                  discardDraftButton: tAi("discardDraftButton"),
-                  duplicateWarningTitle: tMoney("duplicateWarningTitle"),
-                  duplicateWarningBody: tMoney("duplicateWarningBody"),
-                  confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
-                  errMissingAmount: tAi("errMissingAmount"),
-                  errRateLimited: tAi("errRateLimited"),
-                  errGeneric: tAi("errGeneric"),
-                  categories: categoryLabels,
-                }}
-              />
-            ) : null}
-
-            {/* Step 3.1 + Step 4: Manual Expense Form with Live Duplicate-Entry Warning */}
-            {!isLocked ? (
-              <div id="expense-form">
-                <ExpenseFormCard
-                  key={editingExpenseData?.id ?? "new-expense"}
+              <div className="space-y-5 lg:col-span-5">
+                {/* Step 6: AI Expense Parser (Bangla + Banglish -> Confirm Card -> Save) */}
+                <AiExpenseParserCard
                   slug={trip.slug}
                   members={memberInputs}
-                  currentMemberId={currentMember.id}
                   defaultDateYyyyMmDd={defaultExpenseDate}
-                  editingExpense={editingExpenseData}
                   existingExpenses={existingExpenseSummaries}
-                  forceShowDuplicateConfirm={error === "duplicate_expense_warning"}
                   labels={{
-                    addExpenseTitle: tMoney("addExpenseTitle"),
-                    editExpenseTitle: tMoney("editExpenseTitle"),
-                    cancelEdit: tMoney("cancelEdit"),
+                    cardTitle: tAi("cardTitle"),
+                    cardSubtitle: tAi("cardSubtitle"),
+                    inputPlaceholder: tAi("inputPlaceholder"),
+                    tryExamplesLabel: tAi("tryExamplesLabel"),
+                    parseButton: tAi("parseButton"),
+                    parsingButton: tAi("parsingButton"),
+                    confirmCardBadge: tAi("confirmCardBadge"),
+                    confirmCardNote: tAi("confirmCardNote"),
+                    rawInputLabel: tAi("rawInputLabel"),
                     titleLabel: tMoney("titleLabel"),
-                    titlePlaceholder: tMoney("titlePlaceholder"),
                     amountLabel: tMoney("amountLabel"),
-                    amountPlaceholder: tMoney("amountPlaceholder"),
                     categoryLabel: tMoney("categoryLabel"),
                     dateLabel: tMoney("dateLabel"),
                     paidByLabel: tMoney("paidByLabel"),
-                    splitTypeLabel: tMoney("splitTypeLabel"),
-                    splitEqual: tMoney("splitEqual"),
-                    splitExact: tMoney("splitExact"),
-                    splitPercent: tMoney("splitPercent"),
                     participantsLabel: tMoney("participantsLabel"),
                     selectAll: tMoney("selectAll"),
-                    leftoverNote: tMoney("leftoverNote"),
-                    exactSumStatus: tMoney("exactSumStatus"),
-                    percentSumStatus: tMoney("percentSumStatus"),
-                    noteLabel: tMoney("noteLabel"),
-                    notePlaceholder: tMoney("notePlaceholder"),
-                    saveExpenseButton: tMoney("saveExpenseButton"),
-                    updateExpenseButton: tMoney("updateExpenseButton"),
+                    confirmSaveButton: tAi("confirmSaveButton"),
+                    discardDraftButton: tAi("discardDraftButton"),
                     duplicateWarningTitle: tMoney("duplicateWarningTitle"),
                     duplicateWarningBody: tMoney("duplicateWarningBody"),
                     confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
+                    errMissingAmount: tAi("errMissingAmount"),
+                    errRateLimited: tAi("errRateLimited"),
+                    errGeneric: tAi("errGeneric"),
                     categories: categoryLabels,
                   }}
                 />
+
+                {/* Step 3.1 + Step 4: Manual Expense Form with Live Duplicate-Entry Warning */}
+                <div id="expense-form">
+                  <ExpenseFormCard
+                    key={editingExpenseData?.id ?? "new-expense"}
+                    slug={trip.slug}
+                    members={memberInputs}
+                    currentMemberId={currentMember.id}
+                    defaultDateYyyyMmDd={defaultExpenseDate}
+                    editingExpense={editingExpenseData}
+                    existingExpenses={existingExpenseSummaries}
+                    forceShowDuplicateConfirm={error === "duplicate_expense_warning"}
+                    labels={{
+                      addExpenseTitle: tMoney("addExpenseTitle"),
+                      editExpenseTitle: tMoney("editExpenseTitle"),
+                      cancelEdit: tMoney("cancelEdit"),
+                      titleLabel: tMoney("titleLabel"),
+                      titlePlaceholder: tMoney("titlePlaceholder"),
+                      amountLabel: tMoney("amountLabel"),
+                      amountPlaceholder: tMoney("amountPlaceholder"),
+                      categoryLabel: tMoney("categoryLabel"),
+                      dateLabel: tMoney("dateLabel"),
+                      paidByLabel: tMoney("paidByLabel"),
+                      splitTypeLabel: tMoney("splitTypeLabel"),
+                      splitEqual: tMoney("splitEqual"),
+                      splitExact: tMoney("splitExact"),
+                      splitPercent: tMoney("splitPercent"),
+                      participantsLabel: tMoney("participantsLabel"),
+                      selectAll: tMoney("selectAll"),
+                      leftoverNote: tMoney("leftoverNote"),
+                      exactSumStatus: tMoney("exactSumStatus"),
+                      percentSumStatus: tMoney("percentSumStatus"),
+                      noteLabel: tMoney("noteLabel"),
+                      notePlaceholder: tMoney("notePlaceholder"),
+                      saveExpenseButton: tMoney("saveExpenseButton"),
+                      updateExpenseButton: tMoney("updateExpenseButton"),
+                      duplicateWarningTitle: tMoney("duplicateWarningTitle"),
+                      duplicateWarningBody: tMoney("duplicateWarningBody"),
+                      confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
+                      categories: categoryLabels,
+                    }}
+                  />
+                </div>
               </div>
             ) : null}
 
             {/* Step 3.3 + Step 4: Per-Day View with Edit History & Post-Settlement Flagging */}
-            <PerDayExpensesView
-              slug={trip.slug}
-              locale={locale}
-              isLocked={isLocked}
-              members={memberInputs}
-              dayGroups={dayGroups}
-              settlements={settlementInputs}
-              activityLogs={activityLogInputs}
-              labels={{
-                perDayTitle: tMoney("perDayTitle"),
-                noExpensesYet: tMoney("noExpensesYet"),
-                dayTotalLabel: tMoney("dayTotalLabel"),
-                perPersonDayCostLabel: tMoney("perPersonDayCostLabel"),
-                paidByPrefix: tMoney("paidByPrefix"),
-                editedAfterSettlementBadge: tMoney("editedAfterSettlementBadge"),
-                editHistoryToggle: tMoney("editHistoryToggle"),
-                editedByPrefix: tMoney("editedByPrefix"),
-                editButton: tMoney("editButton"),
-                deleteButton: tMoney("deleteButton"),
-                categories: categoryLabels,
-              }}
-            />
-          </>
+            <div className={!isLocked ? "space-y-5 lg:col-span-7" : "space-y-5"}>
+              <PerDayExpensesView
+                slug={trip.slug}
+                locale={locale}
+                isLocked={isLocked}
+                members={memberInputs}
+                dayGroups={dayGroups}
+                settlements={settlementInputs}
+                activityLogs={activityLogInputs}
+                labels={{
+                  perDayTitle: tMoney("perDayTitle"),
+                  noExpensesYet: tMoney("noExpensesYet"),
+                  dayTotalLabel: tMoney("dayTotalLabel"),
+                  perPersonDayCostLabel: tMoney("perPersonDayCostLabel"),
+                  paidByPrefix: tMoney("paidByPrefix"),
+                  editedAfterSettlementBadge: tMoney("editedAfterSettlementBadge"),
+                  editHistoryToggle: tMoney("editHistoryToggle"),
+                  editedByPrefix: tMoney("editedByPrefix"),
+                  editButton: tMoney("editButton"),
+                  deleteButton: tMoney("deleteButton"),
+                  categories: categoryLabels,
+                }}
+              />
+            </div>
+          </div>
         }
         balancesSlot={
-          <>
+          <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 lg:items-start">
             {/* Step 3.2: Balances Computed on Read & Simplified Debts */}
             <BalancesCard
               locale={locale}
@@ -750,275 +780,283 @@ export default async function TripPage({
                 deleteButton: tMoney("deleteButton"),
               }}
             />
-          </>
+          </div>
         }
         planSlot={
-          <>
+          <div className="space-y-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0 lg:items-start">
             {/* Step 5.1: Destination Voting (1 vote per member) */}
-            <DestinationVotingCard
-              slug={trip.slug}
-              locale={locale}
-              isLocked={isLocked}
-              isCreator={isCreator}
-              currentTripDestination={trip.destination}
-              options={voteSummary.options}
-              labels={{
-                votingTitle: tPlan("votingTitle"),
-                votingSubtitle: tPlan("votingSubtitle"),
-                noOptionsYet: tPlan("noOptionsYet"),
-                optionPlaceholder: tPlan("optionPlaceholder"),
-                addOptionButton: tPlan("addOptionButton"),
-                voteButton: tPlan("voteButton"),
-                votedBadge: tPlan("votedBadge"),
-                topPickBadge: tPlan("topPickBadge"),
-                proposedByPrefix: tPlan("proposedByPrefix"),
-                votesCountSuffix: tPlan("votesCountSuffix"),
-                setAsDestinationButton: tPlan("setAsDestinationButton"),
-              }}
-            />
-
-            {/* Step 5.2: Day-by-Day Itinerary */}
-            <ItineraryCard
-              slug={trip.slug}
-              isLocked={isLocked}
-              dayGroups={itineraryDayGroups}
-              labels={{
-                itineraryTitle: tPlan("itineraryTitle"),
-                itinerarySubtitle: tPlan("itinerarySubtitle"),
-                noItineraryYet: tPlan("noItineraryYet"),
-                dayNumberLabel: tPlan("dayNumberLabel"),
-                timeLabel: tPlan("timeLabel"),
-                timePlaceholder: tPlan("timePlaceholder"),
-                activityTitleLabel: tPlan("activityTitleLabel"),
-                activityTitlePlaceholder: tPlan("activityTitlePlaceholder"),
-                activityNotesLabel: tPlan("activityNotesLabel"),
-                activityNotesPlaceholder: tPlan("activityNotesPlaceholder"),
-                addItineraryButton: tPlan("addItineraryButton"),
-                moveUp: tPlan("moveUp"),
-                moveDown: tPlan("moveDown"),
-                deleteItem: tPlan("deleteItem"),
-              }}
-            />
-          </>
-        }
-        membersSlot={
-          <>
-            {/* Shareable invite link card */}
-            <ShareLinkCard
-              slug={trip.slug}
-              tripName={trip.name}
-              shareTitle={tTrip("shareTitle")}
-              shareSubtitle={tTrip("shareSubtitle")}
-              copyLabel={tTrip("copyLink")}
-              copiedLabel={tTrip("copied")}
-              shareNativeLabel={tTrip("shareNative")}
-            />
-
-            {/* Members list */}
-            <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-[var(--color-fg)]">
-                  {tTrip("membersHeading")} ({memberCountLabel})
-                </h2>
-              </div>
-
-              <ul className="divide-y divide-[var(--color-border)]">
-                {trip.members.map((member) => (
-                  <li
-                    key={member.id}
-                    className="flex items-center justify-between gap-2 py-3"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface-muted)] text-xl">
-                        {member.emoji ?? "🎒"}
-                      </span>
-                      <span className="font-bold text-[var(--color-fg)]">
-                        {member.displayName}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {member.id === trip.creatorMemberId ? (
-                        <span className="rounded-md bg-[var(--color-primary-light)] px-2 py-0.5 text-xs font-bold text-[var(--color-primary)]">
-                          {tTrip("creatorBadge")}
-                        </span>
-                      ) : null}
-                      {member.isGuest ? (
-                        <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                          {tTrip("guestBadge")}
-                        </span>
-                      ) : null}
-                      {member.pinHash ? (
-                        <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-0.5 text-xs font-medium text-[var(--color-fg-muted)]">
-                          🔒 {tTrip("pinSetBadge")}
-                        </span>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+            <div className="space-y-5 lg:col-span-5">
+              <DestinationVotingCard
+                slug={trip.slug}
+                locale={locale}
+                isLocked={isLocked}
+                isCreator={isCreator}
+                currentTripDestination={trip.destination}
+                options={voteSummary.options}
+                labels={{
+                  votingTitle: tPlan("votingTitle"),
+                  votingSubtitle: tPlan("votingSubtitle"),
+                  noOptionsYet: tPlan("noOptionsYet"),
+                  optionPlaceholder: tPlan("optionPlaceholder"),
+                  addOptionButton: tPlan("addOptionButton"),
+                  voteButton: tPlan("voteButton"),
+                  votedBadge: tPlan("votedBadge"),
+                  topPickBadge: tPlan("topPickBadge"),
+                  proposedByPrefix: tPlan("proposedByPrefix"),
+                  votesCountSuffix: tPlan("votesCountSuffix"),
+                  setAsDestinationButton: tPlan("setAsDestinationButton"),
+                }}
+              />
             </div>
 
-            {/* Creator Controls (visible only to trip creator) */}
-            {isCreator ? (
-              <div className="space-y-5 rounded-2xl border-2 border-[var(--color-primary)]/30 bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
-                <h2 className="text-lg font-bold text-[var(--color-primary)] flex items-center gap-2">
-                  <span>👑</span>
-                  <span>{tTrip("creatorControlsTitle")}</span>
-                </h2>
+            {/* Step 5.2: Day-by-Day Itinerary */}
+            <div className="space-y-5 lg:col-span-7">
+              <ItineraryCard
+                slug={trip.slug}
+                isLocked={isLocked}
+                dayGroups={itineraryDayGroups}
+                labels={{
+                  itineraryTitle: tPlan("itineraryTitle"),
+                  itinerarySubtitle: tPlan("itinerarySubtitle"),
+                  noItineraryYet: tPlan("noItineraryYet"),
+                  dayNumberLabel: tPlan("dayNumberLabel"),
+                  timeLabel: tPlan("timeLabel"),
+                  timePlaceholder: tPlan("timePlaceholder"),
+                  activityTitleLabel: tPlan("activityTitleLabel"),
+                  activityTitlePlaceholder: tPlan("activityTitlePlaceholder"),
+                  activityNotesLabel: tPlan("activityNotesLabel"),
+                  activityNotesPlaceholder: tPlan("activityNotesPlaceholder"),
+                  addItineraryButton: tPlan("addItineraryButton"),
+                  moveUp: tPlan("moveUp"),
+                  moveDown: tPlan("moveDown"),
+                  deleteItem: tPlan("deleteItem"),
+                }}
+              />
+            </div>
+          </div>
+        }
+        membersSlot={
+          <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 lg:items-start">
+            <div className="space-y-5">
+              {/* Shareable invite link card */}
+              <ShareLinkCard
+                slug={trip.slug}
+                tripName={trip.name}
+                shareTitle={tTrip("shareTitle")}
+                shareSubtitle={tTrip("shareSubtitle")}
+                copyLabel={tTrip("copyLink")}
+                copiedLabel={tTrip("copied")}
+                shareNativeLabel={tTrip("shareNative")}
+              />
 
-                {/* Add Guest Form */}
-                {!isLocked ? (
-                  <form action={addGuestMemberAction} className="space-y-2.5">
-                    <input type="hidden" name="slug" value={trip.slug} />
-                    <label
-                      htmlFor="guestDisplayName"
-                      className="block text-sm font-bold text-[var(--color-fg)]"
+              {/* Members list */}
+              <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-[var(--color-fg)]">
+                    {tTrip("membersHeading")} ({memberCountLabel})
+                  </h2>
+                </div>
+
+                <ul className="divide-y divide-[var(--color-border)]">
+                  {trip.members.map((member) => (
+                    <li
+                      key={member.id}
+                      className="flex items-center justify-between gap-2 py-3"
                     >
-                      {tTrip("addGuestTitle")}{" "}
-                      <span className="text-red-500 font-bold">*</span>
-                    </label>
-                    <div className="flex gap-2">
-                      <select
-                        name="emoji"
-                        aria-label="Guest emoji"
-                        defaultValue="👤"
-                        className="min-h-[44px] rounded-xl border border-[var(--color-border)] bg-white px-2.5 text-lg"
-                      >
-                        <option value="👤">👤</option>
-                        {MEMBER_EMOJIS.map((emoji) => (
-                          <option key={emoji} value={emoji}>
-                            {emoji}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        id="guestDisplayName"
-                        name="displayName"
-                        type="text"
-                        required
-                        maxLength={40}
-                        placeholder={tTrip("guestNamePlaceholder")}
-                        className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                      />
-                      <button
-                        type="submit"
-                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
-                      >
-                        {tTrip("addGuestButton")}
-                      </button>
-                    </div>
-                  </form>
-                ) : null}
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface-muted)] text-xl">
+                          {member.emoji ?? "🎒"}
+                        </span>
+                        <span className="font-bold text-[var(--color-fg)]">
+                          {member.displayName}
+                        </span>
+                      </div>
 
-                {/* Rename / Update Emoji per Member */}
-                {!isLocked ? (
-                  <div className="space-y-2.5 border-t border-[var(--color-border)] pt-4">
-                    <h3 className="text-sm font-bold text-[var(--color-fg)]">
-                      {tTrip("renameTitle")}
-                    </h3>
-                    <div className="space-y-2">
-                      {trip.members.map((member) => (
-                        <form
-                          key={member.id}
-                          action={renameMemberAction}
-                          className="flex items-center gap-2"
-                        >
-                          <input type="hidden" name="slug" value={trip.slug} />
-                          <input type="hidden" name="memberId" value={member.id} />
-                          <select
-                            name="emoji"
-                            aria-label={`Emoji for ${member.displayName}`}
-                            defaultValue={member.emoji ?? "🎒"}
-                            className="min-h-[44px] rounded-xl border border-[var(--color-border)] bg-white px-2.5 text-lg"
-                          >
-                            <option value="👤">👤</option>
-                            {MEMBER_EMOJIS.map((emoji) => (
-                              <option key={emoji} value={emoji}>
-                                {emoji}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            name="displayName"
-                            type="text"
-                            required
-                            maxLength={40}
-                            defaultValue={member.displayName}
-                            className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
-                          />
-                          <button
-                            type="submit"
-                            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3.5 py-2 text-xs font-bold text-[var(--color-fg)] hover:bg-[var(--color-border)] transition-colors"
-                          >
-                            {tTrip("renameSaveButton")}
-                          </button>
-                        </form>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* Lock / Unlock Trip Toggle */}
-                <form
-                  action={toggleTripLockAction}
-                  className="space-y-2.5 border-t border-[var(--color-border)] pt-4"
-                >
-                  <input type="hidden" name="slug" value={trip.slug} />
-                  <p className="text-xs text-[var(--color-fg-muted)]">
-                    {tTrip("lockTripHint")}
-                  </p>
-                  <Button type="submit" variant={isLocked ? "primary" : "secondary"}>
-                    {isLocked ? tTrip("unlockTripButton") : tTrip("lockTripButton")}
-                  </Button>
-                </form>
+                      <div className="flex items-center gap-1.5">
+                        {member.id === trip.creatorMemberId ? (
+                          <span className="rounded-md bg-[var(--color-primary-light)] px-2 py-0.5 text-xs font-bold text-[var(--color-primary)]">
+                            {tTrip("creatorBadge")}
+                          </span>
+                        ) : null}
+                        {member.isGuest ? (
+                          <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                            {tTrip("guestBadge")}
+                          </span>
+                        ) : null}
+                        {member.pinHash ? (
+                          <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-0.5 text-xs font-medium text-[var(--color-fg-muted)]">
+                            🔒 {tTrip("pinSetBadge")}
+                          </span>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ) : null}
 
-            {/* Step 4: Activity Log & Dispute-Protection Audit Trail */}
-            <ActivityLogCard
-              locale={locale}
-              members={memberInputs}
-              activityLogs={activityLogInputs}
-              labels={{
-                activityLogTitle: tMoney("activityLogTitle"),
-                activityLogSubtitle: tMoney("activityLogSubtitle"),
-                noActivityYet: tMoney("noActivityYet"),
-                act_expense_create: tMoney("act_expense_create"),
-                act_expense_update: tMoney("act_expense_update"),
-                act_expense_delete: tMoney("act_expense_delete"),
-                act_settlement_create: tMoney("act_settlement_create"),
-                act_settlement_delete: tMoney("act_settlement_delete"),
-                act_member_join: tMoney("act_member_join"),
-                act_member_create_guest: tMoney("act_member_create_guest"),
-                act_member_update: tMoney("act_member_update"),
-                act_trip_create: tMoney("act_trip_create"),
-                act_trip_lock: tMoney("act_trip_lock"),
-                act_trip_unlock: tMoney("act_trip_unlock"),
-              }}
-            />
+              {/* Creator Controls (visible only to trip creator) */}
+              {isCreator ? (
+                <div className="space-y-5 rounded-2xl border-2 border-[var(--color-primary)]/30 bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+                  <h2 className="text-lg font-bold text-[var(--color-primary)] flex items-center gap-2">
+                    <span>👑</span>
+                    <span>{tTrip("creatorControlsTitle")}</span>
+                  </h2>
 
-            {/* Step 7: Share Card, Public Read-Only Summary & Downloadable Daily Cost Sheet */}
-            <ShareAndExportCard
-              slug={trip.slug}
-              tripName={trip.name}
-              labels={{
-                cardTitle: tShare("cardTitle"),
-                cardSubtitle: tShare("cardSubtitle"),
-                publicSummaryTitle: tShare("publicSummaryTitle"),
-                publicSummaryHint: tShare("publicSummaryHint"),
-                openPublicSummaryButton: tShare("openPublicSummaryButton"),
-                copyPublicLinkButton: tShare("copyPublicLinkButton"),
-                copiedPublicLink: tShare("copiedPublicLink"),
-                shareImageHeading: tShare("shareImageHeading"),
-                downloadShareImageButton: tShare("downloadShareImageButton"),
-                costSheetTitle: tShare("costSheetTitle"),
-                costSheetHint: tShare("costSheetHint"),
-                downloadCsvButton: tShare("downloadCsvButton"),
-                openPrintableSheetButton: tShare("openPrintableSheetButton"),
-              }}
-            />
-          </>
+                  {/* Add Guest Form */}
+                  {!isLocked ? (
+                    <form action={addGuestMemberAction} className="space-y-2.5">
+                      <input type="hidden" name="slug" value={trip.slug} />
+                      <label
+                        htmlFor="guestDisplayName"
+                        className="block text-sm font-bold text-[var(--color-fg)]"
+                      >
+                        {tTrip("addGuestTitle")}{" "}
+                        <span className="text-red-500 font-bold">*</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          name="emoji"
+                          aria-label="Guest emoji"
+                          defaultValue="👤"
+                          className="min-h-[44px] rounded-xl border border-[var(--color-border)] bg-white px-2.5 text-lg"
+                        >
+                          <option value="👤">👤</option>
+                          {MEMBER_EMOJIS.map((emoji) => (
+                            <option key={emoji} value={emoji}>
+                              {emoji}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          id="guestDisplayName"
+                          name="displayName"
+                          type="text"
+                          required
+                          maxLength={40}
+                          placeholder={tTrip("guestNamePlaceholder")}
+                          className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                        />
+                        <button
+                          type="submit"
+                          className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
+                        >
+                          {tTrip("addGuestButton")}
+                        </button>
+                      </div>
+                    </form>
+                  ) : null}
+
+                  {/* Rename / Update Emoji per Member */}
+                  {!isLocked ? (
+                    <div className="space-y-2.5 border-t border-[var(--color-border)] pt-4">
+                      <h3 className="text-sm font-bold text-[var(--color-fg)]">
+                        {tTrip("renameTitle")}
+                      </h3>
+                      <div className="space-y-2">
+                        {trip.members.map((member) => (
+                          <form
+                            key={member.id}
+                            action={renameMemberAction}
+                            className="flex items-center gap-2"
+                          >
+                            <input type="hidden" name="slug" value={trip.slug} />
+                            <input type="hidden" name="memberId" value={member.id} />
+                            <select
+                              name="emoji"
+                              aria-label={`Emoji for ${member.displayName}`}
+                              defaultValue={member.emoji ?? "🎒"}
+                              className="min-h-[44px] rounded-xl border border-[var(--color-border)] bg-white px-2.5 text-lg"
+                            >
+                              <option value="👤">👤</option>
+                              {MEMBER_EMOJIS.map((emoji) => (
+                                <option key={emoji} value={emoji}>
+                                  {emoji}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              name="displayName"
+                              type="text"
+                              required
+                              maxLength={40}
+                              defaultValue={member.displayName}
+                              className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
+                            />
+                            <button
+                              type="submit"
+                              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3.5 py-2 text-xs font-bold text-[var(--color-fg)] hover:bg-[var(--color-border)] transition-colors"
+                            >
+                              {tTrip("renameSaveButton")}
+                            </button>
+                          </form>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Lock / Unlock Trip Toggle */}
+                  <form
+                    action={toggleTripLockAction}
+                    className="space-y-2.5 border-t border-[var(--color-border)] pt-4"
+                  >
+                    <input type="hidden" name="slug" value={trip.slug} />
+                    <p className="text-xs text-[var(--color-fg-muted)]">
+                      {tTrip("lockTripHint")}
+                    </p>
+                    <Button type="submit" variant={isLocked ? "primary" : "secondary"}>
+                      {isLocked ? tTrip("unlockTripButton") : tTrip("lockTripButton")}
+                    </Button>
+                  </form>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="space-y-5">
+              {/* Step 7: Share Card, Public Read-Only Summary & Downloadable Daily Cost Sheet */}
+              <ShareAndExportCard
+                slug={trip.slug}
+                tripName={trip.name}
+                labels={{
+                  cardTitle: tShare("cardTitle"),
+                  cardSubtitle: tShare("cardSubtitle"),
+                  publicSummaryTitle: tShare("publicSummaryTitle"),
+                  publicSummaryHint: tShare("publicSummaryHint"),
+                  openPublicSummaryButton: tShare("openPublicSummaryButton"),
+                  copyPublicLinkButton: tShare("copyPublicLinkButton"),
+                  copiedPublicLink: tShare("copiedPublicLink"),
+                  shareImageHeading: tShare("shareImageHeading"),
+                  downloadShareImageButton: tShare("downloadShareImageButton"),
+                  costSheetTitle: tShare("costSheetTitle"),
+                  costSheetHint: tShare("costSheetHint"),
+                  downloadCsvButton: tShare("downloadCsvButton"),
+                  openPrintableSheetButton: tShare("openPrintableSheetButton"),
+                }}
+              />
+
+              {/* Step 4: Activity Log & Dispute-Protection Audit Trail */}
+              <ActivityLogCard
+                locale={locale}
+                members={memberInputs}
+                activityLogs={activityLogInputs}
+                labels={{
+                  activityLogTitle: tMoney("activityLogTitle"),
+                  activityLogSubtitle: tMoney("activityLogSubtitle"),
+                  noActivityYet: tMoney("noActivityYet"),
+                  act_expense_create: tMoney("act_expense_create"),
+                  act_expense_update: tMoney("act_expense_update"),
+                  act_expense_delete: tMoney("act_expense_delete"),
+                  act_settlement_create: tMoney("act_settlement_create"),
+                  act_settlement_delete: tMoney("act_settlement_delete"),
+                  act_member_join: tMoney("act_member_join"),
+                  act_member_create_guest: tMoney("act_member_create_guest"),
+                  act_member_update: tMoney("act_member_update"),
+                  act_trip_create: tMoney("act_trip_create"),
+                  act_trip_lock: tMoney("act_trip_lock"),
+                  act_trip_unlock: tMoney("act_trip_unlock"),
+                }}
+              />
+            </div>
+          </div>
         }
       />
     </section>
