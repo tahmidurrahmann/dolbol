@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
   return {
-    title: t("name"),
+    title: { default: t("name"), template: `%s | ${t("name")}` },
     description: t("tagline"),
   };
 }
@@ -43,6 +43,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
   const locale = await getLocale();
   const messages = await getMessages();
   const t = await getTranslations("app");
+  const bn = locale === "bn";
 
   return (
     <html
@@ -51,16 +52,24 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     >
       <body
         suppressHydrationWarning
-        className="flex min-h-dvh flex-col bg-[var(--color-bg)] text-base text-[var(--color-fg)]"
+        className="flex min-h-dvh flex-col bg-[var(--color-bg)] text-base text-[var(--color-fg)] antialiased"
       >
+        {/* Lets keyboard users skip the header */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-[var(--color-primary)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+        >
+          {bn ? "মূল অংশে যান" : "Skip to content"}
+        </a>
+
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Header />
-          <main className="flex flex-1 flex-col py-6">
+          <main id="main" className="flex flex-1 flex-col py-4 sm:py-6">
             <Container className="flex flex-1 flex-col">{children}</Container>
           </main>
-          <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)] py-4">
+          <footer className="border-t border-[var(--color-border)] py-5">
             <Container>
-              <p className="text-center text-base text-[var(--color-fg-muted)]">
+              <p className="text-center text-sm text-[var(--color-fg-muted)]">
                 {t("footer")}
               </p>
             </Container>

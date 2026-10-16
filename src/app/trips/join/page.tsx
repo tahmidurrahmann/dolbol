@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
-import { lookupTripByLinkAction } from "@/app/trips/actions";
-import { Button } from "@/components/Button";
+import { getLocale, getTranslations } from "next-intl/server";
+import { JoinTripForm } from "@/components/JoinTripForm";
+import type { SupportedLocale } from "@/lib/format";
 
 interface JoinTripByLinkPageProps {
   searchParams: Promise<{ error?: string }>;
@@ -11,6 +11,7 @@ export default async function JoinTripByLinkPage({
   searchParams,
 }: JoinTripByLinkPageProps) {
   const { error } = await searchParams;
+  const locale = (await getLocale()) as SupportedLocale;
   const t = await getTranslations("joinByLink");
   const tErr = await getTranslations("errors");
 
@@ -44,36 +45,14 @@ export default async function JoinTripByLinkPage({
         </div>
       ) : null}
 
-      <form
-        action={lookupTripByLinkAction}
-        className="space-y-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs sm:p-6"
-      >
-        <div className="space-y-1.5">
-          <label
-            htmlFor="tripLinkOrSlug"
-            className="block text-sm font-semibold text-[var(--color-fg)]"
-          >
-            {t("inputLabel")}
-          </label>
-
-          <input
-            id="tripLinkOrSlug"
-            name="tripLinkOrSlug"
-            type="text"
-            required
-            placeholder={t("inputPlaceholder")}
-            className="min-h-[46px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] shadow-xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-          />
-        </div>
-
-        <Button
-          type="submit"
-          variant="primary"
-          className="w-full min-h-[48px] rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all"
-        >
-          🔍 {t("submitButton")}
-        </Button>
-      </form>
+      <JoinTripForm
+        locale={locale}
+        labels={{
+          inputLabel: t("inputLabel"),
+          inputPlaceholder: t("inputPlaceholder"),
+          submitButton: t("submitButton"),
+        }}
+      />
     </section>
   );
 }
