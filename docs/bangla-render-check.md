@@ -1,0 +1,21 @@
+# Bangla Rendering Visual Inspection Checklist
+
+Use this checklist while running `pnpm dev` and opening:
+1. **Browser HTML Page**: `http://localhost:3000/dev/render-test` (Section 1: Browser HTML Render)
+2. **OG Image Endpoint**: `http://localhost:3000/api/dev/render-image` (or Section 2 on `/dev/render-test`)
+
+## Context: Known Library Limits vs. Inspected Output
+- **Library Architecture**: `next/og` (`ImageResponse`) uses Vercel's Satori layout engine with `opentype.js` rather than a full OpenType Indic text shaper like HarfBuzz. Complex Indic scripts (including Bengali/Bangla) require OpenType `GSUB`/`GPOS` feature tables (`rphf`, `blwf`, `half`, `pstf`, and pre-base vowel matra reordering) to form consonant conjuncts (`যুক্তাক্ষর`).
+- **Live Output Finding**: As verified by inspecting the generated PNG from `/api/dev/render-image`, Satori does not execute OpenType Indic shaping. Consonant ligatures fail to join and instead display explicit hasanta/virama (`্`) marks, while pre-base vowel matras (`ি`) do not reorder to the left of consonant clusters.
+
+## Per-Word Visual Inspection Guide
+
+| Test Word / Token | Conjunct / Feature Under Test | What CORRECT Rendering Looks Like | What BROKEN Rendering Looks Like | `/dev/render-test` (HTML) | `/api/dev/render-image` (PNG) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **সুন্দরবন** | `ন্দ` (`ন + ্ + দ`) | `ন` and `দ` fuse into a single vertical/ligated `ন্দ` conjunct glyph with `ু` (u-kar) attached smoothly beneath `স`. | `ন` and `দ` appear side-by-side as separate letters with a visible diagonal hasanta (`্`) stroke under `ন` (`সুন্দ্‌রবন`). | **PASS** | **FAIL** (broken into `সুন্দ্‌রবন`) |
+| **ভ্রমণ** | `ভ্র` (`ভ + ্ + র`, ra-phala) | `ভ` carries the curved bottom ra-phala (`্র`) stroke smoothly integrated beneath the base consonant `ভ`. | `ভ` is followed by a literal hasanta (`্`) and a separate full `র` letter (`ভ্‌রমণ`). | **PASS** | **FAIL** (broken into `ভ্‌রমণ`) |
+| **মোট** | `ো` (o-kar composed of `ে` + `া`) | Proper rounded o-kar attached to `ম` forming `মোট`. | Decomposed into separated e-kar and a-kar with stray dot marker (`ম ে া ট`). | **PASS** | **FAIL** (split o-kar) |
+| **কক্সবাজার** | `ক্স` (`ক + ্ + স`) | `ক` and `স` join into the compact `ক্স` ligature before `বা`. | `ক` and `স` remain unjoined with a visible hasanta mark (`কক্্সবাজার`). | **PASS** | **FAIL** (broken into `কক্্সবাজার`) |
+| **শ্রীমঙ্গল** | `শ্র` (`শ + ্ + র + ী`) and `ঙ্গ` (`ঙ + ্ + গ`) | `শ্র` forms the distinctive ligated sh-ra glyph with `ী` arching over the right, and `ঙ` + `গ` fuse into the stacked `ঙ্গ` conjunct. | `শ`, `্`, `র` split apart (`শ্‌রী`) and `ঙ` + `গ` split into `ঙ্‌গ` with visible hasanta marks. | **PASS** | **FAIL** (broken into `শ্‌রীমঙ্‌গল`) |
+| **দ্বিতীয় দিন** | `দ্বি` (`দ + ্ + ব + ি`) and `দিন` (`দ + ি + ন`) | `দ` and `ব` join into `দ্ব`, and `ি` reorders to appear on the left of `দ্ব`; in `দিন`, `ি` precedes `দ`. | `দ` and `ব` fail to join (`দ্্ব`), and `ি` renders on the wrong side (e.g. `দনি` instead of `দিন`). | **PASS** | **FAIL** (broken into `দ্্বিতীয় দনি`) |
+| **৳১২,৫০০** | Bangla currency symbol (`৳`) and digits (`১`, `২`, `৫`, `০`) | The Taka sign `৳` and all Bangla digits (`১২,৫০০`) render as crisp Bengali numerals with a comma after `১২`. | Missing glyph boxes (`□`), question marks, or unformatted ASCII digits. | **PASS** | **PASS** (digits render) |

@@ -1,0 +1,15 @@
+{
+  "app": {
+    "name": "Trip Hub",
+    "tagline": "Plan group trips and split expenses with friends effortlessly",
+    "createTrip": "Create a trip",
+    "joinTrip": "Join a trip",
+    "comingSoon": "Coming soon",
+    "footer": "Built for friend groups in Bangladesh • All amounts in whole BDT (৳)"
+  },
+  "header": {
+    "languageLabelBn": "বাংলা",
+    "languageLabelEn": "English",
+    "switchLanguageAria": "Switch language"
+  }
+}

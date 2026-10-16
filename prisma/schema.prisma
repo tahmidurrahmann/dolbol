@@ -1,0 +1,215 @@
+// Group Trip Hub - Phase 1
+// Money is stored as whole taka (Int). Balances are computed on read, never stored.
+// Money-related rows are soft-deleted (deletedAt), never hard-deleted.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENT
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  HOTEL
+  FOOD
+  TICKET
+  OTHER
+}
+
+model Trip {
+  id              String    @id @default(uuid())
+  slug            String    @unique // long random string used in the public link
+  name            String
+  destination     String?
+  startDate       DateTime?
+  endDate         DateTime?
+  creatorMemberId String?
+  lockedAt        DateTime?
+  createdAt       DateTime  @default(now())
+
+  creator      Member?             @relation("TripCreator", fields: [creatorMemberId], references: [id], onDelete: SetNull)
+  members      Member[]            @relation("TripMembers")
+  expenses     Expense[]
+  settlements  Settlement[]
+  activityLogs ActivityLog[]
+  itinerary    ItineraryItem[]
+  options      DestinationOption[]
+  votes        Vote[]
+}
+
+model Member {
+  id          String   @id @default(uuid())
+  tripId      String
+  displayName String
+  nameKey     String // lowercased, trimmed displayName for uniqueness checks
+  emoji       String? // emoji or color to tell same-named people apart
+  isGuest     Boolean  @default(false) // added by creator, never joins the app
+  pinHash     String? // optional, asked only when claiming from a new device
+  userId      String? // reserved for optional accounts later
+  createdAt   DateTime @default(now())
+
+  trip Trip @relation("TripMembers", fields: [tripId], references: [id], onDelete: Restrict)
+
+  sessions        MemberSession[]
+  createdTrips    Trip[]              @relation("TripCreator")
+  paidExpenses    Expense[]           @relation("ExpensePaidBy")
+  createdExpenses Expense[]           @relation("ExpenseCreatedBy")
+  shares          ExpenseShare[]
+  settlementsFrom Settlement[]        @relation("SettlementFrom")
+  settlementsTo   Settlement[]        @relation("SettlementTo")
+  settlementsMade Settlement[]        @relation("SettlementCreatedBy")
+  activityLogs    ActivityLog[]
+  itineraryItems  ItineraryItem[]
+  proposedOptions DestinationOption[]
+  votes           Vote[]
+
+  @@unique([tripId, nameKey])
+  @@index([tripId])
+}
+
+// One row per device, so a member can be signed in on several devices
+model MemberSession {
+  id         String   @id @default(uuid())
+  memberId   String
+  tokenHash  String   @unique // never store the raw token
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  tripId      String
+  title       String
+  amount      Int // whole taka
+  category    ExpenseCategory @default(OTHER)
+  expenseDate DateTime        @default(now())
+  paidById    String
+  createdById String
+  splitType   SplitType       @default(EQUAL)
+  note        String?
+  rawInput    String? // original Bangla/Banglish text typed by the user
+  // Phase 2 data (optional for now)
+  routeFrom   String?
+  routeTo     String?
+  placeName   String?
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  trip      Trip           @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  paidBy    Member         @relation("ExpensePaidBy", fields: [paidById], references: [id], onDelete: Restrict)
+  createdBy Member         @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  shares    ExpenseShare[]
+
+  @@index([tripId, deletedAt])
+  @@index([category, routeFrom, routeTo])
+}
+
+// Who owes what on each expense (amount already computed, rounding leftover goes to the payer)
+model ExpenseShare {
+  id        String @id @default(uuid())
+  expenseId String
+  memberId  String
+  amount    Int // whole taka
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Restrict)
+  member  Member  @relation(fields: [memberId], references: [id], onDelete: Restrict)
+
+  @@unique([expenseId, memberId])
+  @@index([memberId])
+}
+
+// Repayments between members, kept separate from expenses
+model Settlement {
+  id           String    @id @default(uuid())
+  tripId       String
+  fromMemberId String
+  toMemberId   String
+  amount       Int // whole taka
+  createdById  String
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  trip      Trip   @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  from      Member @relation("SettlementFrom", fields: [fromMemberId], references: [id], onDelete: Restrict)
+  to        Member @relation("SettlementTo", fields: [toMemberId], references: [id], onDelete: Restrict)
+  createdBy Member @relation("SettlementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([tripId, deletedAt])
+}
+
+// Written on every expense/settlement change: your protection in money disputes
+model ActivityLog {
+  id         String   @id @default(uuid())
+  tripId     String
+  memberId   String?
+  entityType String // "expense", "settlement", "member", ...
+  entityId   String
+  action     String // "create", "update", "delete"
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now())
+
+  trip   Trip    @relation(fields: [tripId], references: [id], onDelete: Restrict)
+  member Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  @@index([tripId, createdAt])
+}
+
+model ItineraryItem {
+  id          String   @id @default(uuid())
+  tripId      String
+  dayNumber   Int
+  time        String? // "09:30", kept as text for simplicity
+  title       String
+  notes       String?
+  position    Int      @default(0)
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  trip      Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  createdBy Member? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([tripId, dayNumber, position])
+}
+
+model DestinationOption {
+  id           String   @id @default(uuid())
+  tripId       String
+  name         String
+  proposedById String?
+  createdAt    DateTime @default(now())
+
+  trip       Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  proposedBy Member? @relation(fields: [proposedById], references: [id], onDelete: SetNull)
+  votes      Vote[]
+
+  @@index([tripId])
+}
+
+// One vote per member per trip
+model Vote {
+  id       String @id @default(uuid())
+  tripId   String
+  memberId String
+  optionId String
+
+  trip   Trip              @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  member Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  option DestinationOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, memberId])
+}
