@@ -4,6 +4,7 @@ import { useState } from "react";
 import { saveExpenseAction } from "@/app/trips/actions";
 import { Button } from "@/components/Button";
 import { DatePickerField } from "@/components/DatePickerField";
+import { SelectField } from "@/components/SelectField";
 import type { ExistingExpenseSummary } from "@/components/ExpenseFormCard";
 import type { ParsedExpenseDraft } from "@/lib/ai-parser";
 import type { ExpenseCategoryValue, MemberInput } from "@/lib/money";
@@ -302,31 +303,19 @@ export function AiExpenseParserCard({
                 />
               </div>
 
-              <div className="space-y-1">
-                <label
-                  htmlFor="ai-category"
-                  className="block text-xs font-semibold text-[var(--color-fg)]"
-                >
-                  {labels.categoryLabel}
-                </label>
-                <select
-                  id="ai-category"
-                  name="category"
-                  value={categoryVal}
-                  onChange={(e) =>
-                    setCategoryVal(e.target.value as ExpenseCategoryValue)
-                  }
-                  className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-2.5 py-2 text-sm text-[var(--color-fg)]"
-                >
-                  {(
-                    Object.keys(labels.categories) as ExpenseCategoryValue[]
-                  ).map((cat) => (
-                    <option key={cat} value={cat}>
-                      {labels.categories[cat]}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                id="ai-category"
+                name="category"
+                value={categoryVal}
+                onChange={(val) => setCategoryVal(val as ExpenseCategoryValue)}
+                label={labels.categoryLabel}
+                options={(
+                  Object.keys(labels.categories) as ExpenseCategoryValue[]
+                ).map((cat) => ({
+                  value: cat,
+                  label: labels.categories[cat],
+                }))}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -340,28 +329,21 @@ export function AiExpenseParserCard({
                 showQuickPills={true}
               />
 
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="ai-paidBy"
-                  className="block text-sm font-semibold text-[var(--color-fg)]"
-                >
-                  {labels.paidByLabel}
-                  <span className="ml-1 font-bold text-red-500">*</span>
-                </label>
-                <select
-                  id="ai-paidBy"
-                  name="paidById"
-                  value={paidByVal}
-                  onChange={(e) => setPaidByVal(e.target.value)}
-                  className="min-h-[46px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
-                >
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.emoji ?? "🎒"} {m.displayName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                id="ai-paidBy"
+                name="paidById"
+                value={paidByVal}
+                onChange={setPaidByVal}
+                label={labels.paidByLabel}
+                required
+                searchable={members.length > 5}
+                options={members.map((m) => ({
+                  value: m.id,
+                  label: m.displayName,
+                  icon: m.emoji ?? "🎒",
+                  badge: m.isGuest ? "Guest" : undefined,
+                }))}
+              />
             </div>
 
             <div className="space-y-2 rounded-lg border border-[var(--color-border)] bg-white p-3">

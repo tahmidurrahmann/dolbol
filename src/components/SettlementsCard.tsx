@@ -3,6 +3,7 @@ import {
   deleteSettlementAction,
 } from "@/app/trips/actions";
 import { Button } from "@/components/Button";
+import { SelectField } from "@/components/SelectField";
 import { formatDate, formatTaka, type SupportedLocale } from "@/lib/format";
 import type { MemberInput, SettlementRecordInput } from "@/lib/money";
 
@@ -63,49 +64,35 @@ export function SettlementsCard({
           <input type="hidden" name="slug" value={slug} />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label
-                htmlFor="set-from"
-                className="block text-xs font-bold text-[var(--color-fg)]"
-              >
-                {labels.fromMemberLabel}{" "}
-                <span className="text-red-500 font-bold">*</span>
-              </label>
-              <select
-                id="set-from"
-                name="fromMemberId"
-                defaultValue={currentMemberId}
-                className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm font-medium text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              >
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.emoji ?? "🎒"} {m.displayName}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              id="set-from"
+              name="fromMemberId"
+              defaultValue={currentMemberId}
+              label={labels.fromMemberLabel}
+              required
+              searchable={members.length > 5}
+              options={members.map((m) => ({
+                value: m.id,
+                label: m.displayName,
+                icon: m.emoji ?? "🎒",
+                badge: m.isGuest ? "Guest" : undefined,
+              }))}
+            />
 
-            <div className="space-y-1">
-              <label
-                htmlFor="set-to"
-                className="block text-xs font-bold text-[var(--color-fg)]"
-              >
-                {labels.toMemberLabel}{" "}
-                <span className="text-red-500 font-bold">*</span>
-              </label>
-              <select
-                id="set-to"
-                name="toMemberId"
-                defaultValue={defaultReceiverId}
-                className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm font-medium text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              >
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.emoji ?? "🎒"} {m.displayName}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              id="set-to"
+              name="toMemberId"
+              defaultValue={defaultReceiverId}
+              label={labels.toMemberLabel}
+              required
+              searchable={members.length > 5}
+              options={members.map((m) => ({
+                value: m.id,
+                label: m.displayName,
+                icon: m.emoji ?? "🎒",
+                badge: m.isGuest ? "Guest" : undefined,
+              }))}
+            />
           </div>
 
           <div className="space-y-1">

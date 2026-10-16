@@ -20,6 +20,7 @@ import {
 } from "@/components/ExpenseFormCard";
 import { ItineraryCard } from "@/components/ItineraryCard";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
+import { SelectField } from "@/components/SelectField";
 import { SettlementsCard } from "@/components/SettlementsCard";
 import { ShareAndExportCard } from "@/components/ShareAndExportCard";
 import { ShareLinkCard } from "@/components/ShareLinkCard";
@@ -913,20 +914,19 @@ export default async function TripPage({
                         {tTrip("addGuestTitle")}{" "}
                         <span className="text-red-500 font-bold">*</span>
                       </label>
-                      <div className="flex gap-2">
-                        <select
+                      <div className="flex items-center gap-2">
+                        <SelectField
                           name="emoji"
-                          aria-label="Guest emoji"
                           defaultValue="👤"
-                          className="min-h-[44px] rounded-xl border border-[var(--color-border)] bg-white px-2.5 text-lg"
-                        >
-                          <option value="👤">👤</option>
-                          {MEMBER_EMOJIS.map((emoji) => (
-                            <option key={emoji} value={emoji}>
-                              {emoji}
-                            </option>
-                          ))}
-                        </select>
+                          className="w-20 shrink-0 sm:w-24"
+                          options={[
+                            { value: "👤", label: "👤" },
+                            ...MEMBER_EMOJIS.map((emoji) => ({
+                              value: emoji,
+                              label: emoji,
+                            })),
+                          ]}
+                        />
                         <input
                           id="guestDisplayName"
                           name="displayName"
@@ -961,19 +961,18 @@ export default async function TripPage({
                           >
                             <input type="hidden" name="slug" value={trip.slug} />
                             <input type="hidden" name="memberId" value={member.id} />
-                            <select
+                            <SelectField
                               name="emoji"
-                              aria-label={`Emoji for ${member.displayName}`}
                               defaultValue={member.emoji ?? "🎒"}
-                              className="min-h-[44px] rounded-xl border border-[var(--color-border)] bg-white px-2.5 text-lg"
-                            >
-                              <option value="👤">👤</option>
-                              {MEMBER_EMOJIS.map((emoji) => (
-                                <option key={emoji} value={emoji}>
-                                  {emoji}
-                                </option>
-                              ))}
-                            </select>
+                              className="w-20 shrink-0 sm:w-24"
+                              options={[
+                                { value: "👤", label: "👤" },
+                                ...MEMBER_EMOJIS.map((emoji) => ({
+                                  value: emoji,
+                                  label: emoji,
+                                })),
+                              ]}
+                            />
                             <input
                               name="displayName"
                               type="text"

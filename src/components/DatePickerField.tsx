@@ -44,7 +44,10 @@ export function DatePickerField({
     try {
       const el = inputRef.current;
       if (!el) return;
-      if (typeof (el as unknown as { showPicker?: () => void }).showPicker === "function") {
+      if (
+        typeof (el as unknown as { showPicker?: () => void }).showPicker ===
+        "function"
+      ) {
         el.showPicker();
       } else {
         el.focus();
@@ -90,7 +93,9 @@ export function DatePickerField({
           >
             {label}
             {required ? (
-              <span className="ml-1 font-bold text-red-500" title="Required">*</span>
+              <span className="ml-1 font-bold text-red-500" title="Required">
+                *
+              </span>
             ) : null}
           </label>
           {formattedPreview ? (

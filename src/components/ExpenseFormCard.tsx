@@ -5,6 +5,7 @@ import { useState } from "react";
 import { saveExpenseAction } from "@/app/trips/actions";
 import { Button } from "@/components/Button";
 import { DatePickerField } from "@/components/DatePickerField";
+import { SelectField } from "@/components/SelectField";
 import type {
   ExpenseCategoryValue,
   MemberInput,
@@ -368,24 +369,7 @@ export function ExpenseFormCard({
             )}
           </div>
 
-          <select
-            id="exp-category"
-            name="category"
-            value={categoryVal}
-            onChange={(e) =>
-              setCategoryVal(e.target.value as ExpenseCategoryValue)
-            }
-            className="sr-only"
-            aria-label={labels.categoryLabel}
-          >
-            {(Object.keys(labels.categories) as ExpenseCategoryValue[]).map(
-              (cat) => (
-                <option key={cat} value={cat}>
-                  {labels.categories[cat]}
-                </option>
-              ),
-            )}
-          </select>
+          <input type="hidden" name="category" value={categoryVal} />
         </div>
 
         {/* Date (using custom DatePickerField) & Payer */}
@@ -400,28 +384,21 @@ export function ExpenseFormCard({
             showQuickPills={true}
           />
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="exp-paidBy"
-              className="block text-sm font-semibold text-[var(--color-fg)]"
-            >
-              {labels.paidByLabel}
-              <span className="ml-1 font-bold text-red-500">*</span>
-            </label>
-            <select
-              id="exp-paidBy"
-              name="paidById"
-              value={paidByVal}
-              onChange={(e) => setPaidByVal(e.target.value)}
-              className="min-h-[46px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base font-semibold text-[var(--color-fg)] shadow-xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-            >
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.emoji ?? "🎒"} {m.displayName}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            id="exp-paidBy"
+            name="paidById"
+            value={paidByVal}
+            onChange={setPaidByVal}
+            label={labels.paidByLabel}
+            required
+            searchable={members.length > 5}
+            options={members.map((m) => ({
+              value: m.id,
+              label: m.displayName,
+              icon: m.emoji ?? "🎒",
+              badge: m.isGuest ? "Guest" : undefined,
+            }))}
+          />
         </div>
 
         {/* Split Type Selector */}
