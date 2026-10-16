@@ -49,7 +49,10 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       lang={locale}
       className={`${notoSansBengali.variable} ${inter.variable}`}
     >
-      <body className="flex min-h-dvh flex-col bg-[var(--color-bg)] text-base text-[var(--color-fg)]">
+      <body
+        suppressHydrationWarning
+        className="flex min-h-dvh flex-col bg-[var(--color-bg)] text-base text-[var(--color-fg)]"
+      >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Header />
           <main className="flex flex-1 flex-col py-6">
