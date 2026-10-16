@@ -9,6 +9,7 @@ import {
   toggleTripLockAction,
 } from "@/app/trips/actions";
 import { ActivityLogCard } from "@/components/ActivityLogCard";
+import { AiExpenseParserCard } from "@/components/AiExpenseParserCard";
 import { BalancesCard } from "@/components/BalancesCard";
 import { Button } from "@/components/Button";
 import { DestinationVotingCard } from "@/components/DestinationVotingCard";
@@ -133,6 +134,7 @@ export default async function TripPage({
   const tWho = await getTranslations("whoAreYou");
   const tTrip = await getTranslations("tripPage");
   const tMoney = await getTranslations("money");
+  const tAi = await getTranslations("aiParser");
   const tPlan = await getTranslations("planning");
   const tErr = await getTranslations("errors");
 
@@ -333,7 +335,7 @@ export default async function TripPage({
     );
   }
 
-  // 2. Signed-in Trip Hub View + Step 3 Money Core + Step 4 Safety + Step 5 Voting & Itinerary
+  // 2. Signed-in Trip Hub View + Steps 3, 4, 5 & 6
   const isCreator = currentMember.id === trip.creatorMemberId;
   const memberCountLabel =
     locale === "bn"
@@ -519,6 +521,43 @@ export default async function TripPage({
           </form>
         </div>
       </div>
+
+      {/* Step 6: AI Expense Parser (Bangla + Banglish -> Confirm Card -> Save) */}
+      {!isLocked ? (
+        <AiExpenseParserCard
+          slug={trip.slug}
+          members={memberInputs}
+          defaultDateYyyyMmDd={defaultExpenseDate}
+          existingExpenses={existingExpenseSummaries}
+          labels={{
+            cardTitle: tAi("cardTitle"),
+            cardSubtitle: tAi("cardSubtitle"),
+            inputPlaceholder: tAi("inputPlaceholder"),
+            tryExamplesLabel: tAi("tryExamplesLabel"),
+            parseButton: tAi("parseButton"),
+            parsingButton: tAi("parsingButton"),
+            confirmCardBadge: tAi("confirmCardBadge"),
+            confirmCardNote: tAi("confirmCardNote"),
+            rawInputLabel: tAi("rawInputLabel"),
+            titleLabel: tMoney("titleLabel"),
+            amountLabel: tMoney("amountLabel"),
+            categoryLabel: tMoney("categoryLabel"),
+            dateLabel: tMoney("dateLabel"),
+            paidByLabel: tMoney("paidByLabel"),
+            participantsLabel: tMoney("participantsLabel"),
+            selectAll: tMoney("selectAll"),
+            confirmSaveButton: tAi("confirmSaveButton"),
+            discardDraftButton: tAi("discardDraftButton"),
+            duplicateWarningTitle: tMoney("duplicateWarningTitle"),
+            duplicateWarningBody: tMoney("duplicateWarningBody"),
+            confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
+            errMissingAmount: tAi("errMissingAmount"),
+            errRateLimited: tAi("errRateLimited"),
+            errGeneric: tAi("errGeneric"),
+            categories: categoryLabels,
+          }}
+        />
+      ) : null}
 
       {/* Step 3.1 + Step 4: Manual Expense Form with Live Duplicate-Entry Warning */}
       {!isLocked ? (
@@ -871,7 +910,7 @@ export default async function TripPage({
         </div>
       ) : null}
 
-      {/* Placeholder for Step 6–7 features */}
+      {/* Placeholder for Step 7 features */}
       <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-center">
         <h3 className="text-base font-semibold text-[var(--color-fg)]">
           {tTrip("nextStepsTitle")}

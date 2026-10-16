@@ -78,11 +78,11 @@
     "lockTripButton": "Lock trip",
     "unlockTripButton": "Unlock trip",
     "lockTripHint": "Locking prevents new members, guests, or edits.",
-    "nextStepsTitle": "AI Expense Parser & Share Card (Steps 6–7)",
-    "nextStepsBody": "AI text parsing and downloadable daily cost sheets come in Steps 6–7."
+    "nextStepsTitle": "Share Card & Daily Cost Sheet (Step 7)",
+    "nextStepsBody": "Downloadable daily cost sheets and shareable summary images come in Step 7."
   },
   "money": {
-    "addExpenseTitle": "Add an Expense",
+    "addExpenseTitle": "Add Expense Manually",
     "editExpenseTitle": "Edit Expense",
     "cancelEdit": "Cancel edit",
     "titleLabel": "What was it for? *",
@@ -160,6 +160,22 @@
     "act_trip_create": "created trip:",
     "act_trip_lock": "locked the trip",
     "act_trip_unlock": "unlocked the trip"
+  },
+  "aiParser": {
+    "cardTitle": "AI Expense Parser (Bangla / Banglish)",
+    "cardSubtitle": "Type an expense in natural Bangla or Banglish—review and edit on the Confirm Card before saving",
+    "inputPlaceholder": "e.g., রাতের খাবার ১২০০ টাকা করিম দিয়েছে সবাই / CNG 450 tk Tanvir paid for Karim and Tanvir",
+    "tryExamplesLabel": "Tap an example to test:",
+    "parseButton": "Parse Expense with AI",
+    "parsingButton": "Parsing...",
+    "confirmCardBadge": "Confirm Card (Not saved yet)",
+    "confirmCardNote": "Review or edit any field below, then tap 'Confirm & Save Expense'.",
+    "rawInputLabel": "Typed text:",
+    "confirmSaveButton": "Confirm & Save Expense",
+    "discardDraftButton": "Discard",
+    "errMissingAmount": "Could not find a whole-taka amount (e.g., write 1200 tk or ১২০০ টাকা).",
+    "errRateLimited": "Too many parse requests! Please wait and try again",
+    "errGeneric": "Could not parse that text. Please try again or use the manual form below."
   },
   "planning": {
     "votingTitle": "Destination Voting",

@@ -503,7 +503,7 @@ export async function toggleTripLockAction(formData: FormData): Promise<void> {
   redirect(`/trips/${trip.slug}`);
 }
 
-// ---- Step 3 & Step 4: Money Core + Safety Layer Server Actions -----------
+// ---- Step 3, 4 & 6: Money Core + Safety Layer + AI Confirm Save ---------
 
 export async function saveExpenseAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
@@ -517,6 +517,10 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
     paidById: formData.get("paidById") ?? "",
     splitType: formData.get("splitType") ?? "EQUAL",
     note: formData.get("note") ?? undefined,
+    rawInput: formData.get("rawInput") ?? undefined,
+    routeFrom: formData.get("routeFrom") ?? undefined,
+    routeTo: formData.get("routeTo") ?? undefined,
+    placeName: formData.get("placeName") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -721,6 +725,10 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
           createdById: currentMember.id,
           splitType: parsed.data.splitType,
           note: parsed.data.note ?? null,
+          rawInput: parsed.data.rawInput ?? null,
+          routeFrom: parsed.data.routeFrom ?? null,
+          routeTo: parsed.data.routeTo ?? null,
+          placeName: parsed.data.placeName ?? null,
           shares: {
             create: shares.map((s) => ({
               memberId: s.memberId,
@@ -1010,7 +1018,6 @@ export async function proposeDestinationOptionAction(
       },
     });
 
-    // Automatically cast the proposer's vote for their newly proposed option
     await tx.vote.upsert({
       where: {
         tripId_memberId: {
@@ -1298,7 +1305,6 @@ export async function moveItineraryItemAction(
 
   if (idx >= 0 && neighbor) {
     await db.$transaction(async (tx) => {
-      // Normalize positions sequentially and swap idx with swapIdx
       for (let i = 0; i < dayItems.length; i++) {
         let newPos = i + 1;
         if (i === idx) newPos = swapIdx + 1;

@@ -153,6 +153,30 @@ export const expenseFormSchema = z.object({
     .max(200)
     .optional()
     .transform((val) => (val && val.length > 0 ? val : undefined)),
+  rawInput: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  routeFrom: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  routeTo: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
+  placeName: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : undefined)),
 });
 
 export const settlementFormSchema = z

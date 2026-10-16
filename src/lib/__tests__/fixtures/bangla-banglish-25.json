@@ -1,0 +1,277 @@
+[
+  {
+    "id": 1,
+    "input": "রাতের খাবার ১২০০ টাকা করিম দিয়েছে সবাই",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 1200,
+      "category": "FOOD",
+      "paidByMemberId": "karim",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 2,
+    "input": "সিএনজি ভাড়া ৪৫০ টাকা তানভীর দিয়েছে শুধু করিম, সুমি আর তানভীর",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 450,
+      "category": "TRANSPORT",
+      "paidByMemberId": "tanvir",
+      "participantMemberIds": ["karim", "sumi", "tanvir"]
+    }
+  },
+  {
+    "id": 3,
+    "input": "হোটেল রিসোর্ট বিল ৫০০০ টাকা সুমি দিয়েছে সবার জন্য",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 5000,
+      "category": "HOTEL",
+      "paidByMemberId": "sumi",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 4,
+    "input": "বাসের টিকিট ২৫০০ টাকা আমি দিয়েছি সবাই",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 2500,
+      "category": "TICKET",
+      "paidByMemberId": "karim",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 5,
+    "input": "সকালের নাস্তা ও চা ৩৫০ টাকা নাবিলা দিয়েছে",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 350,
+      "category": "FOOD",
+      "paidByMemberId": "nabila",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 6,
+    "input": "নৌকা ভাড়া দেড় হাজার টাকা করিম দিয়েছে",
+    "currentMemberId": "sumi",
+    "expected": {
+      "amount": 1500,
+      "category": "TRANSPORT",
+      "paidByMemberId": "karim",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 7,
+    "input": "করিম আর তানভীরের চা ১২০ টাকা তানভীর দিয়েছে",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 120,
+      "category": "FOOD",
+      "paidByMemberId": "tanvir",
+      "participantMemberIds": ["karim", "tanvir"]
+    }
+  },
+  {
+    "id": 8,
+    "input": "এন্ট্রি টিকিট ৫০০ টাকা সুমি দিছে সবাই",
+    "currentMemberId": "tanvir",
+    "expected": {
+      "amount": 500,
+      "category": "TICKET",
+      "paidByMemberId": "sumi",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 9,
+    "input": "চাঁদের গাড়ি ভাড়া আড়াই হাজার টাকা মামুন দিয়েছে",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 2500,
+      "category": "TRANSPORT",
+      "paidByMemberId": "mamun",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 10,
+    "input": "দুপুরের কাচ্চি বিরিয়ানি ১৮০০ টাকা করিম বিল দিয়েছে",
+    "currentMemberId": "sumi",
+    "expected": {
+      "amount": 1800,
+      "category": "FOOD",
+      "paidByMemberId": "karim",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 11,
+    "input": "কটেজ বুকিং ৩০০০ টাকা আমি বিল দিয়েছি",
+    "currentMemberId": "nabila",
+    "expected": {
+      "amount": 3000,
+      "category": "HOTEL",
+      "paidByMemberId": "nabila",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 12,
+    "input": "ডাব ও পানি ২০০ টাকা শুধু সুমি আর নাবিলা, সুমি দিয়েছে",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 200,
+      "category": "FOOD",
+      "paidByMemberId": "sumi",
+      "participantMemberIds": ["sumi", "nabila"]
+    }
+  },
+  {
+    "id": 13,
+    "input": "Seafood dinner 2200 tk Karim paid shobai",
+    "currentMemberId": "sumi",
+    "expected": {
+      "amount": 2200,
+      "category": "FOOD",
+      "paidByMemberId": "karim",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 14,
+    "input": "CNG bhara 300 tk Tanvir dilo for Karim, Tanvir and Mamun",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 300,
+      "category": "TRANSPORT",
+      "paidByMemberId": "tanvir",
+      "participantMemberIds": ["karim", "tanvir", "mamun"]
+    }
+  },
+  {
+    "id": 15,
+    "input": "Hotel room advance 4000 taka Sumi dise everyone",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 4000,
+      "category": "HOTEL",
+      "paidByMemberId": "sumi",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 16,
+    "input": "Launch ticket 1600 tk ami disi shobar jonno",
+    "currentMemberId": "tanvir",
+    "expected": {
+      "amount": 1600,
+      "category": "TICKET",
+      "paidByMemberId": "tanvir",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 17,
+    "input": "Breakfast পরোটা ও ডিম 400 tk Nabila paid",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 400,
+      "category": "FOOD",
+      "paidByMemberId": "nabila",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 18,
+    "input": "Speedboat vara 1200 bdt Korim dilo for Korim and Sumi",
+    "currentMemberId": "tanvir",
+    "expected": {
+      "amount": 1200,
+      "category": "TRANSPORT",
+      "paidByMemberId": "karim",
+      "participantMemberIds": ["karim", "sumi"]
+    }
+  },
+  {
+    "id": 19,
+    "input": "BBQ night 1500 tk Mamun paid for everyone",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 1500,
+      "category": "FOOD",
+      "paidByMemberId": "mamun",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 20,
+    "input": "Train ticket Dhaka to Sreemangal 1800 tk Karim paid",
+    "currentMemberId": "sumi",
+    "expected": {
+      "amount": 1800,
+      "category": "TICKET",
+      "paidByMemberId": "karim",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 21,
+    "input": "Rickshaw fare 150 tk Shumi dilo only Shumi and Nabila",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 150,
+      "category": "TRANSPORT",
+      "paidByMemberId": "sumi",
+      "participantMemberIds": ["sumi", "nabila"]
+    }
+  },
+  {
+    "id": 22,
+    "input": "Resort check-in 6000 tk paid by Tanbir",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 6000,
+      "category": "HOTEL",
+      "paidByMemberId": "tanvir",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 23,
+    "input": "কফি ও স্ন্যাকস ৬০০ টাকা তানভীর পে করেছে শুধু তানভীর, নাবিলা ও মামুন",
+    "currentMemberId": "karim",
+    "expected": {
+      "amount": 600,
+      "category": "FOOD",
+      "paidByMemberId": "tanvir",
+      "participantMemberIds": ["tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 24,
+    "input": "টর্চলাইট ও ব্যাটারি ৩০০ টাকা করিম দিয়েছে",
+    "currentMemberId": "sumi",
+    "expected": {
+      "amount": 300,
+      "category": "OTHER",
+      "paidByMemberId": "karim",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  },
+  {
+    "id": 25,
+    "input": "Mosquito coil and first aid 250 tk I paid for everyone",
+    "currentMemberId": "sumi",
+    "expected": {
+      "amount": 250,
+      "category": "OTHER",
+      "paidByMemberId": "sumi",
+      "participantMemberIds": ["karim", "sumi", "tanvir", "nabila", "mamun"]
+    }
+  }
+]
