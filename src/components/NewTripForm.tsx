@@ -5,35 +5,36 @@ import { createTripAction } from "@/app/trips/actions";
 import { Button } from "@/components/Button";
 import { DatePickerField } from "@/components/DatePickerField";
 import type { SupportedLocale } from "@/lib/format";
-import { MEMBER_EMOJIS } from "@/lib/trips";
 
 interface NewTripFormProps {
   locale: SupportedLocale;
   labels: {
     tripNameLabel: string;
     tripNamePlaceholder: string;
+    yourNameLabel: string;
+    yourNamePlaceholder: string;
+    friendsNamesLabel: string;
+    friendsNamesPlaceholder: string;
+    friendsNamesHint: string;
+    moreDetailsToggle: string;
     destinationLabel: string;
     destinationPlaceholder: string;
     startDateLabel: string;
     endDateLabel: string;
-    yourNameLabel: string;
-    yourNamePlaceholder: string;
-    emojiLabel: string;
-    pinLabel: string;
-    pinHint: string;
     submitButton: string;
   };
 }
 
 export function NewTripForm({ locale, labels }: NewTripFormProps) {
   const [name, setName] = useState("");
+  const [creatorName, setCreatorName] = useState("");
+  const [friendsNames, setFriendsNames] = useState("");
+
   const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [creatorName, setCreatorName] = useState("");
-  const [selectedEmoji, setSelectedEmoji] = useState<string>(MEMBER_EMOJIS[0]);
-  const [pin, setPin] = useState("");
 
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -52,17 +53,9 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
         : "Your name is required."
       : null;
 
-  const pinClean = pin.trim();
-  const pinError =
-    touched.pin && pinClean.length > 0 && !/^[0-9১২৩৪৫৬৭৮৯]{4,6}$/.test(pinClean)
-      ? locale === "bn"
-        ? "পিন অবশ্যই ৪ থেকে ৬ সংখ্যার হতে হবে।"
-        : "PIN must be 4 to 6 numeric digits."
-      : null;
-
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    setTouched({ name: true, creatorName: true, pin: true });
-    if (name.trim().length < 2 || creatorName.trim().length < 1 || pinError) {
+    setTouched({ name: true, creatorName: true });
+    if (name.trim().length < 2 || creatorName.trim().length < 1) {
       e.preventDefault();
       return;
     }
@@ -73,292 +66,200 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
     <form
       action={createTripAction}
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs sm:p-6"
+      className="space-y-5 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-7 max-w-xl mx-auto w-full"
     >
-      {/* Step 1: Creator Details (Name of Person Registering) */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 border-b border-[var(--color-border)] pb-2.5">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-primary)] text-xs font-bold text-white">
-            ১
-          </span>
-          <h2 className="text-sm font-bold text-[var(--color-fg)]">
-            {locale === "bn"
-              ? "আপনার পরিচয় (যে রেজিস্টার করছেন / ক্রিয়েটর)"
-              : "Your Profile (Creator / Registering)"}
-          </h2>
-        </div>
-
-        {/* Creator Name (Required) */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="creator-name"
-              className="block text-sm font-semibold text-[var(--color-fg)]"
-            >
-              {labels.yourNameLabel}
-              <span className="ml-1 font-bold text-red-500">*</span>
-            </label>
-            <span className="text-xs text-[var(--color-fg-muted)]">
-              {locale === "bn" ? "আবশ্যক" : "Required"}
-            </span>
-          </div>
-
-          <input
-            id="creator-name"
-            name="creatorName"
-            type="text"
-            required
-            minLength={1}
-            maxLength={40}
-            value={creatorName}
-            onChange={(e) => setCreatorName(e.target.value)}
-            onBlur={() => setTouched((p) => ({ ...p, creatorName: true }))}
-            placeholder={labels.yourNamePlaceholder}
-            className={`min-h-[46px] w-full rounded-xl border bg-white px-3.5 py-2 text-base text-[var(--color-fg)] shadow-xs transition-all outline-none ${
-              creatorNameError
-                ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
-                : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-            }`}
-          />
-
-          {creatorNameError ? (
-            <p className="flex items-center gap-1 text-xs font-medium text-red-600">
-              <span>⚠️</span>
-              <span>{creatorNameError}</span>
-            </p>
-          ) : null}
-        </div>
-
-        {/* Emoji Selector */}
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-semibold text-[var(--color-fg)]">
-            {labels.emojiLabel}
-          </legend>
-
-          <div className="grid grid-cols-6 gap-2 sm:grid-cols-12">
-            {MEMBER_EMOJIS.map((emoji) => {
-              const isSelected = selectedEmoji === emoji;
-              return (
-                <label
-                  key={emoji}
-                  onClick={() => setSelectedEmoji(emoji)}
-                  className={`flex min-h-[48px] min-w-[44px] cursor-pointer items-center justify-center rounded-xl border text-2xl transition-all ${
-                    isSelected
-                      ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/10 shadow-xs scale-105"
-                      : "border-[var(--color-border)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-border)]"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="creatorEmoji"
-                    value={emoji}
-                    checked={isSelected}
-                    onChange={() => setSelectedEmoji(emoji)}
-                    className="sr-only"
-                  />
-                  <span>{emoji}</span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        {/* PIN (Optional) */}
-        <div className="space-y-1.5">
+      {/* 1. Trip Name (Always Visible) */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
           <label
-            htmlFor="creator-pin"
-            className="block text-sm font-semibold text-[var(--color-fg)]"
+            htmlFor="trip-name"
+            className="block text-sm font-bold text-[var(--color-fg)]"
           >
-            {labels.pinLabel}
+            {labels.tripNameLabel}
+            <span className="ml-1 font-bold text-red-500">*</span>
           </label>
-
-          <input
-            id="creator-pin"
-            name="creatorPin"
-            type="password"
-            inputMode="numeric"
-            maxLength={6}
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            onBlur={() => setTouched((p) => ({ ...p, pin: true }))}
-            placeholder="১২৩৪ / 1234"
-            className={`min-h-[46px] w-full rounded-xl border bg-white px-3.5 py-2 text-base text-[var(--color-fg)] shadow-xs transition-all outline-none ${
-              pinError
-                ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
-                : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-            }`}
-          />
-
-          {pinError ? (
-            <p className="flex items-center gap-1 text-xs font-medium text-red-600">
-              <span>⚠️</span>
-              <span>{pinError}</span>
-            </p>
-          ) : (
-            <p className="text-xs text-[var(--color-fg-muted)]">
-              🔒 {labels.pinHint}
-            </p>
-          )}
         </div>
+
+        <input
+          id="trip-name"
+          name="name"
+          type="text"
+          required
+          minLength={2}
+          maxLength={80}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => setTouched((p) => ({ ...p, name: true }))}
+          placeholder={labels.tripNamePlaceholder}
+          className={`min-h-[48px] w-full rounded-xl border bg-white px-3.5 py-2.5 text-base text-[var(--color-fg)] shadow-2xs transition-all outline-none ${
+            nameError
+              ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
+              : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+          }`}
+        />
+
+        {nameError ? (
+          <p className="flex items-center gap-1 text-xs font-medium text-red-600">
+            <span>⚠️</span>
+            <span>{nameError}</span>
+          </p>
+        ) : null}
       </div>
 
-      {/* Step 2: Destination & Trip Details */}
-      <div className="space-y-4 pt-2">
-        <div className="flex items-center gap-2 border-b border-[var(--color-border)] pb-2.5">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-primary)] text-xs font-bold text-white">
-            ২
-          </span>
-          <h2 className="text-sm font-bold text-[var(--color-fg)]">
-            {locale === "bn"
-              ? "গন্তব্য ও ট্রিপের বিবরণ"
-              : "Destination & Trip Details"}
-          </h2>
-        </div>
-
-        {/* Destination */}
-        <div className="space-y-1.5">
+      {/* 2. Your Name (Always Visible) */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
           <label
-            htmlFor="trip-destination"
-            className="block text-sm font-semibold text-[var(--color-fg)]"
+            htmlFor="creator-name"
+            className="block text-sm font-bold text-[var(--color-fg)]"
           >
-            {labels.destinationLabel}
+            {labels.yourNameLabel}
+            <span className="ml-1 font-bold text-red-500">*</span>
           </label>
-          <input
-            id="trip-destination"
-            name="destination"
-            type="text"
-            maxLength={80}
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            placeholder={labels.destinationPlaceholder}
-            className="min-h-[46px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] shadow-xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-          />
         </div>
 
-        {/* Trip Name (Required) */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="trip-name"
-              className="block text-sm font-semibold text-[var(--color-fg)]"
-            >
-              {labels.tripNameLabel}
-              <span className="ml-1 font-bold text-red-500">*</span>
-            </label>
-            <span className="text-xs text-[var(--color-fg-muted)]">
-              {locale === "bn" ? "আবশ্যক" : "Required"}
+        <input
+          id="creator-name"
+          name="creatorName"
+          type="text"
+          required
+          minLength={1}
+          maxLength={40}
+          value={creatorName}
+          onChange={(e) => setCreatorName(e.target.value)}
+          onBlur={() => setTouched((p) => ({ ...p, creatorName: true }))}
+          placeholder={labels.yourNamePlaceholder}
+          className={`min-h-[48px] w-full rounded-xl border bg-white px-3.5 py-2.5 text-base text-[var(--color-fg)] shadow-2xs transition-all outline-none ${
+            creatorNameError
+              ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
+              : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+          }`}
+        />
+
+        {creatorNameError ? (
+          <p className="flex items-center gap-1 text-xs font-medium text-red-600">
+            <span>⚠️</span>
+            <span>{creatorNameError}</span>
+          </p>
+        ) : null}
+      </div>
+
+      {/* 3. Friends' Names (Always Visible, Optional Multi-line) */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="friends-names"
+            className="block text-sm font-bold text-[var(--color-fg)]"
+          >
+            👥 {labels.friendsNamesLabel}
+          </label>
+          <span className="text-xs text-neutral-400 font-medium">
+            {locale === "bn" ? "ঐচ্ছিক" : "Optional"}
+          </span>
+        </div>
+
+        <textarea
+          id="friends-names"
+          name="friendsNames"
+          rows={3}
+          value={friendsNames}
+          onChange={(e) => setFriendsNames(e.target.value)}
+          placeholder={labels.friendsNamesPlaceholder}
+          className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2.5 text-sm text-[var(--color-fg)] shadow-2xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 resize-none"
+        />
+
+        <p className="text-xs text-neutral-400">
+          💡 {labels.friendsNamesHint}
+        </p>
+      </div>
+
+      {/* 4. Collapsible "More details (optional)" for Destination and Dates */}
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 p-3 sm:p-4 transition-all">
+        <button
+          type="button"
+          onClick={() => setShowMoreDetails((prev) => !prev)}
+          className="flex w-full items-center justify-between text-left text-sm font-bold text-[var(--color-fg)] hover:text-[var(--color-primary)] transition-colors select-none"
+        >
+          <span className="flex items-center gap-2">
+            <span>📍</span>
+            <span>{labels.moreDetailsToggle}</span>
+          </span>
+          <span className="text-xs text-neutral-400 font-semibold flex items-center gap-1">
+            <span>
+              {showMoreDetails
+                ? locale === "bn"
+                  ? "লুকান"
+                  : "Hide"
+                : locale === "bn"
+                  ? "দেখান"
+                  : "Show"}
             </span>
+            <span className={`transition-transform duration-200 ${showMoreDetails ? "rotate-180" : ""}`}>
+              ▼
+            </span>
+          </span>
+        </button>
+
+        {showMoreDetails && (
+          <div className="space-y-4 pt-3.5 border-t border-[var(--color-border)]/60 mt-3 animate-in fade-in duration-150">
+            {/* Destination */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="trip-destination"
+                className="block text-xs font-bold text-[var(--color-fg)]"
+              >
+                {labels.destinationLabel}
+              </label>
+              <input
+                id="trip-destination"
+                name="destination"
+                type="text"
+                maxLength={80}
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                placeholder={labels.destinationPlaceholder}
+                className="min-h-[46px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-sm text-[var(--color-fg)] shadow-2xs outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+              />
+            </div>
+
+            {/* Travel Dates */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <DatePickerField
+                id="start-date"
+                name="startDate"
+                value={startDate}
+                onChange={setStartDate}
+                label={labels.startDateLabel}
+                locale={locale}
+                showQuickPills={false}
+              />
+              <DatePickerField
+                id="end-date"
+                name="endDate"
+                value={endDate}
+                onChange={setEndDate}
+                label={labels.endDateLabel}
+                min={startDate || undefined}
+                locale={locale}
+                showQuickPills={false}
+              />
+            </div>
           </div>
-
-          <div className="relative">
-            <input
-              id="trip-name"
-              name="name"
-              type="text"
-              required
-              minLength={2}
-              maxLength={80}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={() => setTouched((p) => ({ ...p, name: true }))}
-              placeholder={labels.tripNamePlaceholder}
-              className={`min-h-[46px] w-full rounded-xl border bg-white px-3.5 py-2 text-base text-[var(--color-fg)] shadow-xs transition-all outline-none ${
-                nameError
-                  ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
-                  : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              }`}
-            />
-          </div>
-
-          {nameError ? (
-            <p className="flex items-center gap-1 text-xs font-medium text-red-600">
-              <span>⚠️</span>
-              <span>{nameError}</span>
-            </p>
-          ) : null}
-        </div>
+        )}
       </div>
 
-      {/* Step 3: Travel Schedule (Start & End Dates) */}
-      <div className="space-y-4 pt-2">
-        <div className="flex items-center gap-2 border-b border-[var(--color-border)] pb-2.5">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-primary)] text-xs font-bold text-white">
-            ৩
-          </span>
-          <h2 className="text-sm font-bold text-[var(--color-fg)]">
-            {locale === "bn"
-              ? "শুরুর ও শেষের সময়সূচি"
-              : "Trip Schedule (Start & End Dates)"}
-          </h2>
-        </div>
-
-        {/* Dates using custom DatePickerField */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <DatePickerField
-            id="start-date"
-            name="startDate"
-            value={startDate}
-            onChange={setStartDate}
-            label={labels.startDateLabel}
-            locale={locale}
-            showQuickPills={false}
-          />
-          <DatePickerField
-            id="end-date"
-            name="endDate"
-            value={endDate}
-            onChange={setEndDate}
-            label={labels.endDateLabel}
-            min={startDate || undefined}
-            locale={locale}
-            showQuickPills={false}
-          />
-        </div>
-      </div>
-
-      {/* Feature Preview: Expense Options & Calculations */}
-      <div className="rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-primary-light)]/25 p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-base">✨</span>
-          <span className="text-xs font-bold text-[var(--color-primary)] uppercase tracking-wider">
-            {locale === "bn"
-              ? "ট্রিপ তৈরির পর খরচের ৫টি অপশন ও স্বয়ংক্রিয় হিসাব"
-              : "Included Expense Categories & Auto Calculations"}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5 text-xs font-medium text-[var(--color-fg)]">
-          <span className="rounded-lg bg-white/80 border border-[var(--color-border)] px-2.5 py-1">
-            🏨 {locale === "bn" ? "হোটেল (Hotel)" : "Hotel"}
-          </span>
-          <span className="rounded-lg bg-white/80 border border-[var(--color-border)] px-2.5 py-1">
-            🍛 {locale === "bn" ? "খাবার (Food)" : "Food"}
-          </span>
-          <span className="rounded-lg bg-white/80 border border-[var(--color-border)] px-2.5 py-1">
-            🚗 {locale === "bn" ? "রাইড ও যাতায়াত (Ride)" : "Ride expenses"}
-          </span>
-          <span className="rounded-lg bg-white/80 border border-[var(--color-border)] px-2.5 py-1">
-            🛍️ {locale === "bn" ? "উপহার ও জিনিস (Gifts & Items)" : "Buying gifts / items"}
-          </span>
-          <span className="rounded-lg bg-white/80 border border-[var(--color-border)] px-2.5 py-1">
-            📦 {locale === "bn" ? "অন্যান্য (Others)" : "Others expenses"}
-          </span>
-          <span className="rounded-lg bg-[var(--color-primary)] text-white px-2.5 py-1 font-bold">
-            🧮 {locale === "bn" ? "ক্যালকুলেশন (Calculations)" : "Calculations"}
-          </span>
-        </div>
-      </div>
-
+      {/* Primary Action Button */}
       <Button
         type="submit"
         variant="primary"
         disabled={submitting}
-        className="w-full min-h-[50px] rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all"
+        className="w-full min-h-[50px] text-base font-extrabold transition-all"
       >
         {submitting
           ? locale === "bn"
             ? "তৈরি হচ্ছে..."
-            : "Creating trip..."
-          : `✨ ${labels.submitButton}`}
+            : "Starting trip..."
+          : `🚀 ${labels.submitButton}`}
       </Button>
     </form>
   );

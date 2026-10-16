@@ -14,9 +14,16 @@ export interface ActivityLogCardLabels {
   act_member_join: string;
   act_member_create_guest: string;
   act_member_update: string;
+  act_member_claim: string;
+  act_member_delete: string;
   act_trip_create: string;
   act_trip_lock: string;
   act_trip_unlock: string;
+  act_vote_upsert: string;
+  act_destination_create: string;
+  act_trip_set_destination: string;
+  act_itinerary_create: string;
+  act_itinerary_delete: string;
 }
 
 interface ActivityLogCardProps {
@@ -96,12 +103,46 @@ export function ActivityLogCard({
         return `${labels.act_member_create_guest} ${log.after?.displayName ?? ""}`;
       case "member_update":
         return `${labels.act_member_update} ${log.before?.displayName ?? ""} → ${log.after?.displayName ?? ""}`;
+      case "member_claim":
+        return `${labels.act_member_claim} ${log.after?.displayName ?? ""}`;
+      case "member_delete":
+        return `${labels.act_member_delete} ${log.before?.displayName ?? ""}`;
       case "trip_create":
         return `${labels.act_trip_create} "${log.after?.name ?? ""}"`;
       case "trip_lock":
         return labels.act_trip_lock;
       case "trip_unlock":
         return labels.act_trip_unlock;
+      case "vote_upsert": {
+        const dest = log.after?.name ?? "";
+        return dest
+          ? `${labels.act_vote_upsert} "${dest}"`
+          : labels.act_vote_upsert;
+      }
+      case "destination_create": {
+        const dest = log.after?.name ?? "";
+        return dest
+          ? `${labels.act_destination_create} "${dest}"`
+          : labels.act_destination_create;
+      }
+      case "trip_set_destination": {
+        const dest = log.after?.destination ?? "";
+        return dest
+          ? `${labels.act_trip_set_destination} "${dest}"`
+          : labels.act_trip_set_destination;
+      }
+      case "itinerary_create": {
+        const title = log.after?.title ?? "";
+        return title
+          ? `${labels.act_itinerary_create} "${title}"`
+          : labels.act_itinerary_create;
+      }
+      case "itinerary_delete": {
+        const title = log.before?.title ?? "";
+        return title
+          ? `${labels.act_itinerary_delete} "${title}"`
+          : labels.act_itinerary_delete;
+      }
       default:
         return `${log.entityType} (${log.action})`;
     }

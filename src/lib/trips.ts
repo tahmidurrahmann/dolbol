@@ -87,6 +87,7 @@ export const createTripFormSchema = z.object({
     .trim()
     .min(1, "member_name_required")
     .max(40, "member_name_long"),
+  friendsNames: z.string().trim().optional(),
   creatorEmoji: optionalEmojiString,
   creatorPin: optionalPinString,
 });

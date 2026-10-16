@@ -7,6 +7,7 @@ import { DatePickerField } from "@/components/DatePickerField";
 import { SelectField } from "@/components/SelectField";
 import type { ExistingExpenseSummary } from "@/components/ExpenseFormCard";
 import type { ParsedExpenseDraft } from "@/lib/ai-parser";
+import { formatTaka } from "@/lib/format";
 import type { ExpenseCategoryValue, MemberInput } from "@/lib/money";
 
 export interface AiExpenseParserLabels {
@@ -43,6 +44,7 @@ interface AiExpenseParserCardProps {
   defaultDateYyyyMmDd: string;
   existingExpenses: ExistingExpenseSummary[];
   labels: AiExpenseParserLabels;
+  locale?: "bn" | "en";
 }
 
 const BANGLA_DIGITS = "০১২৩৪৫৬৭৮৯";
@@ -66,6 +68,7 @@ export function AiExpenseParserCard({
   defaultDateYyyyMmDd,
   existingExpenses,
   labels,
+  locale = "bn",
 }: AiExpenseParserCardProps) {
   const [rawText, setRawText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -82,14 +85,21 @@ export function AiExpenseParserCard({
     members.map((m) => m.id),
   );
 
-  const firstMemberName = members[0]?.displayName ?? "করিম";
-  const secondMemberName = members[1]?.displayName ?? "সুমি";
+  const firstMemberName = members[0]?.displayName ?? (locale === "bn" ? "করিম" : "Karim");
+  const secondMemberName = members[1]?.displayName ?? (locale === "bn" ? "সুমি" : "Sumi");
 
-  const samplePrompts = [
-    `রাতের খাবার ১২০০ টাকা ${firstMemberName} দিয়েছে সবাই`,
-    `CNG bhara 450 tk ${firstMemberName} paid for ${firstMemberName} and ${secondMemberName}`,
-    `হোটেল বুকিং ৫০০০ টাকা আমি দিয়েছি সবার জন্য`,
-  ];
+  const samplePrompts =
+    locale === "bn"
+      ? [
+          `রাতের খাবার ১২০০ টাকা ${firstMemberName} দিয়েছে সবাই`,
+          `ডিনার ১২০০ ${firstMemberName} দিল সবার জন্য`,
+          `সিএনজি ভাড়া ৪৫০ টাকা ${firstMemberName} দিল ${firstMemberName} ও ${secondMemberName} এর জন্য`,
+        ]
+      : [
+          `Dinner 1200 ${firstMemberName} paid everyone`,
+          `Lunch 850 tk ${firstMemberName} paid for all`,
+          `CNG fare 450 tk ${firstMemberName} paid for ${firstMemberName} and ${secondMemberName}`,
+        ];
 
   async function handleParse(
     e: React.FormEvent<HTMLFormElement>,
@@ -150,6 +160,16 @@ export function AiExpenseParserCard({
     );
   }
 
+  const isAllSelected = selectedIds.length === members.length;
+
+  function handleToggleAll(): void {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(members.map((m) => m.id));
+    }
+  }
+
   const totalAmount = Math.trunc(toAsciiNumber(amountStr));
   const candidateNormTitle = normalizeTitle(titleStr);
   const matchingDuplicate =
@@ -167,12 +187,13 @@ export function AiExpenseParserCard({
       : null;
 
   return (
-    <div className="space-y-4 rounded-xl border-2 border-[var(--color-primary)]/40 bg-[var(--color-surface)] p-4">
+    <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-xs">
       <div className="space-y-1">
-        <h2 className="text-lg font-bold text-[var(--color-primary)]">
-          ✨ {labels.cardTitle}
+        <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
+          <span>✨</span>
+          <span>{labels.cardTitle}</span>
         </h2>
-        <p className="text-sm text-[var(--color-fg-muted)]">
+        <p className="text-sm text-neutral-400">
           {labels.cardSubtitle}
         </p>
       </div>
@@ -186,12 +207,12 @@ export function AiExpenseParserCard({
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
           placeholder={labels.inputPlaceholder}
-          className="w-full rounded-xl border border-[var(--color-border)] bg-white p-3 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
+          className="w-full rounded-2xl border border-[var(--color-border)] bg-white p-3.5 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15 focus:outline-none resize-none shadow-xs"
         />
 
         {/* Quick example chips */}
         <div className="space-y-1">
-          <span className="block text-xs font-semibold text-[var(--color-fg-muted)]">
+          <span className="block text-xs font-semibold text-neutral-400">
             {labels.tryExamplesLabel}
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -200,7 +221,7 @@ export function AiExpenseParserCard({
                 key={sample}
                 type="button"
                 onClick={() => setRawText(sample)}
-                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2.5 py-1 text-left text-xs text-[var(--color-fg)] hover:bg-[var(--color-border)]"
+                className="rounded-full border border-gray-200/90 bg-[#f4f7f5] px-3 py-1 text-left text-xs font-semibold text-gray-700 hover:bg-[#e8f5ee] hover:border-emerald-200 hover:text-[#0f6b4a] transition-all cursor-pointer shadow-2xs"
               >
                 &ldquo;{sample}&rdquo;
               </button>
@@ -224,26 +245,26 @@ export function AiExpenseParserCard({
 
       {/* Step 6.4: Confirm Card before saving (NEVER auto-saves) */}
       {draft ? (
-        <div className="space-y-4 rounded-xl border-2 border-[var(--color-primary)] bg-[var(--color-surface-muted)] p-4">
+        <div className="space-y-4 rounded-2xl border border-[var(--color-primary)]/40 bg-[var(--color-surface-muted)] p-4 sm:p-5 shadow-xs">
           <div className="flex items-start justify-between gap-2 border-b border-[var(--color-border)] pb-2.5">
             <div>
               <span className="inline-block rounded-md bg-[var(--color-primary)] px-2.5 py-0.5 text-xs font-bold text-white">
                 {labels.confirmCardBadge}
               </span>
-              <p className="mt-1 text-xs text-[var(--color-fg-muted)]">
+              <p className="mt-1 text-xs text-neutral-400">
                 {labels.confirmCardNote}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setDraft(null)}
-              className="text-xs font-semibold text-red-700 underline"
+              className="text-xs font-semibold text-red-700 underline cursor-pointer"
             >
               {labels.discardDraftButton}
             </button>
           </div>
 
-          <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-xs text-[var(--color-fg-muted)]">
+          <div className="rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2.5 text-xs text-neutral-400">
             <span className="font-semibold text-[var(--color-fg)]">
               {labels.rawInputLabel}
             </span>{" "}
@@ -283,14 +304,18 @@ export function AiExpenseParserCard({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label
-                  htmlFor="ai-amount"
-                  className="block text-xs font-semibold text-[var(--color-fg)]"
-                >
-                  {labels.amountLabel}
-                </label>
+            {/* Amount */}
+            <div className="space-y-1">
+              <label
+                htmlFor="ai-amount"
+                className="block text-xs font-semibold text-[var(--color-fg)]"
+              >
+                {labels.amountLabel}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-[var(--color-primary)]">
+                  ৳
+                </span>
                 <input
                   id="ai-amount"
                   name="amount"
@@ -299,10 +324,13 @@ export function AiExpenseParserCard({
                   required
                   value={amountStr}
                   onChange={(e) => setAmountStr(e.target.value)}
-                  className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-base font-bold text-[var(--color-primary)]"
+                  className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-white pl-10 pr-3.5 py-2 text-base font-bold text-[var(--color-primary)] shadow-xs focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15 outline-none"
                 />
               </div>
+            </div>
 
+            {/* Category */}
+            <div className="space-y-1">
               <SelectField
                 id="ai-category"
                 name="category"
@@ -318,17 +346,22 @@ export function AiExpenseParserCard({
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Date */}
+            <div className="space-y-1">
               <DatePickerField
                 id="ai-date"
                 name="expenseDate"
                 value={dateStr}
                 onChange={setDateStr}
                 label={labels.dateLabel}
+                locale={locale}
                 required
                 showQuickPills={true}
               />
+            </div>
 
+            {/* Who Paid */}
+            <div className="space-y-1">
               <SelectField
                 id="ai-paidBy"
                 name="paidById"
@@ -346,47 +379,81 @@ export function AiExpenseParserCard({
               />
             </div>
 
-            <div className="space-y-2 rounded-lg border border-[var(--color-border)] bg-white p-3">
+            {/* Who Shared */}
+            <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[var(--color-fg)]">
                   {labels.participantsLabel}
                 </span>
                 <button
                   type="button"
-                  onClick={() => setSelectedIds(members.map((m) => m.id))}
-                  className="text-xs font-semibold text-[var(--color-primary)] underline"
+                  onClick={handleToggleAll}
+                  className="rounded-lg px-2.5 py-1 text-xs font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/40 transition-colors cursor-pointer"
                 >
-                  {labels.selectAll}
+                  {isAllSelected
+                    ? locale === "bn"
+                      ? "সবাই মুছুন"
+                      : "Clear all"
+                    : locale === "bn"
+                      ? "সবাই"
+                      : labels.selectAll}
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                {members.map((m) => {
-                  const checked = selectedIds.includes(m.id);
-                  return (
-                    <label
-                      key={m.id}
-                      className={`flex min-h-[40px] cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
-                        checked
-                          ? "border-[var(--color-primary)] bg-[var(--color-surface-muted)] text-[var(--color-fg)]"
-                          : "border-[var(--color-border)] bg-transparent text-[var(--color-fg-muted)]"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        name="participantIds"
-                        value={m.id}
-                        checked={checked}
-                        onChange={() => toggleParticipant(m.id)}
-                        className="h-4 w-4 accent-[var(--color-primary)]"
-                      />
-                      <span className="truncate">
-                        {m.emoji ?? "🎒"} {m.displayName}
-                      </span>
-                    </label>
-                  );
-                })}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {(() => {
+                  const parsedTotal = toAsciiNumber(amountStr);
+                  const equalSharePerPerson =
+                    parsedTotal > 0 && selectedIds.length > 0
+                      ? Math.floor(parsedTotal / selectedIds.length)
+                      : 0;
+
+                  return members.map((m) => {
+                    const checked = selectedIds.includes(m.id);
+                    return (
+                      <label
+                        key={m.id}
+                        className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none active:scale-95 ${
+                          checked
+                            ? "bg-[var(--color-surface-muted)] text-[var(--color-fg)] border border-[var(--color-border)] shadow-2xs font-bold"
+                            : "border border-[var(--color-border)] bg-white text-gray-800 shadow-2xs hover:border-[var(--color-primary)]/40 hover:bg-gray-50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          name="participantIds"
+                          value={m.id}
+                          checked={checked}
+                          onChange={() => toggleParticipant(m.id)}
+                          className="sr-only"
+                        />
+                        <span className="text-sm leading-none shrink-0">
+                          {m.emoji ?? "🎒"}
+                        </span>
+                        <span className="whitespace-nowrap font-bold text-[var(--color-fg)]">
+                          {m.displayName}{checked && equalSharePerPerson > 0 ? ":" : ""}
+                        </span>
+                        {checked && equalSharePerPerson > 0 ? (
+                          <strong className="font-extrabold text-[var(--color-primary)] shrink-0">
+                            {formatTaka(equalSharePerPerson, locale)}
+                          </strong>
+                        ) : null}
+                      </label>
+                    );
+                  });
+                })()}
               </div>
+
+              {selectedIds.length === 0 ? (
+                <p className="flex items-center gap-1 text-xs font-medium text-red-600 pt-1">
+                  <span>⚠️</span>
+                  <span>
+                    {locale === "bn"
+                      ? "কমপক্ষে একজন সদস্য নির্বাচন করুন।"
+                      : "Select at least one participant."}
+                  </span>
+                </p>
+              ) : null}
             </div>
 
             {matchingDuplicate ? (
@@ -414,7 +481,11 @@ export function AiExpenseParserCard({
               </div>
             ) : null}
 
-            <Button type="submit" variant="primary">
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={selectedIds.length === 0 || totalAmount <= 0}
+            >
               ✓ {labels.confirmSaveButton}
             </Button>
           </form>

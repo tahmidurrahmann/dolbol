@@ -1,25 +1,80 @@
-import { getLocale, getTranslations } from "next-intl/server";
+"use client";
+
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { setLocaleAction } from "@/i18n/actions";
+import { LOCALE_COOKIE_NAME } from "@/i18n/config";
 import type { SupportedLocale } from "@/lib/format";
 
-export async function LanguageToggle() {
-  const locale = (await getLocale()) as SupportedLocale;
-  const t = await getTranslations("header");
+interface LanguageToggleProps {
+  currentLocale: SupportedLocale;
+}
 
-  const targetLocale: SupportedLocale = locale === "bn" ? "en" : "bn";
-  const targetLabel =
-    targetLocale === "bn" ? t("languageLabelBn") : t("languageLabelEn");
+export function LanguageToggle({ currentLocale }: LanguageToggleProps) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const isBn = currentLocale === "bn";
+
+  function handleSwitch(target: SupportedLocale) {
+    if (target === currentLocale || isPending) return;
+
+    // Set cookies synchronously on the client — Next.js reads these on the next render
+    document.cookie = `${LOCALE_COOKIE_NAME}=${target}; path=/; max-age=31536000; SameSite=Lax`;
+    document.cookie = `NEXT_LOCALE=${target}; path=/; max-age=31536000; SameSite=Lax`;
+    try {
+      localStorage.setItem("trip_hub_locale", target);
+    } catch {
+      // ignore storage errors
+    }
+
+    const formData = new FormData();
+    formData.append("locale", target);
+
+    startTransition(async () => {
+      try {
+        await setLocaleAction(formData);
+      } catch {
+        // Cookies already set; continue even if the network action fails
+      }
+      // router.refresh() re-renders server components using the new cookie
+      // WITHOUT doing a full page reload, so form state is preserved
+      router.refresh();
+    });
+  }
 
   return (
-    <form action={setLocaleAction}>
-      <input type="hidden" name="locale" value={targetLocale} />
+    <div
+      role="group"
+      aria-label="Language selection"
+      className="inline-flex items-center rounded-xl bg-[#f0f3f1] p-1 border border-gray-200/70 shadow-2xs"
+    >
+      {/* Bangla Option */}
       <button
-        type="submit"
-        aria-label={t("switchLanguageAria")}
-        className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-base font-medium text-[var(--color-fg)] transition-colors motion-reduce:transition-none hover:bg-[var(--color-surface-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+        type="button"
+        onClick={() => handleSwitch("bn")}
+        disabled={isPending}
+        className={`inline-flex items-center justify-center rounded-lg px-2.5 py-1 text-xs font-black transition-all select-none cursor-pointer ${
+          isBn
+            ? "bg-white text-gray-900 shadow-xs border border-gray-200/50"
+            : "text-gray-500 hover:text-gray-900"
+        }`}
       >
-        {targetLabel}
+        বাং
       </button>
-    </form>
+
+      {/* English Option */}
+      <button
+        type="button"
+        onClick={() => handleSwitch("en")}
+        disabled={isPending}
+        className={`inline-flex items-center justify-center rounded-lg px-2.5 py-1 text-xs font-black transition-all select-none cursor-pointer ${
+          !isBn
+            ? "bg-white text-gray-900 shadow-xs border border-gray-200/50"
+            : "text-gray-500 hover:text-gray-900"
+        }`}
+      >
+        EN
+      </button>
+    </div>
   );
 }

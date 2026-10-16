@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useRef } from "react";
-import { formatDate, type SupportedLocale } from "@/lib/format";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { formatDate, type SupportedLocale, toBanglaDigits } from "@/lib/format";
 import { dayKey } from "@/lib/time";
 
 interface DatePickerFieldProps {
@@ -14,10 +14,69 @@ interface DatePickerFieldProps {
   error?: string | null;
   locale?: SupportedLocale;
   showQuickPills?: boolean;
-  min?: string;
-  max?: string;
+  min?: string; // YYYY-MM-DD
+  max?: string; // YYYY-MM-DD
   className?: string;
   helperText?: string;
+}
+
+const MONTH_NAMES_BN = [
+  "জানুয়ারি",
+  "ফেব্রুয়ারি",
+  "মার্চ",
+  "এপ্রিল",
+  "মে",
+  "জুন",
+  "জুলাই",
+  "আগস্ট",
+  "সেপ্টেম্বর",
+  "অক্টোবর",
+  "নভেম্বর",
+  "ডিসেম্বর",
+];
+
+const MONTH_NAMES_EN = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const WEEKDAYS_BN = ["শনি", "রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র"];
+const WEEKDAYS_EN = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
+
+function parseYyyyMmDd(str: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
+  const now = new Date();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return {
+      year: now.getFullYear(),
+      month: now.getMonth(),
+      day: now.getDate(),
+    };
+  }
+  const parts = str.split("-").map(Number);
+  const y = parts[0] ?? now.getFullYear();
+  const m = parts[1] !== undefined ? parts[1] - 1 : now.getMonth();
+  const d = parts[2] ?? now.getDate();
+  return { year: y, month: m, day: d };
+}
+
+function formatYyyyMmDd(year: number, month: number, day: number): string {
+  const mm = String(month + 1).padStart(2, "0");
+  const dd = String(day).padStart(2, "0");
+  return `${year}-${mm}-${dd}`;
 }
 
 export function DatePickerField({
@@ -37,24 +96,54 @@ export function DatePickerField({
 }: DatePickerFieldProps) {
   const generatedId = useId();
   const inputId = explicitId ?? generatedId;
-  const inputRef = useRef<HTMLInputElement>(null);
+  const isBn = locale === "bn";
 
-  function handleContainerClick() {
-    // Attempt to open the native calendar popup on modern browsers
-    try {
-      const el = inputRef.current;
-      if (!el) return;
-      if (
-        typeof (el as unknown as { showPicker?: () => void }).showPicker ===
-        "function"
-      ) {
-        el.showPicker();
-      } else {
-        el.focus();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"days" | "monthYear">("days");
+
+  // Month & Year currently viewed in the calendar popup
+  const initial = parseYyyyMmDd(value || dayKey(new Date()));
+  const [viewYear, setViewYear] = useState<number>(initial.year);
+  const [viewMonth, setViewMonth] = useState<number>(initial.month);
+
+  function openDropdown() {
+    const parsed = parseYyyyMmDd(value || dayKey(new Date()));
+    setViewYear(parsed.year);
+    setViewMonth(parsed.month);
+    setViewMode("days");
+    setOpen(true);
+  }
+
+  function close() {
+    setOpen(false);
+    setViewMode("days");
+  }
+
+  function handleSelectDate(year: number, month: number, day: number) {
+    const dateStr = formatYyyyMmDd(year, month, day);
+    onChange?.(dateStr);
+    close();
+  }
+
+  function handlePrevMonth() {
+    setViewMonth((prevM) => {
+      if (prevM === 0) {
+        setViewYear((prevY) => prevY - 1);
+        return 11;
       }
-    } catch {
-      inputRef.current?.focus();
-    }
+      return prevM - 1;
+    });
+  }
+
+  function handleNextMonth() {
+    setViewMonth((prevM) => {
+      if (prevM === 11) {
+        setViewYear((prevY) => prevY + 1);
+        return 0;
+      }
+      return prevM + 1;
+    });
   }
 
   function handleQuickSet(target: "today" | "yesterday") {
@@ -62,26 +151,42 @@ export function DatePickerField({
     const targetDate =
       target === "today" ? now : new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const dateStr = dayKey(targetDate);
-    if (onChange) {
-      onChange(dateStr);
-    } else if (inputRef.current) {
-      inputRef.current.value = dateStr;
-      inputRef.current.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    onChange?.(dateStr);
   }
 
-  // Format a human-readable preview of the selected date
-  let formattedPreview = "";
-  if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  // Days in current month
+  const daysInMonth = useMemo(() => {
+    return new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
+  }, [viewYear, viewMonth]);
+
+  // Starting weekday of current month (0 = Sun, 1 = Mon... 6 = Sat)
+  // Shift Sunday (0) to 1, Saturday (6) to 0 so week starts Saturday
+  const startDayOffset = useMemo(() => {
+    const sunDay = new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay();
+    return (sunDay + 1) % 7;
+  }, [viewYear, viewMonth]);
+
+  // Formatted display text on the button
+  const formattedDisplay = useMemo(() => {
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return isBn ? "তারিখ নির্বাচন করুন" : "Select date";
+    }
     try {
       const parsed = new Date(`${value}T12:00:00+06:00`);
       if (!Number.isNaN(parsed.getTime())) {
-        formattedPreview = formatDate(parsed, locale);
+        return formatDate(parsed, locale);
       }
     } catch {
-      formattedPreview = "";
+      // Fallback
     }
-  }
+    return value;
+  }, [value, locale, isBn]);
+
+  const todayStr = dayKey(new Date());
+
+  const monthLabel = isBn
+    ? `${MONTH_NAMES_BN[viewMonth] ?? ""} ${toBanglaDigits(viewYear)}`
+    : `${MONTH_NAMES_EN[viewMonth] ?? ""} ${viewYear}`;
 
   return (
     <div className={`space-y-1.5 ${className}`}>
@@ -98,58 +203,311 @@ export function DatePickerField({
               </span>
             ) : null}
           </label>
-          {formattedPreview ? (
-            <span className="truncate rounded-md bg-[var(--color-primary)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--color-primary)]">
-              📅 {formattedPreview}
-            </span>
-          ) : null}
         </div>
       ) : null}
 
-      <div
-        onClick={handleContainerClick}
-        className={`relative flex min-h-[46px] cursor-pointer items-center rounded-xl border bg-white px-3.5 py-1.5 shadow-xs transition-all ${
-          error
-            ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
-            : "border-[var(--color-border)] hover:border-[var(--color-primary)]/60 focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20"
-        }`}
-      >
-        <span className="mr-2.5 text-lg text-[var(--color-fg-muted)] select-none">
-          🗓️
-        </span>
+      <div className="relative">
+        {/* Hidden Input for Form & Server Actions */}
+        <input type="hidden" id={inputId} name={name} value={value ?? ""} />
 
-        <input
-          ref={inputRef}
-          id={inputId}
-          name={name}
-          type="date"
-          required={required}
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          min={min}
-          max={max}
-          className="w-full cursor-pointer bg-transparent text-base font-medium text-[var(--color-fg)] outline-none"
-        />
+        {/* Custom Calendar Trigger Button */}
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => (open ? close() : openDropdown())}
+          className={`flex min-h-[42px] w-full items-center justify-between gap-2.5 rounded-xl border bg-white px-3.5 py-2 text-left text-sm transition-all outline-none cursor-pointer ${
+            error
+              ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
+              : open
+                ? "border-gray-400 ring-2 ring-gray-200 shadow-2xs"
+                : "border-gray-200/90 hover:border-gray-300 shadow-2xs"
+          }`}
+        >
+          <div className="flex items-center gap-2.5 truncate">
+            <span className="text-base select-none">🗓️</span>
+            <span className="truncate font-medium text-gray-800">
+              {formattedDisplay}
+            </span>
+          </div>
+
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            className={`size-4 shrink-0 text-gray-400 transition-transform duration-150 ${
+              open ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m5 7.5 5 5 5-5" />
+          </svg>
+        </button>
+
+        {open ? (
+          <>
+            {/* Click-away backdrop */}
+            <div
+              className="fixed inset-0 z-40 bg-transparent"
+              onClick={close}
+              aria-hidden="true"
+            />
+
+            {/* Floating Calendar Popover */}
+            <div
+              role="dialog"
+              aria-label={label ?? "Calendar"}
+              className="absolute left-0 top-full mt-1.5 w-full min-w-[280px] max-w-xs z-50 rounded-2xl border border-gray-200 bg-white p-3.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+            >
+              {viewMode === "monthYear" ? (
+                /* Year & Month Selection Mode */
+                <div className="space-y-3">
+                  {/* Mode Header */}
+                  <div className="flex items-center justify-between pb-2.5 border-b border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("days")}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-gray-900 rounded-lg px-2 py-1 hover:bg-gray-100 transition-colors cursor-pointer"
+                    >
+                      <span>←</span>
+                      <span>{isBn ? "ক্যালেন্ডার" : "Calendar"}</span>
+                    </button>
+                    <span className="text-xs font-black uppercase tracking-wider text-gray-400">
+                      {isBn ? "বছর ও মাস" : "Year & Month"}
+                    </span>
+                  </div>
+
+                  {/* Year Jumper & Year Pills */}
+                  <div className="space-y-1.5">
+                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                      {isBn ? "বছর নির্বাচন:" : "Select Year:"}
+                    </div>
+                    <div className="flex items-center justify-between gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setViewYear((y) => y - 1)}
+                        aria-label="Previous year"
+                        className="flex size-7 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        ◀
+                      </button>
+                      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+                        {[viewYear - 2, viewYear - 1, viewYear, viewYear + 1, viewYear + 2].map((y) => {
+                          const isCurYear = y === viewYear;
+                          return (
+                            <button
+                              key={y}
+                              type="button"
+                              onClick={() => setViewYear(y)}
+                              className={`rounded-full px-2.5 py-1 text-xs font-black transition-all cursor-pointer ${
+                                isCurYear
+                                  ? "bg-[#0f6b4a] text-white shadow-2xs scale-105"
+                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              }`}
+                            >
+                              {isBn ? toBanglaDigits(y) : y}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setViewYear((y) => y + 1)}
+                        aria-label="Next year"
+                        className="flex size-7 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        ▶
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 12-Months Grid */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                      {isBn ? "মাস নির্বাচন:" : "Select Month:"}
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(isBn ? MONTH_NAMES_BN : MONTH_NAMES_EN).map((mName, idx) => {
+                        const isCurMonth = idx === viewMonth;
+                        return (
+                          <button
+                            key={mName}
+                            type="button"
+                            onClick={() => {
+                              setViewMonth(idx);
+                              setViewMode("days");
+                            }}
+                            className={`rounded-xl px-2 py-2 text-xs font-bold transition-all text-center cursor-pointer ${
+                              isCurMonth
+                                ? "bg-[#e8f5ee] border border-emerald-300 text-[#0f6b4a] font-black shadow-2xs scale-102"
+                                : "bg-gray-50 text-gray-700 border border-gray-100 hover:bg-gray-100 hover:border-gray-200"
+                            }`}
+                          >
+                            {mName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Month-Year Footer */}
+                  <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        setViewYear(now.getFullYear());
+                        setViewMonth(now.getMonth());
+                        setViewMode("days");
+                      }}
+                      className="font-bold text-[#0f6b4a] hover:underline cursor-pointer"
+                    >
+                      {isBn ? "চলতি মাস" : "Current month"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("days")}
+                      className="font-bold text-gray-600 hover:text-gray-900 cursor-pointer"
+                    >
+                      {isBn ? "দিন বাছুন →" : "Pick day →"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Regular Calendar Days Mode */
+                <>
+                  {/* Month & Year Navigation Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                    <button
+                      type="button"
+                      onClick={handlePrevMonth}
+                      aria-label="Previous month"
+                      className="flex size-8 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
+                    >
+                      ◀
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("monthYear")}
+                      aria-label={isBn ? "বছর ও মাস পরিবর্তন করুন" : "Change year and month"}
+                      className="group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-black text-gray-900 hover:bg-emerald-50 hover:text-[#0f6b4a] transition-all cursor-pointer"
+                    >
+                      <span>{monthLabel}</span>
+                      <span className="text-[10px] text-gray-400 group-hover:text-[#0f6b4a]">
+                        ▾
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleNextMonth}
+                      aria-label="Next month"
+                      className="flex size-8 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
+                    >
+                      ▶
+                    </button>
+                  </div>
+
+                  {/* Weekdays Header */}
+                  <div className="grid grid-cols-7 gap-1 pt-2 pb-1 text-center text-xs font-bold text-gray-400 select-none">
+                    {(isBn ? WEEKDAYS_BN : WEEKDAYS_EN).map((d) => (
+                      <div key={d} className="py-1">
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Days Grid */}
+                  <div className="grid grid-cols-7 gap-1 pt-1">
+                    {Array.from({ length: startDayOffset }).map((_, i) => (
+                      <div key={`empty-${i}`} className="h-8 w-8" />
+                    ))}
+
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const dayNum = i + 1;
+                      const dateStr = formatYyyyMmDd(viewYear, viewMonth, dayNum);
+                      const isSelected = dateStr === value;
+                      const isToday = dateStr === todayStr;
+
+                      const isDisabled =
+                        (min && dateStr < min) || (max && dateStr > max);
+
+                      return (
+                        <button
+                          key={dateStr}
+                          type="button"
+                          disabled={Boolean(isDisabled)}
+                          onClick={() =>
+                            handleSelectDate(viewYear, viewMonth, dayNum)
+                          }
+                          className={`flex size-8 items-center justify-center rounded-xl text-xs font-bold transition-all select-none cursor-pointer ${
+                            isDisabled
+                              ? "opacity-25 cursor-not-allowed text-gray-400"
+                              : isSelected
+                                ? "bg-[#1a73e8] text-white shadow-xs scale-105"
+                                : isToday
+                                  ? "bg-blue-50 text-blue-700 font-extrabold hover:bg-blue-100"
+                                  : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          {isBn ? toBanglaDigits(dayNum) : dayNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Quick Today Button inside Calendar Footer */}
+                  <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        handleSelectDate(
+                          now.getFullYear(),
+                          now.getMonth(),
+                          now.getDate(),
+                        );
+                      }}
+                      className="font-bold text-blue-600 hover:underline cursor-pointer"
+                    >
+                      {isBn ? "আজকের দিন" : "Today"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={close}
+                      className="font-medium text-gray-500 hover:text-gray-900 cursor-pointer"
+                    >
+                      {isBn ? "বন্ধ করুন" : "Close"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </>
+        ) : null}
       </div>
 
       {showQuickPills ? (
-        <div className="flex items-center gap-2 pt-0.5">
-          <span className="text-xs text-[var(--color-fg-muted)]">
-            {locale === "bn" ? "দ্রুত বাছুন:" : "Quick pick:"}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-0.5">
+          <span className="text-xs text-gray-500">
+            {isBn ? "দ্রুত বাছুন:" : "Quick pick:"}
           </span>
           <button
             type="button"
             onClick={() => handleQuickSet("today")}
-            className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-fg)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/40 hover:text-[var(--color-primary)] transition-colors active:scale-95"
+            className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"
           >
-            {locale === "bn" ? "+ আজ" : "+ Today"}
+            {isBn ? "+ আজ" : "+ Today"}
           </button>
           <button
             type="button"
             onClick={() => handleQuickSet("yesterday")}
-            className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-fg)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/40 hover:text-[var(--color-primary)] transition-colors active:scale-95"
+            className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"
           >
-            {locale === "bn" ? "+ গতকাল" : "+ Yesterday"}
+            {isBn ? "+ গতকাল" : "+ Yesterday"}
           </button>
         </div>
       ) : null}

@@ -1,7 +1,34 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { JoinTripForm } from "@/components/JoinTripForm";
 import type { SupportedLocale } from "@/lib/format";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("joinByLink");
+  return {
+    title: t("title"),
+    description: t("subtitle"),
+    openGraph: {
+      title: `${t("title")} | Trip Hub`,
+      description: t("subtitle"),
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: "Trip Hub",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${t("title")} | Trip Hub`,
+      description: t("subtitle"),
+      images: ["/og-image.png"],
+    },
+  };
+}
 
 interface JoinTripByLinkPageProps {
   searchParams: Promise<{ error?: string }>;
@@ -30,7 +57,7 @@ export default async function JoinTripByLinkPage({
           {t("title")}
         </h1>
 
-        <p className="mt-1 text-sm text-[var(--color-fg-muted)]">
+        <p className="mt-1 text-sm text-neutral-400">
           {t("subtitle")}
         </p>
       </div>

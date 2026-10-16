@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { NewTripForm } from "@/components/NewTripForm";
 import type { SupportedLocale } from "@/lib/format";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("createTrip");
+  return {
+    title: t("title"),
+    description: t("subtitle"),
+  };
+}
 
 interface NewTripPageProps {
   searchParams: Promise<{ error?: string }>;
@@ -35,7 +44,7 @@ export default async function NewTripPage({ searchParams }: NewTripPageProps) {
           {t("title")}
         </h1>
 
-        <p className="mt-1 text-sm text-[var(--color-fg-muted)]">
+        <p className="mt-1 text-sm text-neutral-400">
           {t("subtitle")}
         </p>
       </div>
@@ -55,15 +64,16 @@ export default async function NewTripPage({ searchParams }: NewTripPageProps) {
         labels={{
           tripNameLabel: t("tripNameLabel"),
           tripNamePlaceholder: t("tripNamePlaceholder"),
+          yourNameLabel: t("yourNameLabel"),
+          yourNamePlaceholder: t("yourNamePlaceholder"),
+          friendsNamesLabel: t("friendsNamesLabel"),
+          friendsNamesPlaceholder: t("friendsNamesPlaceholder"),
+          friendsNamesHint: t("friendsNamesHint"),
+          moreDetailsToggle: t("moreDetailsToggle"),
           destinationLabel: t("destinationLabel"),
           destinationPlaceholder: t("destinationPlaceholder"),
           startDateLabel: t("startDateLabel"),
           endDateLabel: t("endDateLabel"),
-          yourNameLabel: t("yourNameLabel"),
-          yourNamePlaceholder: t("yourNamePlaceholder"),
-          emojiLabel: t("emojiLabel"),
-          pinLabel: t("pinLabel"),
-          pinHint: t("pinHint"),
           submitButton: t("submitButton"),
         }}
       />

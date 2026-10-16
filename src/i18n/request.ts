@@ -8,9 +8,10 @@ import {
 
 export default getRequestConfig(async () => {
   const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+  const cookieLocale =
+    cookieStore.get(LOCALE_COOKIE_NAME)?.value ||
+    cookieStore.get("NEXT_LOCALE")?.value;
 
-  // Strictly use cookie if valid, otherwise default to "bn" (never inspect Accept-Language)
   const locale = isSupportedLocale(cookieLocale)
     ? cookieLocale
     : DEFAULT_LOCALE;

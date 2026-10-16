@@ -58,14 +58,20 @@ export async function GET(
     locale: "bn",
   });
 
-  const fontPath = join(
-    process.cwd(),
-    "src",
-    "assets",
-    "fonts",
-    "NotoSansBengali-Regular.ttf",
-  );
-  const notoSansBengaliData = await readFile(fontPath);
+  let notoSansBengaliData: Buffer | null = null;
+  const candidateFontPaths = [
+    join(process.cwd(), "public", "fonts", "NotoSansBengali-Regular.ttf"),
+    join(process.cwd(), "src", "assets", "fonts", "NotoSansBengali-Regular.ttf"),
+  ];
+
+  for (const fontPath of candidateFontPaths) {
+    try {
+      notoSansBengaliData = await readFile(/*turbopackIgnore: true*/ fontPath);
+      if (notoSansBengaliData) break;
+    } catch {
+      // Continue to next candidate path
+    }
+  }
 
   const destinationText =
     summary.destination ?? summary.topVotedDestination ?? "বাংলাদেশ";
@@ -209,14 +215,16 @@ export async function GET(
     {
       width: 1200,
       height: 630,
-      fonts: [
-        {
-          name: "Noto Sans Bengali",
-          data: notoSansBengaliData,
-          style: "normal",
-          weight: 400,
-        },
-      ],
+      fonts: notoSansBengaliData
+        ? [
+            {
+              name: "Noto Sans Bengali",
+              data: notoSansBengaliData,
+              style: "normal",
+              weight: 400,
+            },
+          ]
+        : [],
     },
   );
 

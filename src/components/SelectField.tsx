@@ -28,6 +28,7 @@ export interface SelectFieldProps {
   disabled?: boolean;
   searchable?: boolean;
   searchPlaceholder?: string;
+  emojiMode?: boolean;
 }
 
 export function SelectField({
@@ -39,26 +40,26 @@ export function SelectField({
   label,
   required = false,
   error = null,
-  placeholder = "নির্বাচন করুন",
+  placeholder = "All options",
   options,
   className = "",
   helperText,
   icon,
   disabled = false,
   searchable = false,
-  searchPlaceholder = "খুঁজুন...",
+  searchPlaceholder = "Search...",
+  emojiMode,
 }: SelectFieldProps) {
   const generatedId = useId();
   const inputId = explicitId ?? generatedId;
-  const errorId = `${inputId}-error`;
-  const helpId = `${inputId}-help`;
   const listboxId = `${inputId}-listbox`;
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const optionsListRef = useRef<HTMLUListElement>(null);
 
-  // Works controlled (onChange provided) or uncontrolled (defaultValue or initial option)
+  // Controlled or uncontrolled
   const isControlled = value !== undefined;
   const [internal, setInternal] = useState(
     defaultValue ?? (options[0]?.value || ""),
@@ -123,7 +124,12 @@ export function SelectField({
   // Keyboard navigation on trigger button
   function handleTriggerKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
     if (disabled) return;
-    if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter" || e.key === " ") {
+    if (
+      e.key === "ArrowDown" ||
+      e.key === "ArrowUp" ||
+      e.key === "Enter" ||
+      e.key === " "
+    ) {
       e.preventDefault();
       openDropdown();
     }
@@ -158,10 +164,20 @@ export function SelectField({
     }
   }
 
-  const describedBy = error ? errorId : helperText ? helpId : undefined;
+  const isEmojiMode =
+    Boolean(emojiMode) ||
+    (options.length > 0 &&
+      options.every(
+        (o) => o.label.length <= 4 && !/[a-zA-Z0-9]/.test(o.label),
+      ));
 
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
+    <div
+      ref={containerRef}
+      className={`flex flex-col gap-1.5 ${
+        isEmojiMode ? "w-auto shrink-0" : ""
+      } ${className}`}
+    >
       {label ? (
         <label
           htmlFor={inputId}
@@ -187,137 +203,157 @@ export function SelectField({
           required={required}
         />
 
-        {/* Custom Trigger Button */}
-        <button
-          ref={triggerRef}
-          id={inputId}
-          type="button"
-          disabled={disabled}
-          onClick={() => (open ? close() : openDropdown())}
-          onKeyDown={handleTriggerKeyDown}
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          aria-controls={listboxId}
-          aria-describedby={describedBy}
-          className={`group flex min-h-[48px] w-full items-center justify-between gap-3 rounded-xl border bg-white px-3.5 py-2.5 text-left text-base transition-all outline-none ${
-            disabled
-              ? "cursor-not-allowed bg-[var(--color-surface-muted)] opacity-60 border-[var(--color-border)]"
-              : error
-                ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
-                : open
-                  ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/20 shadow-xs"
-                  : "border-[var(--color-border)] hover:border-[var(--color-primary)]/50 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 shadow-xs"
-          }`}
-        >
-          <div className="flex min-w-0 flex-1 items-center gap-2.5">
-            {icon ? (
-              <span className="shrink-0 text-[var(--color-fg-muted)] group-hover:text-[var(--color-primary)] transition-colors">
-                {icon}
-              </span>
-            ) : null}
-
-            {selectedOption ? (
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                {selectedOption.icon ? (
-                  <span className="shrink-0 text-lg leading-none">
-                    {selectedOption.icon}
-                  </span>
-                ) : null}
-                <span className="truncate font-semibold text-[var(--color-fg)]">
-                  {selectedOption.label}
-                </span>
-                {selectedOption.badge ? (
-                  <span className="shrink-0 rounded-md bg-[var(--color-surface-muted)] px-1.5 py-0.5 text-2xs font-bold text-[var(--color-fg-muted)]">
-                    {selectedOption.badge}
-                  </span>
-                ) : null}
-              </div>
-            ) : (
-              <span className="truncate text-[var(--color-fg-muted)] font-normal">
-                {placeholder}
-              </span>
-            )}
-          </div>
-
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            className={`size-4 shrink-0 text-[var(--color-fg-muted)] transition-transform duration-200 ${
-              open ? "rotate-180 text-[var(--color-primary)]" : ""
+        {isEmojiMode ? (
+          /* Compact Emoji Trigger Button (takes exact width of emoji) */
+          <button
+            ref={triggerRef}
+            id={inputId}
+            type="button"
+            disabled={disabled}
+            onClick={() => (open ? close() : openDropdown())}
+            onKeyDown={handleTriggerKeyDown}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            aria-controls={listboxId}
+            className={`flex min-h-[40px] sm:min-h-[44px] w-10 sm:w-[48px] min-w-10 sm:min-w-[48px] max-w-10 sm:max-w-[48px] items-center justify-center rounded-2xl border bg-white p-1 text-center transition-all outline-none cursor-pointer ${
+              disabled
+                ? "cursor-not-allowed bg-gray-100 opacity-60 border-gray-200"
+                : error
+                  ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
+                  : open
+                    ? "border-emerald-500 ring-2 ring-emerald-100 shadow-2xs scale-102"
+                    : "border-gray-200/90 hover:border-emerald-300 shadow-2xs hover:bg-emerald-50/20"
             }`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
           >
-            <path d="m5 7.5 5 5 5-5" />
-          </svg>
-        </button>
+            <span className="text-xl sm:text-2xl leading-none select-none">
+              {selectedOption?.label ?? current ?? "👤"}
+            </span>
+          </button>
+        ) : (
+          /* Custom Trigger Button (Matches clean screenshot 2 style) */
+          <button
+            ref={triggerRef}
+            id={inputId}
+            type="button"
+            disabled={disabled}
+            onClick={() => (open ? close() : openDropdown())}
+            onKeyDown={handleTriggerKeyDown}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            aria-controls={listboxId}
+            className={`flex min-h-[42px] w-full items-center justify-between gap-2.5 rounded-xl border bg-white px-3.5 py-2 text-left text-sm transition-all outline-none cursor-pointer ${
+              disabled
+                ? "cursor-not-allowed bg-gray-100 opacity-60 border-gray-200"
+                : error
+                  ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
+                  : open
+                    ? "border-gray-400 ring-2 ring-gray-200 shadow-2xs"
+                    : "border-gray-200/90 hover:border-gray-300 shadow-2xs"
+            }`}
+          >
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              {icon ? (
+                <span className="shrink-0 text-gray-500">{icon}</span>
+              ) : null}
+
+              {selectedOption ? (
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  {selectedOption.icon ? (
+                    <span className="shrink-0 text-base leading-none">
+                      {selectedOption.icon}
+                    </span>
+                  ) : null}
+                  <span className="truncate font-medium text-gray-800">
+                    {selectedOption.label}
+                  </span>
+                  {selectedOption.badge ? (
+                    <span className="shrink-0 text-xs text-gray-400">
+                      ({selectedOption.badge})
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="truncate text-gray-500 font-normal">
+                  {placeholder}
+                </span>
+              )}
+            </div>
+
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 20 20"
+              className={`size-4 shrink-0 text-gray-400 transition-transform duration-150 ${
+                open ? "rotate-180" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m5 7.5 5 5 5-5" />
+            </svg>
+          </button>
+        )}
 
         {open ? (
           <>
-            {/* Backdrop: Darkened bottom sheet on mobile, click-away transparent on desktop */}
+            {/* Transparent backdrop for outside-click dismiss */}
             <div
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs sm:bg-transparent sm:backdrop-blur-none"
+              className="fixed inset-0 z-40 bg-transparent"
               onClick={close}
               aria-hidden="true"
             />
 
-            {/* Dropdown Container: Bottom sheet on mobile (<640px), floating popover on desktop (>=640px) */}
+            {isEmojiMode ? (
+              /* Emoji Grid Dropdown Popover */
+              <div
+                role="dialog"
+                aria-label={label ?? "Emoji picker"}
+                className="absolute left-0 top-full mt-1.5 z-50 w-max min-w-[190px] max-w-[230px] rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+              >
+                <div className="grid grid-cols-4 gap-1.5 p-1">
+                  {options.map((opt) => {
+                    const isSelected = opt.value === current;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => handleSelect(opt.value)}
+                        className={`flex size-10 items-center justify-center rounded-xl text-xl select-none transition-transform hover:scale-115 active:scale-95 cursor-pointer ${
+                          isSelected
+                            ? "bg-[#e8f5ee] border-2 border-emerald-400 shadow-2xs scale-105"
+                            : "hover:bg-gray-100"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* Dropdown Menu (Exact match to Screenshot 2) */
             <div
               role="dialog"
               aria-label={label ?? placeholder}
-              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl animate-in slide-in-from-bottom duration-200 sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-1.5 sm:w-full sm:min-w-[240px] sm:rounded-2xl sm:border sm:p-2 sm:pb-2 sm:shadow-xl sm:animate-in sm:fade-in sm:zoom-in-95"
+              className="absolute left-0 top-full mt-1.5 w-full min-w-[200px] z-50 rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
             >
-              {/* Mobile Sheet Handle and Header */}
-              <div className="mb-2 flex items-center justify-between px-1 pb-2 border-b border-[var(--color-border)] sm:hidden">
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-10 rounded-full bg-[var(--color-border)] mx-auto absolute left-1/2 -top-3 -translate-x-1/2 sm:hidden" />
-                  <p className="text-sm font-bold text-[var(--color-fg)]">
-                    {label ?? placeholder}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={close}
-                  aria-label="Close"
-                  className="flex size-8 items-center justify-center rounded-full text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-muted)] transition-colors"
-                >
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="size-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  >
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
               {/* Optional Search Input */}
               {searchable && options.length > 5 ? (
-                <div className="mb-2 px-1">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-fg-muted)]">
-                      🔍
-                    </span>
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setHighlightedIndex(0);
-                      }}
-                      onKeyDown={handleListKeyDown}
-                      placeholder={searchPlaceholder}
-                      className="min-h-[38px] w-full rounded-xl border border-[var(--color-border)] bg-white pl-8 pr-3 py-1.5 text-sm text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                    />
-                  </div>
+                <div className="px-2 pb-1.5 border-b border-gray-100 mb-1">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setHighlightedIndex(0);
+                    }}
+                    onKeyDown={handleListKeyDown}
+                    placeholder={searchPlaceholder}
+                    className="min-h-[34px] w-full rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-1 text-xs text-gray-800 outline-none focus:border-blue-500 focus:bg-white"
+                  />
                 </div>
               ) : null}
 
@@ -329,11 +365,11 @@ export function SelectField({
                 aria-label={label ?? placeholder}
                 tabIndex={-1}
                 onKeyDown={handleListKeyDown}
-                className="max-h-[50vh] sm:max-h-60 overflow-y-auto space-y-1 p-0.5 no-scrollbar"
+                className="max-h-60 overflow-y-auto space-y-0.5 no-scrollbar"
               >
                 {filteredOptions.length === 0 ? (
-                  <li className="py-6 text-center text-xs font-medium text-[var(--color-fg-muted)]">
-                    কোনো ফলাফল পাওয়া যায়নি
+                  <li className="py-4 text-center text-xs font-medium text-gray-400">
+                    No results found
                   </li>
                 ) : (
                   filteredOptions.map((opt, idx) => {
@@ -348,53 +384,33 @@ export function SelectField({
                         aria-disabled={opt.disabled}
                         onClick={() => handleSelect(opt.value)}
                         onMouseEnter={() => setHighlightedIndex(idx)}
-                        className={`flex min-h-[44px] cursor-pointer select-none items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm transition-all ${
+                        className={`flex min-h-[36px] cursor-pointer select-none items-center justify-between gap-2.5 px-4 py-2 text-sm transition-colors ${
                           opt.disabled
-                            ? "cursor-not-allowed opacity-40"
+                            ? "cursor-not-allowed opacity-40 text-gray-400"
                             : isSelected
-                              ? "bg-[var(--color-primary-light)]/40 text-[var(--color-primary)] font-bold shadow-2xs"
+                              ? "bg-[#1a73e8] text-white font-medium"
                               : isHighlighted
-                                ? "bg-[var(--color-surface-muted)] text-[var(--color-fg)]"
-                                : "text-[var(--color-fg)] hover:bg-[var(--color-surface-muted)]"
+                                ? "bg-gray-100 text-gray-900"
+                                : "text-gray-800 hover:bg-gray-50"
                         }`}
                       >
-                        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
                           {opt.icon ? (
-                            <span className="shrink-0 text-xl leading-none">
+                            <span className="shrink-0 text-base leading-none">
                               {opt.icon}
                             </span>
                           ) : null}
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="truncate">{opt.label}</span>
-                              {opt.badge ? (
-                                <span className="shrink-0 rounded-md bg-[var(--color-surface-muted)] px-1.5 py-0.5 text-2xs font-semibold text-[var(--color-fg-muted)]">
-                                  {opt.badge}
-                                </span>
-                              ) : null}
-                            </div>
-                            {opt.description ? (
-                              <p className="truncate text-xs font-normal text-[var(--color-fg-muted)]">
-                                {opt.description}
-                              </p>
-                            ) : null}
-                          </div>
+                          <span className="truncate">{opt.label}</span>
                         </div>
 
-                        {isSelected ? (
-                          <svg
-                            aria-hidden="true"
-                            viewBox="0 0 20 20"
-                            className="size-4 shrink-0 text-[var(--color-primary)]"
-                            fill="currentColor"
+                        {opt.badge ? (
+                          <span
+                            className={`shrink-0 text-xs ${
+                              isSelected ? "text-blue-100" : "text-gray-400"
+                            }`}
                           >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                            ({opt.badge})
+                          </span>
                         ) : null}
                       </li>
                     );
@@ -402,13 +418,13 @@ export function SelectField({
                 )}
               </ul>
             </div>
-          </>
-        ) : null}
+          )}
+        </>
+      ) : null}
       </div>
 
       {error ? (
         <p
-          id={errorId}
           role="alert"
           className="flex items-center gap-1 text-xs font-medium text-red-600"
         >
@@ -416,9 +432,7 @@ export function SelectField({
           <span>{error}</span>
         </p>
       ) : helperText ? (
-        <p id={helpId} className="text-xs text-[var(--color-fg-muted)]">
-          {helperText}
-        </p>
+        <p className="text-xs text-[var(--color-fg-muted)]">{helperText}</p>
       ) : null}
     </div>
   );

@@ -116,7 +116,7 @@ export function JoinTripForm({ locale, labels }: JoinTripFormProps) {
         type="submit"
         variant="primary"
         disabled={submitting}
-        className="w-full min-h-[50px] rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all"
+        className="w-full min-h-[50px] text-base font-extrabold transition-all"
       >
         {submitting
           ? isBn

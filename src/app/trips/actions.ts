@@ -38,6 +38,7 @@ import {
   expenseFormSchema,
   itineraryItemFormSchema,
   joinTripFormSchema,
+  MEMBER_EMOJIS,
   reclaimMemberFormSchema,
   renameMemberFormSchema,
   settlementFormSchema,
@@ -61,7 +62,8 @@ export async function createTripAction(formData: FormData): Promise<void> {
     startDate: formData.get("startDate") ?? undefined,
     endDate: formData.get("endDate") ?? undefined,
     creatorName: formData.get("creatorName") ?? "",
-    creatorEmoji: formData.get("creatorEmoji") ?? "🎒",
+    friendsNames: formData.get("friendsNames") ?? undefined,
+    creatorEmoji: formData.get("creatorEmoji") ?? undefined,
     creatorPin: formData.get("creatorPin") ?? undefined,
   });
 
@@ -79,6 +81,7 @@ export async function createTripAction(formData: FormData): Promise<void> {
     startDate,
     endDate,
     creatorName,
+    friendsNames,
     creatorEmoji,
     creatorPin,
   } = parsed.data;
@@ -86,6 +89,32 @@ export async function createTripAction(formData: FormData): Promise<void> {
   const slug = generateTripSlug();
   const nameKey = normalizeNameKey(creatorName);
   const pinHash = creatorPin ? hashPin(creatorPin) : null;
+
+  // Pick random emoji for creator if not provided
+  const chosenCreatorEmoji =
+    creatorEmoji && creatorEmoji.trim().length > 0 && creatorEmoji !== "🎒"
+      ? creatorEmoji
+      : (MEMBER_EMOJIS[Math.floor(Math.random() * MEMBER_EMOJIS.length)] ?? "🎒");
+
+  // Parse and deduplicate friends' names (up to 30)
+  const rawFriends = friendsNames ?? "";
+  const friendLines = rawFriends
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  const seenNameKeys = new Set<string>();
+  seenNameKeys.add(nameKey); // cannot duplicate creator's name
+
+  const validatedFriends: string[] = [];
+  for (const line of friendLines) {
+    if (line.length > 40) continue;
+    const fKey = normalizeNameKey(line);
+    if (!fKey || seenNameKeys.has(fKey)) continue;
+    seenNameKeys.add(fKey);
+    validatedFriends.push(line);
+    if (validatedFriends.length >= 30) break;
+  }
 
   const result = await db.$transaction(async (tx) => {
     const trip = await tx.trip.create({
@@ -103,7 +132,7 @@ export async function createTripAction(formData: FormData): Promise<void> {
         tripId: trip.id,
         displayName: creatorName.trim(),
         nameKey,
-        emoji: creatorEmoji,
+        emoji: chosenCreatorEmoji,
         isGuest: false,
         pinHash,
       },
@@ -113,6 +142,24 @@ export async function createTripAction(formData: FormData): Promise<void> {
       where: { id: trip.id },
       data: { creatorMemberId: creator.id },
     });
+
+    // Pre-add friends with rotated/random emojis
+    let emojiIdx = 1;
+    for (const friendName of validatedFriends) {
+      const friendEmoji =
+        MEMBER_EMOJIS[emojiIdx % MEMBER_EMOJIS.length] ?? "🎒";
+      emojiIdx++;
+      await tx.member.create({
+        data: {
+          tripId: trip.id,
+          displayName: friendName,
+          nameKey: normalizeNameKey(friendName),
+          emoji: friendEmoji,
+          isGuest: false,
+          pinHash: null,
+        },
+      });
+    }
 
     await tx.activityLog.create({
       data: {
@@ -125,6 +172,7 @@ export async function createTripAction(formData: FormData): Promise<void> {
           name: updatedTrip.name,
           destination: updatedTrip.destination,
           displayName: creator.displayName,
+          preAddedFriendsCount: validatedFriends.length,
         },
       },
     });
@@ -201,6 +249,42 @@ export async function joinTripAction(formData: FormData): Promise<void> {
   });
 
   if (existing) {
+    // If existing member is an unclaimed guest with no active device sessions and no PIN, seamlessly claim it!
+    const activeSessionsCount = await db.memberSession.count({
+      where: { memberId: existing.id },
+    });
+
+    if (existing.isGuest && activeSessionsCount === 0 && !existing.pinHash) {
+      const pinHash = parsed.data.pin ? hashPin(parsed.data.pin) : null;
+      await db.member.update({
+        where: { id: existing.id },
+        data: {
+          isGuest: false,
+          emoji: parsed.data.emoji ?? existing.emoji,
+          ...(pinHash ? { pinHash } : {}),
+        },
+      });
+
+      await createMemberDeviceSession(existing.id, trip.id);
+
+      await db.activityLog.create({
+        data: {
+          tripId: trip.id,
+          memberId: existing.id,
+          entityType: "member",
+          entityId: existing.id,
+          action: "join",
+          after: {
+            displayName: existing.displayName,
+            claimedFromGuest: true,
+          },
+        },
+      }).catch(() => undefined);
+
+      revalidatePath(`/trips/${trip.slug}`);
+      redirect(`/trips/${trip.slug}`);
+    }
+
     redirect(`/trips/${trip.slug}?error=duplicate_name`);
   }
 
@@ -275,6 +359,124 @@ export async function reclaimMemberAction(formData: FormData): Promise<void> {
   }
 
   await createMemberDeviceSession(member.id, trip.id);
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+/**
+ * One-tap claiming for pre-added members who don't have a PIN set yet.
+ */
+export async function claimMemberAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const memberId = String(formData.get("memberId") ?? "").trim();
+
+  if (!slug || !memberId) {
+    redirect("/trips/join?error=invalid_input");
+  }
+
+  const trip = await db.trip.findUnique({
+    where: { slug },
+  });
+
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const member = await db.member.findUnique({
+    where: { id: memberId },
+  });
+
+  if (!member || member.tripId !== trip.id) {
+    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  }
+
+  if (member.pinHash) {
+    // Member has PIN protection, must use reclaim with PIN
+    redirect(`/trips/${trip.slug}?reclaim=${member.id}`);
+  }
+
+  // If claiming a pre-added guest profile, activate it into a full member
+  if (member.isGuest) {
+    await db.member.update({
+      where: { id: member.id },
+      data: { isGuest: false },
+    });
+  }
+
+  await createMemberDeviceSession(member.id, trip.id);
+
+  await db.activityLog.create({
+    data: {
+      tripId: trip.id,
+      memberId: member.id,
+      entityType: "member",
+      entityId: member.id,
+      action: "claim",
+      after: {
+        displayName: member.displayName,
+        claimedFromGuest: member.isGuest,
+      },
+    },
+  }).catch(() => undefined);
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+/**
+ * Allows the current logged-in user to update their name, emoji, or set an optional PIN.
+ */
+export async function updateMyProfileAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const displayName = String(formData.get("displayName") ?? "").trim();
+  const emoji = String(formData.get("emoji") ?? "").trim() || "🎒";
+  const pin = String(formData.get("pin") ?? "").trim();
+
+  const trip = await db.trip.findUnique({ where: { slug } });
+  if (!trip) redirect("/trips/join?error=trip_not_found");
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) redirect(`/trips/${trip.slug}`);
+
+  if (displayName.length < 1 || displayName.length > 40) {
+    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  }
+
+  const newNameKey = normalizeNameKey(displayName);
+  if (newNameKey !== currentMember.nameKey) {
+    const existing = await db.member.findUnique({
+      where: { tripId_nameKey: { tripId: trip.id, nameKey: newNameKey } },
+    });
+    if (existing) {
+      redirect(`/trips/${trip.slug}?error=duplicate_name`);
+    }
+  }
+
+  let pinHash = currentMember.pinHash;
+  if (pin) {
+    const ascii = banglaToAsciiDigits(pin);
+    if (!/^\d{4,6}$/.test(ascii)) {
+      redirect(`/trips/${trip.slug}?error=invalid_pin`);
+    }
+    pinHash = hashPin(ascii);
+  }
+
+  await db.member.update({
+    where: { id: currentMember.id },
+    data: {
+      displayName,
+      nameKey: newNameKey,
+      emoji,
+      pinHash,
+    },
+  });
+
   revalidatePath(`/trips/${trip.slug}`);
   redirect(`/trips/${trip.slug}`);
 }
@@ -456,6 +658,104 @@ export async function renameMemberAction(formData: FormData): Promise<void> {
           emoji: updated.emoji,
         },
       },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+export async function deleteMemberAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const memberId = String(formData.get("memberId") ?? "").trim();
+
+  if (!slug || !memberId) {
+    redirect(`/trips/${encodeURIComponent(slug)}?error=invalid_input`);
+  }
+
+  const trip = await db.trip.findUnique({
+    where: { slug },
+  });
+
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember || currentMember.id !== trip.creatorMemberId) {
+    redirect(`/trips/${trip.slug}?error=not_creator`);
+  }
+
+  const targetMember = await db.member.findUnique({
+    where: { id: memberId },
+  });
+
+  if (!targetMember || targetMember.tripId !== trip.id) {
+    redirect(`/trips/${trip.slug}`);
+  }
+
+  if (targetMember.id === trip.creatorMemberId) {
+    redirect(`/trips/${trip.slug}?error=cannot_delete_creator`);
+  }
+
+  // Safety check: Ensure the member has NO expenses or settlements recorded
+  const hasExpenses = await db.expense.count({
+    where: {
+      OR: [{ paidById: targetMember.id }, { createdById: targetMember.id }],
+    },
+  });
+  const hasShares = await db.expenseShare.count({
+    where: { memberId: targetMember.id },
+  });
+  const hasSettlements = await db.settlement.count({
+    where: {
+      OR: [
+        { fromMemberId: targetMember.id },
+        { toMemberId: targetMember.id },
+        { createdById: targetMember.id },
+      ],
+    },
+  });
+
+  if (hasExpenses > 0 || hasShares > 0 || hasSettlements > 0) {
+    redirect(`/trips/${trip.slug}?error=member_has_transactions`);
+  }
+
+  await db.$transaction(async (tx) => {
+    // Delete device sessions
+    await tx.memberSession.deleteMany({
+      where: { memberId: targetMember.id },
+    });
+
+    // Delete votes
+    await tx.vote.deleteMany({
+      where: { memberId: targetMember.id },
+    });
+
+    // Log deletion activity
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "member",
+        entityId: targetMember.id,
+        action: "delete",
+        before: {
+          displayName: targetMember.displayName,
+          emoji: targetMember.emoji,
+        },
+      },
+    });
+
+    // Delete member record
+    await tx.member.delete({
+      where: { id: targetMember.id },
     });
   });
 
@@ -659,6 +959,15 @@ export async function saveExpenseAction(formData: FormData): Promise<void> {
       redirect(`/trips/${trip.slug}?error=invalid_input`);
     }
 
+    // Security check: Only the payer, author, or trip creator can edit this expense
+    const isPayer = currentMember.id === existingExpense.paidById;
+    const isAuthor = currentMember.id === existingExpense.createdById;
+    const isCreator = currentMember.id === trip.creatorMemberId;
+
+    if (!isPayer && !isAuthor && !isCreator) {
+      redirect(`/trips/${trip.slug}?error=unauthorized`);
+    }
+
     await db.$transaction(async (tx) => {
       await tx.expenseShare.deleteMany({
         where: { expenseId: existingExpense.id },
@@ -788,6 +1097,15 @@ export async function deleteExpenseAction(formData: FormData): Promise<void> {
 
   if (!existing || existing.tripId !== trip.id || existing.deletedAt) {
     redirect(`/trips/${trip.slug}`);
+  }
+
+  // Security check: Only the payer, the person who logged the expense, or the trip creator can delete it
+  const isPayer = currentMember.id === existing.paidById;
+  const isAuthor = currentMember.id === existing.createdById;
+  const isCreator = currentMember.id === trip.creatorMemberId;
+
+  if (!isPayer && !isAuthor && !isCreator) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
   }
 
   const deletedAt = new Date();
@@ -935,6 +1253,15 @@ export async function deleteSettlementAction(
 
   if (!existing || existing.tripId !== trip.id || existing.deletedAt) {
     redirect(`/trips/${trip.slug}`);
+  }
+
+  // Security check: Only the payer, receiver, or trip creator can delete this settlement
+  const isPayer = currentMember.id === existing.fromMemberId;
+  const isReceiver = currentMember.id === existing.toMemberId;
+  const isCreator = currentMember.id === trip.creatorMemberId;
+
+  if (!isPayer && !isReceiver && !isCreator) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
   }
 
   const deletedAt = new Date();

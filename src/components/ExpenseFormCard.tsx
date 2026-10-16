@@ -6,6 +6,7 @@ import { saveExpenseAction } from "@/app/trips/actions";
 import { Button } from "@/components/Button";
 import { DatePickerField } from "@/components/DatePickerField";
 import { SelectField } from "@/components/SelectField";
+import { formatTaka, type SupportedLocale } from "@/lib/format";
 import type {
   ExpenseCategoryValue,
   MemberInput,
@@ -62,6 +63,11 @@ export interface ExpenseFormLabels {
   duplicateWarningBody: string;
   confirmDuplicateLabel: string;
   categories: Record<ExpenseCategoryValue, string>;
+  manualFormToggle?: string;
+  manualFormClose?: string;
+  moreOptionsToggle?: string;
+  whoPaidLabel?: string;
+  whoSharedLabel?: string;
 }
 
 interface ExpenseFormCardProps {
@@ -72,6 +78,7 @@ interface ExpenseFormCardProps {
   editingExpense: EditableExpenseData | null;
   existingExpenses: ExistingExpenseSummary[];
   forceShowDuplicateConfirm?: boolean;
+  locale?: SupportedLocale;
   labels: ExpenseFormLabels;
 }
 
@@ -90,6 +97,7 @@ function normalizeTitle(s: string): string {
   return s.normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+
 export function ExpenseFormCard({
   slug,
   members,
@@ -98,8 +106,21 @@ export function ExpenseFormCard({
   editingExpense,
   existingExpenses,
   forceShowDuplicateConfirm = false,
+  locale = "bn",
   labels,
 }: ExpenseFormCardProps) {
+  const [isManualOpen, setIsManualOpen] = useState<boolean>(
+    Boolean(editingExpense),
+  );
+  const [showMoreOptions, setShowMoreOptions] = useState<boolean>(
+    Boolean(
+      editingExpense &&
+        (editingExpense.splitType !== "EQUAL" ||
+          editingExpense.category !== "FOOD" ||
+          editingExpense.note),
+    ),
+  );
+
   const [titleStr, setTitleStr] = useState<string>(editingExpense?.title ?? "");
   const [splitType, setSplitType] = useState<SplitTypeValue>(
     editingExpense?.splitType ?? "EQUAL",
@@ -155,8 +176,14 @@ export function ExpenseFormCard({
     );
   }
 
-  function selectAllParticipants(): void {
-    setSelectedIds(members.map((m) => m.id));
+  const isAllSelected = selectedIds.length === members.length;
+
+  function handleToggleAll(): void {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(members.map((m) => m.id));
+    }
   }
 
   const totalAmount = Math.trunc(toAsciiNumber(amountStr));
@@ -164,17 +191,23 @@ export function ExpenseFormCard({
   // Field validation messages
   const titleError =
     touched.title && titleStr.trim().length === 0
-      ? "খরচের বিবরণ লিখুন (Title is required)."
+      ? locale === "bn"
+        ? "খরচের বিবরণ লিখুন।"
+        : "Title is required."
       : null;
 
   const amountError =
     touched.amount && (amountStr.trim().length === 0 || totalAmount <= 0)
-      ? "সঠিক টাকার পরিমাণ দিন (Amount must be a positive integer)."
+      ? locale === "bn"
+        ? "সঠিক টাকার পরিমাণ দিন।"
+        : "Amount must be a positive integer."
       : null;
 
   const participantsError =
     splitType === "EQUAL" && selectedIds.length === 0
-      ? "কমপক্ষে একজন অংশীদার নির্বাচন করুন (Select at least one participant)."
+      ? locale === "bn"
+        ? "কমপক্ষে একজন সদস্য নির্বাচন করুন।"
+        : "Select at least one participant."
       : null;
 
   // Validation helpers for EXACT split
@@ -207,7 +240,8 @@ export function ExpenseFormCard({
         }) ?? null
       : null;
 
-  const showDuplicateWarning = Boolean(matchingDuplicate) || forceShowDuplicateConfirm;
+  const showDuplicateWarning =
+    Boolean(matchingDuplicate) || forceShowDuplicateConfirm;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     setTouched({ title: true, amount: true });
@@ -223,12 +257,32 @@ export function ExpenseFormCard({
     }
   }
 
+  // Collapsed state: single clean button
+  if (!isManualOpen && !editingExpense) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsManualOpen(true)}
+        className="w-full flex min-h-[50px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-3 px-4 text-sm font-bold text-[var(--color-primary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-muted)] transition-all shadow-xs active:scale-[0.99]"
+      >
+        <span>✍️</span>
+        <span>
+          {labels.manualFormToggle ??
+            (locale === "bn"
+              ? "ফর্ম ব্যবহার করে খরচ লিখুন"
+              : "Add expense using form")}
+        </span>
+      </button>
+    );
+  }
+
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs sm:p-6">
+    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs sm:p-6 animate-in fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between gap-2 border-b border-[var(--color-border)] pb-3">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-lg">
-            {editingExpense ? "✏️" : "➕"}
+            {editingExpense ? "✏️" : "✍️"}
           </span>
           <h2 className="text-lg font-bold text-[var(--color-fg)]">
             {editingExpense ? labels.editExpenseTitle : labels.addExpenseTitle}
@@ -242,17 +296,30 @@ export function ExpenseFormCard({
           >
             {labels.cancelEdit}
           </Link>
-        ) : null}
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsManualOpen(false)}
+            className="rounded-lg bg-[var(--color-surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--color-fg-muted)] hover:bg-[var(--color-border)] transition-colors"
+          >
+            {labels.manualFormClose ??
+              (locale === "bn" ? "✕ বন্ধ করুন" : "✕ Close")}
+          </button>
+        )}
       </div>
 
-      <form action={saveExpenseAction} onSubmit={handleSubmit} className="space-y-4">
+      <form
+        action={saveExpenseAction}
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
         <input type="hidden" name="slug" value={slug} />
         {editingExpense ? (
           <input type="hidden" name="expenseId" value={editingExpense.id} />
         ) : null}
         <input type="hidden" name="splitType" value={splitType} />
 
-        {/* Title Input (Required) */}
+        {/* 1. What for (Title) */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label
@@ -262,7 +329,9 @@ export function ExpenseFormCard({
               {labels.titleLabel}
               <span className="ml-1 font-bold text-red-500">*</span>
             </label>
-            <span className="text-xs text-[var(--color-fg-muted)]">আবশ্যক</span>
+            <span className="text-xs text-neutral-400">
+              {locale === "bn" ? "আবশ্যক" : "Required"}
+            </span>
           </div>
 
           <input
@@ -290,7 +359,7 @@ export function ExpenseFormCard({
           ) : null}
         </div>
 
-        {/* Amount */}
+        {/* 2. Amount */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label
@@ -300,7 +369,9 @@ export function ExpenseFormCard({
               {labels.amountLabel}
               <span className="ml-1 font-bold text-red-500">*</span>
             </label>
-            <span className="text-xs text-[var(--color-fg-muted)]">পূর্ণ টাকা</span>
+            <span className="text-xs text-neutral-400">
+              {locale === "bn" ? "পূর্ণ টাকা" : "Whole BDT"}
+            </span>
           </div>
 
           <div className="relative">
@@ -317,7 +388,7 @@ export function ExpenseFormCard({
               onChange={(e) => setAmountStr(e.target.value)}
               onBlur={() => setTouched((p) => ({ ...p, amount: true }))}
               placeholder={labels.amountPlaceholder}
-              className={`min-h-[46px] w-full rounded-xl border bg-white pl-8 pr-3.5 py-2 text-base font-bold text-[var(--color-primary)] shadow-xs transition-all outline-none ${
+              className={`min-h-[46px] w-full rounded-xl border bg-white pl-10 pr-3.5 py-2 text-base font-bold text-[var(--color-primary)] shadow-xs transition-all outline-none ${
                 amountError
                   ? "border-red-400 bg-red-50/20 ring-2 ring-red-400/20"
                   : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
@@ -333,63 +404,45 @@ export function ExpenseFormCard({
           ) : null}
         </div>
 
-        {/* 5 Expense Category Options */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="exp-category"
-              className="block text-sm font-semibold text-[var(--color-fg)]"
-            >
-              {labels.categoryLabel}
-            </label>
-            <span className="text-xs text-[var(--color-fg-muted)]">
-              ৫টি অপশন থেকে বেছে নিন
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {(Object.keys(labels.categories) as ExpenseCategoryValue[]).map(
-              (cat) => {
-                const isSelected = categoryVal === cat;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategoryVal(cat)}
-                    className={`flex min-h-[46px] items-center justify-center rounded-xl border px-3 py-2 text-xs font-bold transition-all text-center ${
-                      isSelected
-                        ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)] shadow-xs scale-[1.02]"
-                        : "border-[var(--color-border)] bg-white text-[var(--color-fg)] hover:bg-[var(--color-surface-muted)]"
-                    }`}
-                  >
-                    <span>{labels.categories[cat]}</span>
-                  </button>
-                );
-              },
-            )}
-          </div>
-
-          <input type="hidden" name="category" value={categoryVal} />
+        {/* 3. Category (Dedicated Row) */}
+        <div className="space-y-1.5">
+          <SelectField
+            id="exp-category"
+            name="category"
+            value={categoryVal}
+            onChange={(val) => setCategoryVal(val as ExpenseCategoryValue)}
+            label={labels.categoryLabel}
+            options={(
+              Object.keys(labels.categories) as ExpenseCategoryValue[]
+            ).map((cat) => ({
+              value: cat,
+              label: labels.categories[cat],
+            }))}
+          />
         </div>
 
-        {/* Date (using custom DatePickerField) & Payer */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* 4. Date (Dedicated Row) */}
+        <div className="space-y-1.5">
           <DatePickerField
             id="exp-date"
             name="expenseDate"
             value={dateStr}
             onChange={setDateStr}
             label={labels.dateLabel}
+            locale={locale}
             required
             showQuickPills={true}
           />
+        </div>
 
+        {/* 5. Who paid (Dedicated Row) */}
+        <div className="space-y-1.5">
           <SelectField
             id="exp-paidBy"
             name="paidById"
             value={paidByVal}
             onChange={setPaidByVal}
-            label={labels.paidByLabel}
+            label={labels.whoPaidLabel ?? labels.paidByLabel}
             required
             searchable={members.length > 5}
             options={members.map((m) => ({
@@ -401,79 +454,70 @@ export function ExpenseFormCard({
           />
         </div>
 
-        {/* Split Type Selector */}
-        <div className="space-y-2 pt-1">
-          <span className="block text-sm font-semibold text-[var(--color-fg)]">
-            {labels.splitTypeLabel}
-          </span>
-          <div className="grid grid-cols-3 gap-2">
-            {(
-              [
-                ["EQUAL", labels.splitEqual, "🤝"],
-                ["EXACT", labels.splitExact, "৳"],
-                ["PERCENT", labels.splitPercent, "%"],
-              ] as const
-            ).map(([type, text, icon]) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setSplitType(type)}
-                className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-bold transition-all ${
-                  splitType === type
-                    ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-xs scale-[1.02]"
-                    : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-fg)] hover:bg-[var(--color-border)]"
-                }`}
-              >
-                <span>{icon}</span>
-                <span>{text}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* EQUAL Split Participants */}
+        {/* 6. Shared by (default: everyone) when EQUAL split */}
         {splitType === "EQUAL" ? (
-          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 shadow-xs">
+          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-[var(--color-fg)]">
-                {labels.participantsLabel}
+                {labels.whoSharedLabel ?? labels.participantsLabel}
                 <span className="ml-1 font-bold text-red-500">*</span>
               </span>
               <button
                 type="button"
-                onClick={selectAllParticipants}
-                className="rounded-md px-2 py-0.5 text-xs font-bold text-[var(--color-primary)] hover:underline"
+                onClick={handleToggleAll}
+                className="rounded-lg px-2.5 py-1 text-xs font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/40 transition-colors cursor-pointer"
               >
-                ✓ {labels.selectAll}
+                {isAllSelected
+                  ? locale === "bn"
+                    ? "সবাই মুছুন"
+                    : "Clear all"
+                  : locale === "bn"
+                    ? "সবাই"
+                    : labels.selectAll}
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {members.map((m) => {
-                const checked = selectedIds.includes(m.id);
-                return (
-                  <label
-                    key={m.id}
-                    className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
-                      checked
-                        ? "border-2 border-[var(--color-primary)] bg-white text-[var(--color-fg)] shadow-xs"
-                        : "border-[var(--color-border)] bg-transparent text-[var(--color-fg-muted)] hover:bg-white/50"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      name="participantIds"
-                      value={m.id}
-                      checked={checked}
-                      onChange={() => toggleParticipant(m.id)}
-                      className="h-4 w-4 accent-[var(--color-primary)]"
-                    />
-                    <span className="truncate">
-                      {m.emoji ?? "🎒"} {m.displayName}
-                    </span>
-                  </label>
-                );
-              })}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {(() => {
+                const equalSharePerPerson =
+                  totalAmount > 0 && selectedIds.length > 0
+                    ? Math.floor(totalAmount / selectedIds.length)
+                    : 0;
+
+                return members.map((m) => {
+                  const checked = selectedIds.includes(m.id);
+                  return (
+                    <label
+                      key={m.id}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none active:scale-95 ${
+                        checked
+                          ? "bg-[var(--color-surface-muted)] text-[var(--color-fg)] border border-[var(--color-border)] shadow-2xs font-bold"
+                          : "border border-[var(--color-border)] bg-white text-gray-800 shadow-2xs hover:border-[var(--color-primary)]/40 hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="participantIds"
+                        value={m.id}
+                        checked={checked}
+                        onChange={() => toggleParticipant(m.id)}
+                        className="sr-only"
+                      />
+                      <span className="text-sm leading-none shrink-0">
+                        {m.emoji ?? "🎒"}
+                      </span>
+                      <span className="whitespace-nowrap font-bold text-[var(--color-fg)]">
+                        {m.displayName}{checked && equalSharePerPerson > 0 ? ":" : ""}
+                      </span>
+                      {checked && equalSharePerPerson > 0 ? (
+                        <strong className="font-extrabold text-[var(--color-primary)] shrink-0">
+                          {formatTaka(equalSharePerPerson, locale)}
+                        </strong>
+                      ) : null}
+                    </label>
+                  );
+                });
+              })()}
             </div>
 
             {participantsError ? (
@@ -483,133 +527,201 @@ export function ExpenseFormCard({
               </p>
             ) : null}
 
-            <p className="text-xs text-[var(--color-fg-muted)]">
+            <p className="text-xs text-neutral-400">
               💡 {labels.leftoverNote}
             </p>
           </div>
         ) : null}
 
-        {/* EXACT Split Inputs */}
-        {splitType === "EXACT" ? (
-          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 shadow-xs">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-[var(--color-fg)]">
-                {labels.exactSumStatus}
-              </span>
-              <span
-                className={`rounded-md px-2 py-0.5 font-bold ${
-                  exactDiff === 0
-                    ? "bg-emerald-100 text-emerald-900"
-                    : "bg-red-100 text-red-900"
-                }`}
-              >
-                {exactDiff === 0 ? "✓ মিলেছে" : `বাকি: ৳${exactDiff}`}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {members.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-white p-2.5 shadow-xs"
-                >
-                  <span className="text-sm font-semibold text-[var(--color-fg)]">
-                    {m.emoji ?? "🎒"} {m.displayName}
-                  </span>
-                  <div className="relative">
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-primary)]">
-                      ৳
-                    </span>
-                    <input
-                      name={`exact_${m.id}`}
-                      type="text"
-                      inputMode="numeric"
-                      value={exactValues[m.id] ?? ""}
-                      placeholder="0"
-                      onChange={(e) =>
-                        setExactValues((prev) => ({
-                          ...prev,
-                          [m.id]: e.target.value,
-                        }))
-                      }
-                      className="min-h-[40px] w-28 rounded-lg border border-[var(--color-border)] bg-white pl-6 pr-2.5 text-right text-base font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {/* PERCENT Split Inputs */}
-        {splitType === "PERCENT" ? (
-          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 shadow-xs">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-[var(--color-fg)]">
-                {labels.percentSumStatus}
-              </span>
-              <span
-                className={`rounded-md px-2 py-0.5 font-bold ${
-                  percentSum === 100
-                    ? "bg-emerald-100 text-emerald-900"
-                    : "bg-red-100 text-red-900"
-                }`}
-              >
-                {percentSum}% / 100%
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {members.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-white p-2.5 shadow-xs"
-                >
-                  <span className="text-sm font-semibold text-[var(--color-fg)]">
-                    {m.emoji ?? "🎒"} {m.displayName}
-                  </span>
-                  <div className="relative">
-                    <input
-                      name={`percent_${m.id}`}
-                      type="text"
-                      inputMode="numeric"
-                      value={percentValues[m.id] ?? ""}
-                      placeholder="0"
-                      onChange={(e) =>
-                        setPercentValues((prev) => ({
-                          ...prev,
-                          [m.id]: e.target.value,
-                        }))
-                      }
-                      className="min-h-[40px] w-24 rounded-lg border border-[var(--color-border)] bg-white pr-7 pl-2.5 text-right text-base font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
-                    />
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-fg-muted)]">
-                      %
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {/* Note */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="exp-note"
-            className="block text-sm font-semibold text-[var(--color-fg)]"
+        {/* 7. Collapsible "More options": Split Type, Note */}
+        <div className="pt-2 border-t border-[var(--color-border)]">
+          <button
+            type="button"
+            onClick={() => setShowMoreOptions((prev) => !prev)}
+            className="inline-flex min-h-[40px] items-center gap-1.5 text-xs font-bold text-[var(--color-primary)] hover:underline py-1"
           >
-            {labels.noteLabel}
-          </label>
-          <input
-            id="exp-note"
-            name="note"
-            type="text"
-            maxLength={200}
-            defaultValue={editingExpense?.note ?? ""}
-            placeholder={labels.notePlaceholder}
-            className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] shadow-xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-          />
+            <span>{showMoreOptions ? "▲" : "▼"}</span>
+            <span>
+              {labels.moreOptionsToggle ??
+                (locale === "bn"
+                  ? "আরও অপশন (স্প্লিটের ধরন, নোট)"
+                  : "More options (Split type, note)")}
+            </span>
+          </button>
+
+          {showMoreOptions ? (
+            <div className="mt-3 space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-4 animate-in fade-in">
+
+              {/* Split Type Selector */}
+              <div className="space-y-2 pt-1">
+                <span className="block text-xs font-bold text-[var(--color-fg)]">
+                  {labels.splitTypeLabel}
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      ["EQUAL", labels.splitEqual, "🤝"],
+                      ["EXACT", labels.splitExact, "৳"],
+                      ["PERCENT", labels.splitPercent, "%"],
+                    ] as const
+                  ).map(([type, text, icon]) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setSplitType(type)}
+                      className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
+                        splitType === type
+                          ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-xs scale-[1.02]"
+                          : "border-[var(--color-border)] bg-white text-[var(--color-fg)] hover:bg-[var(--color-border)]"
+                      }`}
+                    >
+                      <span>{icon}</span>
+                      <span>{text}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* EXACT Split Inputs */}
+              {splitType === "EXACT" ? (
+                <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white p-3.5 shadow-xs">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-[var(--color-fg)]">
+                      {labels.exactSumStatus}
+                    </span>
+                    <span
+                      className={`rounded-md px-2 py-0.5 font-bold ${
+                        exactDiff === 0
+                          ? "bg-emerald-100 text-emerald-900"
+                          : "bg-red-100 text-red-900"
+                      }`}
+                    >
+                      {exactDiff === 0
+                        ? locale === "bn"
+                          ? "✓ মিলেছে"
+                          : "✓ Balanced"
+                        : locale === "bn"
+                          ? `বাকি: ৳ ${exactDiff}`
+                          : `Remaining: ৳ ${exactDiff}`}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {members.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 shadow-xs"
+                      >
+                        <span className="text-xs font-semibold text-[var(--color-fg)]">
+                          {m.emoji ?? "🎒"} {m.displayName}
+                        </span>
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-primary)]">
+                            ৳
+                          </span>
+                          <input
+                            name={`exact_${m.id}`}
+                            type="text"
+                            inputMode="numeric"
+                            value={exactValues[m.id] ?? ""}
+                            placeholder="0"
+                            onChange={(e) =>
+                              setExactValues((prev) => ({
+                                ...prev,
+                                [m.id]: e.target.value,
+                              }))
+                            }
+                            className="min-h-[38px] w-28 rounded-lg border border-[var(--color-border)] bg-white pl-7 pr-2.5 text-right text-sm font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* PERCENT Split Inputs */}
+              {splitType === "PERCENT" ? (
+                <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white p-3.5 shadow-xs">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-[var(--color-fg)]">
+                      {labels.percentSumStatus}
+                    </span>
+                    <span
+                      className={`rounded-md px-2 py-0.5 font-bold ${
+                        percentSum === 100
+                          ? "bg-emerald-100 text-emerald-900"
+                          : "bg-red-100 text-red-900"
+                      }`}
+                    >
+                      {percentSum}% / 100%
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {members.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 shadow-xs"
+                      >
+                        <span className="text-xs font-semibold text-[var(--color-fg)]">
+                          {m.emoji ?? "🎒"} {m.displayName}
+                        </span>
+                        <div className="relative">
+                          <input
+                            name={`percent_${m.id}`}
+                            type="text"
+                            inputMode="numeric"
+                            value={percentValues[m.id] ?? ""}
+                            placeholder="0"
+                            onChange={(e) =>
+                              setPercentValues((prev) => ({
+                                ...prev,
+                                [m.id]: e.target.value,
+                              }))
+                            }
+                            className="min-h-[38px] w-24 rounded-lg border border-[var(--color-border)] bg-white pr-7 pl-2.5 text-right text-sm font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-fg-muted)]">
+                            %
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Note */}
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="exp-note"
+                  className="block text-xs font-bold text-[var(--color-fg)]"
+                >
+                  {labels.noteLabel}
+                </label>
+                <input
+                  id="exp-note"
+                  name="note"
+                  type="text"
+                  maxLength={200}
+                  defaultValue={editingExpense?.note ?? ""}
+                  placeholder={labels.notePlaceholder}
+                  className="min-h-[42px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-sm text-[var(--color-fg)] shadow-xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <input type="hidden" name="category" value={categoryVal} />
+              <input type="hidden" name="expenseDate" value={dateStr} />
+              <input
+                type="hidden"
+                name="note"
+                value={editingExpense?.note ?? ""}
+              />
+            </>
+          )}
         </div>
 
         {/* Duplicate-entry Warning Banner */}
@@ -644,7 +756,7 @@ export function ExpenseFormCard({
         <Button
           type="submit"
           variant="primary"
-          className="w-full min-h-[50px] rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all"
+          className="w-full min-h-[50px] text-base font-extrabold transition-all"
         >
           {editingExpense
             ? `✓ ${labels.updateExpenseButton}`

@@ -18,6 +18,12 @@ export async function setLocaleAction(formData: FormData): Promise<void> {
     sameSite: "lax",
     httpOnly: false,
   });
+  cookieStore.set("NEXT_LOCALE", nextLocale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+    httpOnly: false,
+  });
 
   revalidatePath("/", "layout");
 }

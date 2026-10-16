@@ -1,3 +1,7 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   createSettlementAction,
   deleteSettlementAction,
@@ -25,6 +29,7 @@ interface SettlementsCardProps {
   locale: SupportedLocale;
   isLocked: boolean;
   currentMemberId: string;
+  creatorMemberId?: string | null;
   members: MemberInput[];
   settlements: SettlementRecordInput[];
   labels: SettlementsCardLabels;
@@ -35,23 +40,51 @@ export function SettlementsCard({
   locale,
   isLocked,
   currentMemberId,
+  creatorMemberId,
   members,
   settlements,
   labels,
 }: SettlementsCardProps) {
+  const router = useRouter();
   const memberById = new Map(members.map((m) => [m.id, m]));
   const activeSettlements = settlements.filter((s) => !s.deletedAt);
   const defaultReceiverId =
     members.find((m) => m.id !== currentMemberId)?.id ?? currentMemberId;
 
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    fromName: string;
+    toName: string;
+    amount: number;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete || isDeleting) return;
+    const target = pendingDelete;
+    setPendingDelete(null);
+    setIsDeleting(true);
+    try {
+      const formData = new FormData();
+      formData.append("slug", slug);
+      formData.append("settlementId", target.id);
+      await deleteSettlementAction(formData);
+    } catch {
+      // Handled by Next.js redirect
+    } finally {
+      setIsDeleting(false);
+      router.refresh();
+    }
+  };
+
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+    <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-xs">
       <div className="space-y-1">
         <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
           <span>🤝</span>
           <span>{labels.settlementsTitle}</span>
         </h2>
-        <p className="text-xs sm:text-sm text-[var(--color-fg-muted)]">
+        <p className="text-xs sm:text-sm text-neutral-400">
           {labels.settlementSubtitle}
         </p>
       </div>
@@ -114,7 +147,7 @@ export function SettlementsCard({
                 inputMode="numeric"
                 required
                 placeholder="500"
-                className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] pl-8 pr-3.5 py-2 text-base font-bold text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] pl-10 pr-3.5 py-2 text-base font-bold text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
             </div>
           </div>
@@ -153,27 +186,103 @@ export function SettlementsCard({
                         {to?.emoji ?? "🎒"} {to?.displayName}
                       </span>
                     </div>
-                    <div className="text-xs text-[var(--color-fg-muted)]">
+                    <div className="text-xs text-neutral-400">
                       {formatDate(s.createdAt, locale)}
                     </div>
                   </div>
 
-                  {!isLocked ? (
-                    <form action={deleteSettlementAction}>
-                      <input type="hidden" name="slug" value={slug} />
-                      <input type="hidden" name="settlementId" value={s.id} />
+                  {(() => {
+                    const canDelete =
+                      !isLocked &&
+                      (currentMemberId === s.fromMemberId ||
+                        currentMemberId === s.toMemberId ||
+                        (Boolean(creatorMemberId) &&
+                          currentMemberId === creatorMemberId));
+
+                    if (!canDelete) return null;
+
+                    return (
                       <button
-                        type="submit"
-                        className="inline-flex min-h-[36px] items-center rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
+                        type="button"
+                        onClick={() =>
+                          setPendingDelete({
+                            id: s.id,
+                            fromName: from?.displayName ?? "Member",
+                            toName: to?.displayName ?? "Member",
+                            amount: s.amount,
+                          })
+                        }
+                        className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-rose-200 bg-rose-50/50 px-3.5 py-1 text-xs font-bold text-rose-700 hover:bg-rose-100/70 transition-all cursor-pointer active:scale-95"
                       >
-                        {labels.deleteButton}
+                        <span>🗑️</span>
+                        <span>{labels.deleteButton}</span>
                       </button>
-                    </form>
-                  ) : null}
+                    );
+                  })()}
                 </li>
               );
             })}
           </ul>
+        </div>
+      ) : null}
+
+      {/* Floating Delete Settlement Confirmation Toast */}
+      {pendingDelete ? (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          className="fixed bottom-20 min-[1000px]:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md animate-in fade-in slide-in-from-bottom-4 duration-200"
+        >
+          <div className="rounded-2xl border border-rose-200 bg-white/95 p-4 sm:p-5 shadow-2xl backdrop-blur-md space-y-3.5 ring-1 ring-black/5">
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-xl text-rose-600">
+                🗑️
+              </span>
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <p className="text-sm font-black text-gray-900">
+                  {locale === "bn"
+                    ? "এই লেনদেনটি মুছে ফেলতে চান?"
+                    : "Delete this settlement?"}
+                </p>
+                <p className="text-xs text-gray-600 truncate">
+                  <span className="font-bold text-gray-950">
+                    {pendingDelete.fromName} → {pendingDelete.toName}
+                  </span>{" "}
+                  <span className="font-extrabold text-[#0b724f]">
+                    ({formatTaka(pendingDelete.amount, locale)})
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setPendingDelete(null)}
+                className="rounded-full px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {locale === "bn" ? "বাতিল" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 hover:bg-rose-700 px-4 py-2 text-xs font-black text-white shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <span>{locale === "bn" ? "মুছছে..." : "Deleting..."}</span>
+                ) : (
+                  <>
+                    <span>🗑️</span>
+                    <span>
+                      {locale === "bn" ? "মুছে ফেলুন" : "Confirm Delete"}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

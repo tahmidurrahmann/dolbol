@@ -10,7 +10,7 @@ export default async function HomePage() {
   const fmt = new Intl.NumberFormat(bn ? "bn-BD" : "en-BD", {
     maximumFractionDigits: 0,
   });
-  const taka = (n: number) => `৳${fmt.format(n)}`;
+  const taka = (n: number) => `৳ ${fmt.format(n)}`;
 
   const people = {
     rahim: bn ? "রহিম" : "Rahim",
@@ -20,9 +20,9 @@ export default async function HomePage() {
   };
 
   const settlements = [
-    { from: people.mim, to: people.rahim, amount: 4500 },
-    { from: people.tanvir, to: people.rahim, amount: 1700 },
-    { from: people.nusrat, to: people.rahim, amount: 1300 },
+    { from: people.nusrat, to: people.rahim, amount: 3000 },
+    { from: people.tanvir, to: people.rahim, amount: 3000 },
+    { from: people.mim, to: people.rahim, amount: 3000 },
   ];
 
   const steps = [
@@ -115,7 +115,7 @@ export default async function HomePage() {
             )}
           </h1>
 
-          <p className="max-w-xl text-base sm:text-lg text-[var(--color-fg-muted)] leading-relaxed">
+          <p className="max-w-xl text-base sm:text-lg text-neutral-500 leading-relaxed">
             {bn
               ? "হোটেল, খাবার, গাড়ি ভাড়ার হিসাব রাখুন এক জায়গায়। বাংলা বা বাংলিশ মেসেজ লিখলেই এআই হিসাব বানিয়ে দেবে। পয়সা ছাড়া নিখুঁত পূর্ণ টাকার হিসাব।"
               : "Track hotels, food, and transport in one shared place. Just type what you spent in natural Bangla or Banglish, and AI splits it fairly in whole BDT."}
@@ -125,9 +125,8 @@ export default async function HomePage() {
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row pt-1">
             <Link
               href="/trips/new"
-              className="group inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[var(--color-primary)] to-emerald-700 px-7 text-base font-bold text-white shadow-md transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              className="group inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#e8f5ee] border border-emerald-300/80 px-7 text-base font-extrabold text-[#0f6b4a] shadow-2xs transition-all hover:bg-[#daf0e3] hover:border-emerald-400 active:scale-[0.98]"
             >
-              <span>➕</span>
               <span>{t("createTrip")}</span>
               <span className="transition-transform group-hover:translate-x-1">
                 →
@@ -136,7 +135,7 @@ export default async function HomePage() {
 
             <Link
               href="/trips/join"
-              className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-7 text-base font-bold text-[var(--color-fg)] shadow-xs transition-all hover:bg-[var(--color-surface-muted)] hover:border-[var(--color-primary)]/40 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-7 text-base font-bold text-gray-800 shadow-2xs transition-all hover:bg-gray-50 active:scale-[0.98]"
             >
               <span>🔗</span>
               <span>{t("joinTrip")}</span>
@@ -144,7 +143,7 @@ export default async function HomePage() {
           </div>
 
           {/* Trust points */}
-          <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-[var(--color-fg-muted)] pt-1">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-neutral-400 pt-1">
             <span className="inline-flex items-center gap-1.5">
               <span>⚡</span>
               <span>
@@ -179,19 +178,19 @@ export default async function HomePage() {
                   <p className="text-sm font-extrabold text-[var(--color-fg)]">
                     {bn ? "সাজেক ভ্যালি ট্যুর ২০২৬" : "Sajek Tour 2026"}
                   </p>
-                  <p className="text-[11px] text-[var(--color-fg-muted)]">
+                  <p className="text-[11px] text-neutral-400">
                     {bn ? "৪ জন সদস্য • পূর্ণ টাকা" : "4 members • Whole BDT"}
                   </p>
                 </div>
               </div>
               <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-300">
-                🟢 {bn ? "লাইভ ডেমো" : "Live Demo"}
+                {bn ? "উদাহরণ" : "Example"}
               </span>
             </div>
 
             {/* Chat message input snippet */}
             <div className="mt-4 space-y-1.5">
-              <span className="text-[11px] font-semibold text-[var(--color-fg-muted)] uppercase tracking-wider block">
+              <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                 {bn ? "১. গ্রুপে মেসেজ দিন" : "1. Type naturally"}
               </span>
               <div className="flex items-start gap-2 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-sm font-medium text-[var(--color-fg)] border border-[var(--color-border)]">
@@ -216,7 +215,7 @@ export default async function HomePage() {
                   <span>🏨</span>
                   <span>{bn ? "হোটেল রুম" : "Hotel Room"}</span>
                 </p>
-                <p className="text-[11px] text-[var(--color-fg-muted)]">
+                <p className="text-[11px] text-neutral-400">
                   {bn
                     ? `${people.rahim} দিয়েছেন • ৪ জনে সমান ভাগ`
                     : `Paid by ${people.rahim} • 4 equal shares`}
@@ -235,7 +234,7 @@ export default async function HomePage() {
                   <span>{bn ? "কে কাকে কত দেবে (সহজ হিসাব)" : "Who owes whom (simplified)"}</span>
                 </p>
                 <span className="text-[11px] font-semibold text-[var(--color-primary)]">
-                  {bn ? `মোট ${taka(18000)}` : `${taka(18000)} total`}
+                  {bn ? `মোট ${taka(12000)}` : `${taka(12000)} total`}
                 </span>
               </div>
 
@@ -250,7 +249,7 @@ export default async function HomePage() {
                         👤
                       </span>
                       <span>{s.from}</span>
-                      <span className="text-[10px] text-[var(--color-fg-muted)] font-normal">
+                      <span className="text-[10px] text-neutral-400 font-normal">
                         → {bn ? "দেবে" : "pays"} →
                       </span>
                       <span>{s.to}</span>
@@ -272,7 +271,7 @@ export default async function HomePage() {
           <h2 className="text-2xl font-black tracking-tight text-[var(--color-fg)] sm:text-3xl">
             {bn ? "তিন ধাপে সহজ হিসাব" : "Three simple steps"}
           </h2>
-          <p className="text-sm text-[var(--color-fg-muted)]">
+          <p className="text-sm text-neutral-400">
             {bn
               ? "কোনো জটিল সেটআপ ছাড়া বন্ধুদের সাথে যেভাবে ট্যুর শুরু করবেন"
               : "How to run fair group trip accounts without complex setup"}
@@ -295,7 +294,7 @@ export default async function HomePage() {
                 <h3 className="text-base font-bold text-[var(--color-fg)]">
                   {step.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-[var(--color-fg-muted)]">
+                <p className="text-sm leading-relaxed text-neutral-400">
                   {step.body}
                 </p>
               </div>
@@ -310,7 +309,7 @@ export default async function HomePage() {
           <h2 className="text-2xl font-black tracking-tight text-[var(--color-fg)] sm:text-3xl">
             {bn ? "প্রতিটি ট্রিপে যা পাবেন" : "What is included in every trip"}
           </h2>
-          <p className="text-sm text-[var(--color-fg-muted)]">
+          <p className="text-sm text-neutral-400">
             {bn
               ? "বাংলাদেশের ট্যুরের বাস্তব অভিজ্ঞতার আলোকে তৈরি বিশেষ সুবিধাসমূহ"
               : "Built specifically for realistic travel dynamics in Bangladesh"}
@@ -327,7 +326,7 @@ export default async function HomePage() {
               <h3 className="text-base font-bold text-[var(--color-fg)]">
                 {item.title}
               </h3>
-              <p className="text-xs leading-relaxed text-[var(--color-fg-muted)]">
+              <p className="text-xs leading-relaxed text-neutral-400">
                 {item.body}
               </p>
             </div>
@@ -353,14 +352,15 @@ export default async function HomePage() {
         <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row shrink-0">
           <Link
             href="/trips/new"
-            className="inline-flex min-h-[52px] items-center justify-center rounded-2xl bg-white px-7 text-base font-bold text-[var(--color-primary)] shadow-md transition-all hover:brightness-95 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="inline-flex min-h-[50px] items-center justify-center gap-1.5 rounded-full bg-white px-7 text-base font-bold text-[#0f6b4a] shadow-md transition-all hover:bg-gray-50 active:scale-[0.98]"
           >
-            ➕ {t("createTrip")}
+            <span>{t("createTrip")}</span>
+            <span>→</span>
           </Link>
 
           <Link
             href="/trips/join"
-            className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-white/30 bg-white/10 px-6 text-base font-bold text-white transition-all hover:bg-white/20 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="inline-flex min-h-[50px] items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 text-base font-bold text-white transition-all hover:bg-white/20 active:scale-[0.98]"
           >
             🔗 {t("joinTrip")}
           </Link>

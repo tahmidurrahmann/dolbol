@@ -414,14 +414,15 @@ export function generateDailyCostSheetHtml(args: {
         </ul>`;
 
   return `<!DOCTYPE html>
-<html lang="${locale}">
+<html lang="${locale}" translate="no" class="notranslate">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="google" content="notranslate" />
   <title>${escapeHtml(sheet.tripName)} — ${isBn ? "খরচের শিট" : "Daily Cost Sheet"}</title>
   <style>
     body {
-      font-family: "Noto Sans Bengali", "Inter", system-ui, sans-serif;
+      font-family: "Anek Bangla", system-ui, sans-serif;
       color: #111c16;
       background: #f8faf9;
       margin: 0;

@@ -77,13 +77,13 @@ export function ShareLinkCard({
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+    <div className="space-y-3.5 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-xs">
       <div className="space-y-1">
         <h2 className="text-base font-bold text-[var(--color-fg)] flex items-center gap-2">
           <span>🔗</span>
           <span>{shareTitle}</span>
         </h2>
-        <p className="text-xs sm:text-sm text-[var(--color-fg-muted)]">{shareSubtitle}</p>
+        <p className="text-xs sm:text-sm text-neutral-400">{shareSubtitle}</p>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2.5 font-mono text-sm text-[var(--color-primary)] font-medium shadow-2xs">
@@ -94,10 +94,10 @@ export function ShareLinkCard({
         <button
           type="button"
           onClick={handleCopy}
-          className={`inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-bold transition-all active:scale-95 ${
+          className={`inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full border border-gray-300 px-3 py-2 text-sm font-bold transition-all active:scale-95 cursor-pointer ${
             copied
               ? "bg-emerald-50 border-emerald-300 text-emerald-800"
-              : "bg-white text-[var(--color-fg)] hover:bg-[var(--color-surface-muted)]"
+              : "bg-white text-gray-800 hover:bg-gray-50 shadow-2xs"
           }`}
         >
           <span>{copied ? "✓" : "📋"}</span>
@@ -107,7 +107,7 @@ export function ShareLinkCard({
         <button
           type="button"
           onClick={handleNativeShare}
-          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-[var(--color-primary)] px-3 py-2 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
+          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-[#e8f5ee] border border-emerald-300/80 px-3 py-2 text-sm font-bold text-[#0f6b4a] shadow-2xs hover:bg-[#daf0e3] active:scale-95 transition-all cursor-pointer"
         >
           <span>📤</span>
           <span>{shareNativeLabel}</span>

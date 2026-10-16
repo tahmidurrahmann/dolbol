@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans_Bengali } from "next/font/google";
+import { Anek_Bangla } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
@@ -7,18 +7,11 @@ import { Container } from "@/components/Container";
 import { Header } from "@/components/Header";
 import "./globals.css";
 
-const notoSansBengali = Noto_Sans_Bengali({
-  subsets: ["bengali"],
-  weight: ["400", "500", "600", "700"],
+const anekBangla = Anek_Bangla({
+  subsets: ["bengali", "latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
-  variable: "--font-noto-bengali",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--font-inter",
+  variable: "--font-anek-bangla",
 });
 
 export const viewport: Viewport = {
@@ -32,6 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: t("name"), template: `%s | ${t("name")}` },
     description: t("tagline"),
+    other: {
+      google: "notranslate",
+    },
   };
 }
 
@@ -48,11 +44,16 @@ export default async function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang={locale}
-      className={`${notoSansBengali.variable} ${inter.variable}`}
+      translate="no"
+      className={`notranslate ${anekBangla.variable}`}
     >
+      <head>
+        <meta name="google" content="notranslate" />
+      </head>
       <body
+        translate="no"
         suppressHydrationWarning
-        className="flex min-h-dvh flex-col bg-[var(--color-bg)] text-base text-[var(--color-fg)] antialiased"
+        className="notranslate flex min-h-dvh flex-col bg-[var(--color-bg)] text-base text-[var(--color-fg)] antialiased"
       >
         {/* Lets keyboard users skip the header */}
         <a
@@ -69,7 +70,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           </main>
           <footer className="border-t border-[var(--color-border)] py-5">
             <Container>
-              <p className="text-center text-sm text-[var(--color-fg-muted)]">
+              <p className="text-center text-sm text-neutral-400">
                 {t("footer")}
               </p>
             </Container>

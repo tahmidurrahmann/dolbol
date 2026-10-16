@@ -1,12 +1,14 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
   addGuestMemberAction,
+  claimMemberAction,
   joinTripAction,
   reclaimMemberAction,
   renameMemberAction,
-  switchDeviceMemberAction,
   toggleTripLockAction,
+  updateMyProfileAction,
 } from "@/app/trips/actions";
 import { ActivityLogCard } from "@/components/ActivityLogCard";
 import { AiExpenseParserCard } from "@/components/AiExpenseParserCard";
@@ -18,12 +20,13 @@ import {
   type ExistingExpenseSummary,
   ExpenseFormCard,
 } from "@/components/ExpenseFormCard";
+import { InviteFriendsCard } from "@/components/InviteFriendsCard";
 import { ItineraryCard } from "@/components/ItineraryCard";
+import { MembersListCard } from "@/components/MembersListCard";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
 import { SelectField } from "@/components/SelectField";
 import { SettlementsCard } from "@/components/SettlementsCard";
 import { ShareAndExportCard } from "@/components/ShareAndExportCard";
-import { ShareLinkCard } from "@/components/ShareLinkCard";
 import { TripTabsContainer } from "@/components/TripTabsContainer";
 import { db } from "@/lib/db";
 import {
@@ -67,7 +70,9 @@ type ErrorKey =
   | "unauthorized"
   | "duplicate_expense_warning"
   | "cross_trip_option"
-  | "duplicate_option";
+  | "duplicate_option"
+  | "member_has_transactions"
+  | "cannot_delete_creator";
 
 const ERROR_KEYS = new Set<ErrorKey>([
   "invalid_input",
@@ -84,6 +89,8 @@ const ERROR_KEYS = new Set<ErrorKey>([
   "duplicate_expense_warning",
   "cross_trip_option",
   "duplicate_option",
+  "member_has_transactions",
+  "cannot_delete_creator",
 ]);
 
 function asSnapshot(val: unknown): ActivityLogSnapshot | null {
@@ -91,6 +98,57 @@ function asSnapshot(val: unknown): ActivityLogSnapshot | null {
     return val as ActivityLogSnapshot;
   }
   return null;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const trip = await db.trip.findUnique({
+    where: { slug },
+    select: { name: true, destination: true },
+  });
+
+  const locale = (await getLocale()) as SupportedLocale;
+
+  if (!trip) {
+    return {
+      title: locale === "bn" ? "ট্রিপ পাওয়া যায়নি" : "Trip Not Found",
+    };
+  }
+
+  const destinationPart = trip.destination ? ` - ${trip.destination}` : "";
+  const pageTitle = `${trip.name}${destinationPart}`;
+  const fullTitle = `${pageTitle} | Trip Hub`;
+  const description =
+    locale === "bn"
+      ? `${trip.name} ট্রিপের খরচ ভাগাভাগি ও হিসাব করার জন্য ইনভাইট লিংক।`
+      : `Invitation link to join ${trip.name} to track and split expenses.`;
+
+  return {
+    title: pageTitle,
+    description,
+    openGraph: {
+      title: fullTitle,
+      description,
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: trip.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description,
+      images: ["/og-image.png"],
+    },
+  };
 }
 
 export default async function TripPage({
@@ -105,6 +163,9 @@ export default async function TripPage({
     where: { slug },
     include: {
       members: {
+        include: {
+          sessions: true,
+        },
         orderBy: { createdAt: "asc" },
       },
       expenses: {
@@ -151,36 +212,70 @@ export default async function TripPage({
     error && ERROR_KEYS.has(error as ErrorKey) ? tErr(error as ErrorKey) : null;
 
   const isLocked = Boolean(trip.lockedAt);
-  const reclaimableMembers = trip.members.filter((m) => !m.isGuest);
+  const creator = trip.members.find((m) => m.id === trip.creatorMemberId);
 
-  // 1. If device has no active session for this trip, show the "Who are you?" screen
+  // 1. If device has no active session for this trip, show the streamlined 1-tap Join screen
   if (!currentMember) {
+    const unclaimedMembers = trip.members.filter(
+      (m) =>
+        m.sessions.length === 0 &&
+        m.id !== trip.creatorMemberId &&
+        !m.pinHash,
+    );
+
+    const claimedMembers = trip.members.filter(
+      (m) =>
+        m.sessions.length > 0 ||
+        m.id === trip.creatorMemberId ||
+        Boolean(m.pinHash),
+    );
+
+    const joinedCount = claimedMembers.length;
+    const joinedCountLabel =
+      locale === "bn" ? toBanglaDigits(joinedCount) : String(joinedCount);
+
     return (
-      <section className="space-y-6 py-4 max-w-2xl mx-auto w-full">
-        <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+      <section className="space-y-5 py-4 max-w-xl mx-auto w-full">
+        {/* Header Invitation Card */}
+        <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
               <span className="text-2xl">🌴</span>
-              <h1 className="text-2xl font-black text-[var(--color-fg)] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
                 {trip.name}
               </h1>
             </div>
-            <span
-              className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                isLocked
-                  ? "bg-amber-100 text-amber-900 border border-amber-300"
-                  : "bg-emerald-100 text-emerald-800 border border-emerald-300"
-              }`}
-            >
-              {isLocked ? `🔒 ${tTrip("lockedBadge")}` : `🟢 ${tTrip("unlockedBadge")}`}
+            {isLocked ? (
+              <span className="self-center rounded-full bg-amber-100 px-3 py-0.5 text-xs font-bold text-amber-900 border border-amber-300">
+                🔒 {tTrip("lockedBadge")}
+              </span>
+            ) : null}
+          </div>
+
+          <p className="text-sm font-semibold text-[var(--color-primary)]">
+            👋 {creator?.displayName ?? (locale === "bn" ? "আপনার বন্ধু" : "A friend")}{" "}
+            {locale === "bn"
+              ? "আপনাকে এই ট্রিপে আমন্ত্রণ জানিয়েছেন"
+              : "invited you to this trip"}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-[var(--color-fg-muted)] pt-1">
+            {trip.destination ? (
+              <span className="font-semibold text-[var(--color-fg)] flex items-center gap-1">
+                📍 {trip.destination}
+              </span>
+            ) : null}
+            {trip.startDate || trip.endDate ? (
+              <span>
+                🗓️ {trip.startDate ? formatDate(trip.startDate, locale) : ""}{" "}
+                {trip.startDate && trip.endDate ? "—" : ""}{" "}
+                {trip.endDate ? formatDate(trip.endDate, locale) : ""}
+              </span>
+            ) : null}
+            <span className="font-bold text-[var(--color-fg)]">
+              👥 {joinedCountLabel} {locale === "bn" ? "জন যুক্ত আছেন" : "joined"}
             </span>
           </div>
-          {trip.destination ? (
-            <p className="text-sm font-medium text-[var(--color-fg-muted)] flex items-center gap-1">
-              <span>📍 {tTrip("destinationPrefix")}</span>
-              <span className="font-semibold text-[var(--color-fg)]">{trip.destination}</span>
-            </p>
-          ) : null}
         </div>
 
         {errorMessage ? (
@@ -193,197 +288,175 @@ export default async function TripPage({
           </div>
         ) : null}
 
-        <div className="space-y-1 text-center sm:text-left">
-          <h2 className="text-2xl font-black text-[var(--color-fg)] tracking-tight">
-            {tWho("title")}
-          </h2>
-          <p className="text-sm text-[var(--color-fg-muted)]">
-            {tWho("subtitle")}
-          </p>
-        </div>
-
-        {/* Reclaim existing member section */}
-        {reclaimableMembers.length > 0 ? (
+        {/* 1-Tap Name Selection for Pre-Added Friends */}
+        {unclaimedMembers.length > 0 ? (
           <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🙋</span>
-              <h3 className="text-base font-bold text-[var(--color-fg)]">
-                {tWho("reclaimTitle")}
-              </h3>
+            <div className="space-y-1">
+              <h2 className="text-base font-extrabold text-[var(--color-fg)] flex items-center gap-2">
+                <span>👇</span>
+                <span>
+                  {locale === "bn"
+                    ? "আপনার নামের ওপর চাপ দিন:"
+                    : "Tap your name below to join:"}
+                </span>
+              </h2>
+              <p className="text-xs text-[var(--color-fg-muted)]">
+                {locale === "bn"
+                  ? "এক ট্যাপেই আপনি ট্রিপে যুক্ত হয়ে যাবেন।"
+                  : "One tap to join instantly without password or PIN."}
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {reclaimableMembers.map((member) => {
-                const hasPin = Boolean(member.pinHash);
-                return (
-                  <form
-                    key={member.id}
-                    action={reclaimMemberAction}
-                    className="flex flex-col gap-2.5 rounded-xl border border-[var(--color-border)] bg-white p-3.5 shadow-2xs hover:border-[var(--color-primary)]/40 transition-colors"
+            <div className="grid grid-cols-1 gap-2.5 pt-1">
+              {unclaimedMembers.map((member) => (
+                <form key={member.id} action={claimMemberAction}>
+                  <input type="hidden" name="slug" value={trip.slug} />
+                  <input type="hidden" name="memberId" value={member.id} />
+                  <button
+                    type="submit"
+                    className="group w-full flex min-h-[58px] items-center justify-between gap-3 rounded-2xl border-2 border-[var(--color-primary)]/30 bg-white p-3 sm:px-4 sm:py-3.5 text-base font-bold text-[var(--color-fg)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/20 hover:shadow-xs active:scale-[0.99] transition-all cursor-pointer"
                   >
-                    <input type="hidden" name="slug" value={trip.slug} />
-                    <input type="hidden" name="memberId" value={member.id} />
-
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 font-bold text-[var(--color-fg)]">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-surface-muted)] text-lg">
-                          {member.emoji ?? "🎒"}
+                    <div className="flex items-center gap-3 truncate">
+                      <span className="flex size-11 items-center justify-center rounded-xl bg-[var(--color-primary-light)]/60 text-2xl border border-[var(--color-primary)]/20 shrink-0">
+                        {member.emoji ?? "🎒"}
+                      </span>
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="truncate text-base font-extrabold text-[var(--color-fg)]">
+                          {member.displayName}
                         </span>
-                        <span>{member.displayName}</span>
-                        {member.id === trip.creatorMemberId ? (
-                          <span className="rounded-md bg-[var(--color-primary-light)] px-2 py-0.5 text-xs font-bold text-[var(--color-primary)]">
-                            {tTrip("creatorBadge")}
+                        {member.isGuest ? (
+                          <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200 shrink-0">
+                            {locale === "bn" ? "গেস্ট প্রোফাইল" : "Guest profile"}
                           </span>
                         ) : null}
                       </div>
-                      <span className="text-xs font-medium text-[var(--color-fg-muted)]">
-                        {hasPin
-                          ? `🔒 ${tWho("pinProtected")}`
-                          : tWho("noPinSet")}
-                      </span>
                     </div>
-
-                    {hasPin ? (
-                      <div className="flex gap-2 pt-1">
-                        <input
-                          name="pin"
-                          type="password"
-                          inputMode="numeric"
-                          required
-                          maxLength={6}
-                          placeholder={tWho("enterPinPlaceholder")}
-                          className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                        />
-                        <button
-                          type="submit"
-                          className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
-                        >
-                          {tWho("reclaimButton")}
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="submit"
-                        className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
-                      >
-                        {tWho("reclaimButton")}
-                      </button>
-                    )}
-                  </form>
-                );
-              })}
+                    <span className="flex items-center gap-1.5 rounded-full bg-[#18201a] px-4 py-2 text-xs font-black text-white shadow-2xs shrink-0 group-hover:bg-[#253229] group-hover:scale-105 transition-all">
+                      <span>{locale === "bn" ? "আমি এটা" : "This is me"}</span>
+                      <span>→</span>
+                    </span>
+                  </button>
+                </form>
+              ))}
             </div>
           </div>
         ) : null}
 
-        {/* Join as a new member section */}
-        <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">✨</span>
-            <h3 className="text-base font-bold text-[var(--color-fg)]">
-              {tWho("newMemberTitle")}
-            </h3>
+        {/* Already Joined Members (Disabled) */}
+        {claimedMembers.length > 0 ? (
+          <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-4">
+            <span className="text-xs font-bold text-[var(--color-fg-muted)] block">
+              {locale === "bn" ? "ইতিমধ্যে যুক্ত হয়েছেন:" : "Already joined:"}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {claimedMembers.map((member) => (
+                <div
+                  key={member.id}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--color-fg-muted)] opacity-80"
+                >
+                  <span>{member.emoji ?? "🎒"}</span>
+                  <span>{member.displayName}</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md font-bold">
+                    ✓ {locale === "bn" ? "যুক্ত" : "Joined"}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
+        ) : null}
 
-          {isLocked ? (
-            <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-fg-muted)]">
-              {tWho("lockedNotice")}
-            </p>
-          ) : (
-            <form action={joinTripAction} className="space-y-4">
+        {/* "My name isn't here" Expandable Form */}
+        {!isLocked ? (
+          <details className="group space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs">
+            <summary className="cursor-pointer list-none font-bold text-sm text-[var(--color-primary)] hover:underline flex items-center justify-between select-none">
+              <span>➕ {locale === "bn" ? "আমার নাম এখানে নেই" : "My name isn't here"}</span>
+              <span className="transition-transform group-open:rotate-180 text-xs text-[var(--color-fg-muted)]">
+                ▼
+              </span>
+            </summary>
+
+            <form action={joinTripAction} className="pt-3 space-y-3 border-t border-[var(--color-border)]">
               <input type="hidden" name="slug" value={trip.slug} />
-
               <div className="space-y-1.5">
                 <label
-                  htmlFor="displayName"
+                  htmlFor="new-displayName"
                   className="block text-sm font-bold text-[var(--color-fg)]"
                 >
-                  {tWho("yourNameLabel")}{" "}
+                  {locale === "bn" ? "আপনার নাম লিখুন" : "Enter your name"}{" "}
                   <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
-                  id="displayName"
+                  id="new-displayName"
                   name="displayName"
                   type="text"
                   required
                   minLength={1}
                   maxLength={40}
-                  placeholder={tWho("yourNamePlaceholder")}
-                  className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                  placeholder={locale === "bn" ? "যেমন: তানভীর" : "e.g., Tanvir"}
+                  className="min-h-[48px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2.5 text-base text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 shadow-xs"
                 />
               </div>
 
-              <fieldset className="space-y-1.5">
-                <legend className="text-sm font-bold text-[var(--color-fg)]">
-                  {tWho("emojiLabel")}
-                </legend>
-                <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 pt-1">
-                  {MEMBER_EMOJIS.map((emoji, index) => (
-                    <label
-                      key={emoji}
-                      className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-xl has-[:checked]:border-2 has-[:checked]:border-[var(--color-primary)] has-[:checked]:bg-[var(--color-primary-light)]/40 hover:bg-[var(--color-surface-muted)] transition-all"
-                    >
-                      <input
-                        type="radio"
-                        name="emoji"
-                        value={emoji}
-                        defaultChecked={index === 0}
-                        className="sr-only"
-                      />
-                      <span>{emoji}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="pin"
-                    className="block text-sm font-bold text-[var(--color-fg)]"
-                  >
-                    {tWho("pinLabel")}
-                  </label>
-                  <span className="text-xs text-[var(--color-fg-muted)]">
-                    {locale === "bn"
-                      ? "(ঐচ্ছিক - ৪-৬ ডিজিট)"
-                      : "(Optional - 4-6 digits)"}
-                  </span>
-                </div>
-                <input
-                  id="pin"
-                  name="pin"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder={tWho("pinPlaceholder")}
-                  className="min-h-[44px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-                />
-              </div>
-
-              <Button type="submit" variant="primary">
-                {tWho("joinButton")}
+              <Button type="submit" variant="primary" className="w-full min-h-[48px] font-bold">
+                {locale === "bn" ? "ট্রিপে যুক্ত হোন" : "Join trip"}
               </Button>
             </form>
-          )}
-        </div>
+          </details>
+        ) : null}
+
+        {/* Phone reset / Reclaim PIN option (collapsed) */}
+        {claimedMembers.some((m) => Boolean(m.pinHash)) ? (
+          <details className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-xs text-[var(--color-fg-muted)]">
+            <summary className="cursor-pointer hover:underline font-semibold select-none flex items-center justify-between">
+              <span>🔑 {locale === "bn" ? "ফোন পরিবর্তন করেছেন? পিন দিয়ে লগইন করুন" : "Changed phone? Rejoin with PIN"}</span>
+              <span className="text-[10px]">▼</span>
+            </summary>
+            <div className="pt-3 space-y-2.5 border-t border-[var(--color-border)] mt-2">
+              {claimedMembers
+                .filter((m) => Boolean(m.pinHash))
+                .map((m) => (
+                  <form key={m.id} action={reclaimMemberAction} className="flex gap-2">
+                    <input type="hidden" name="slug" value={trip.slug} />
+                    <input type="hidden" name="memberId" value={m.id} />
+                    <span className="flex items-center text-xs font-bold text-[var(--color-fg)] w-24 truncate">
+                      {m.emoji ?? "🎒"} {m.displayName}
+                    </span>
+                    <input
+                      name="pin"
+                      type="password"
+                      inputMode="numeric"
+                      required
+                      maxLength={6}
+                      placeholder={locale === "bn" ? "পিন দিন" : "Enter PIN"}
+                      className="min-h-[38px] flex-1 rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-lg bg-[var(--color-primary)] px-3 py-1 text-xs font-bold text-white"
+                    >
+                      {locale === "bn" ? "প্রবেশ" : "Go"}
+                    </button>
+                  </form>
+                ))}
+            </div>
+          </details>
+        ) : null}
       </section>
     );
   }
 
-  // 2. Signed-in Trip Hub View + Steps 3, 4, 5 & 6
+  // 2. Signed-in Trip Hub View
   const isCreator = currentMember.id === trip.creatorMemberId;
-  const memberCountLabel =
-    locale === "bn"
-      ? toBanglaDigits(trip.members.length)
-      : String(trip.members.length);
-
   const memberInputs: MemberInput[] = trip.members.map((m) => ({
     id: m.id,
     displayName: m.displayName,
     emoji: m.emoji,
     isGuest: m.isGuest,
   }));
+
+  const joinedMembersCount = trip.members.filter(
+    (m) => m.sessions.length > 0 || m.id === trip.creatorMemberId,
+  ).length;
 
   const expenseInputs: ExpenseRecordInput[] = trip.expenses.map((e) => ({
     id: e.id,
@@ -450,6 +523,27 @@ export default async function TripPage({
   const simplifiedDebts = simplifyDebts(balances);
   const myBalance = balances.find((b) => b.memberId === currentMember.id);
 
+  const membersWithTransactionsSet = new Set<string>();
+  for (const exp of expenseInputs) {
+    membersWithTransactionsSet.add(exp.paidById);
+    for (const share of exp.shares) {
+      membersWithTransactionsSet.add(share.memberId);
+    }
+  }
+  for (const set of settlementInputs) {
+    membersWithTransactionsSet.add(set.fromMemberId);
+    membersWithTransactionsSet.add(set.toMemberId);
+  }
+  const membersWithTransactions = Array.from(membersWithTransactionsSet);
+
+  const memberListItems = trip.members.map((m) => ({
+    id: m.id,
+    displayName: m.displayName,
+    emoji: m.emoji,
+    isGuest: m.isGuest,
+    sessionsCount: m.sessions.length,
+  }));
+
   const dayGroups = groupExpensesByDhakaDay({
     expenses: expenseInputs,
     members: memberInputs,
@@ -476,8 +570,15 @@ export default async function TripPage({
     ? expenseInputs.find((e) => e.id === editExpense)
     : undefined;
 
-  const editingExpenseData: EditableExpenseData | null = targetEditExpense
-    ? {
+  const canEditTargetExpense =
+    Boolean(targetEditExpense) &&
+    (currentMember.id === targetEditExpense!.paidById ||
+      currentMember.id === targetEditExpense!.createdById ||
+      currentMember.id === trip.creatorMemberId);
+
+  const editingExpenseData: EditableExpenseData | null =
+    targetEditExpense && canEditTargetExpense
+      ? {
         id: targetEditExpense.id,
         title: targetEditExpense.title,
         amount: targetEditExpense.amount,
@@ -500,8 +601,108 @@ export default async function TripPage({
 
   const defaultExpenseDate = dayKey(trip.startDate ?? new Date());
 
+  const tripDateRangeLabel =
+    trip.startDate || trip.endDate
+      ? `${trip.startDate ? formatDate(trip.startDate, locale) : ""} ${trip.startDate && trip.endDate ? "—" : ""} ${trip.endDate ? formatDate(trip.endDate, locale) : ""}`
+      : null;
+
+  const statCardsNode = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      {/* Card 1: Total trip cost */}
+      <div className="rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 p-4 sm:p-5 shadow-xs flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-[var(--color-primary)]" />
+            <span className="text-xs font-extrabold text-neutral-400 uppercase tracking-wider">
+              {tTrip("totalTripCost")}
+            </span>
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
+            {formatTaka(totalTripSpend, locale)}
+          </div>
+          <p className="text-xs text-neutral-400">
+            {tTrip("totalTripSpendHint")}
+          </p>
+        </div>
+        <div className="size-12 rounded-2xl bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center text-2xl shrink-0 shadow-2xs">
+          💳
+        </div>
+      </div>
+
+      {/* Card 2: My balance */}
+      {(() => {
+        const net = myBalance?.netBalance ?? 0;
+        const isPositive = net > 0;
+        const isNegative = net < 0;
+
+        const cardBg = isPositive
+          ? "bg-gradient-to-br from-emerald-50/90 via-white to-emerald-100/40 border-emerald-300/80"
+          : isNegative
+            ? "bg-gradient-to-br from-rose-50/90 via-white to-rose-100/40 border-rose-300/80"
+            : "bg-gradient-to-br from-slate-50 via-white to-slate-100/50 border-slate-200";
+
+        const badgeBg = isPositive
+          ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+          : isNegative
+            ? "bg-rose-100 text-rose-800 border-rose-200"
+            : "bg-slate-100 text-slate-700 border-slate-200";
+
+        const amountColor = isPositive
+          ? "text-emerald-700"
+          : isNegative
+            ? "text-rose-600"
+            : "text-[var(--color-fg)]";
+
+        const badgeText = isPositive
+          ? `✓ ${tTrip("youWillGet")}`
+          : isNegative
+            ? `⚠️ ${tTrip("youOwe")}`
+            : `🤝 ${tTrip("allSettled")}`;
+
+        const amountText = isPositive
+          ? `+${formatTaka(net, locale)}`
+          : isNegative
+            ? `-${formatTaka(Math.abs(net), locale)}`
+            : formatTaka(0, locale);
+
+        const hintText = isPositive
+          ? tTrip("myBalanceGetsHint")
+          : isNegative
+            ? tTrip("myBalanceOwesHint")
+            : tTrip("myBalanceSettledHint");
+
+        const icon = isPositive ? "💰" : isNegative ? "💸" : "🤝";
+
+        return (
+          <div
+            className={`rounded-2xl border p-4 sm:p-5 shadow-xs flex items-center justify-between ${cardBg}`}
+          >
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${badgeBg}`}
+                >
+                  {badgeText}
+                </span>
+              </div>
+              <div className={`text-2xl sm:text-3xl font-black tracking-tight ${amountColor}`}>
+                {amountText}
+              </div>
+              <p className="text-xs text-neutral-400">
+                {hintText}
+              </p>
+            </div>
+            <div className="size-12 rounded-2xl bg-white text-2xl flex items-center justify-center shrink-0 shadow-2xs border border-[var(--color-border)]">
+              {icon}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+
   return (
-    <section className="space-y-5 py-2">
+    <section className="space-y-5 py-2 pb-24 min-[1000px]:pb-4">
       {errorMessage ? (
         <div
           role="alert"
@@ -512,125 +713,85 @@ export default async function TripPage({
         </div>
       ) : null}
 
-      {/* Modern Trip Header Card with Key Metrics Bar */}
-      <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+      {/* Header Card */}
+      <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-white p-4 sm:p-6 shadow-xs">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
+              <span className="text-xl sm:text-2xl">🌴</span>
+              <h1 className="text-xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
                 {trip.name}
               </h1>
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                  isLocked
-                    ? "bg-amber-100 text-amber-900 border border-amber-300"
-                    : "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                }`}
-              >
-                {isLocked ? `🔒 ${tTrip("lockedBadge")}` : `🟢 ${tTrip("unlockedBadge")}`}
-              </span>
+              {isLocked ? (
+                <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900 border border-amber-300">
+                  🔒 {tTrip("lockedBadge")}
+                </span>
+              ) : null}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--color-fg-muted)]">
+            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-[var(--color-fg-muted)]">
               {trip.destination ? (
-                <span className="inline-flex items-center gap-1 font-semibold text-[var(--color-fg)]">
+                <span className="inline-flex items-center gap-1 font-semibold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
                   📍 {trip.destination}
                 </span>
               ) : null}
-              {trip.destination && (trip.startDate || trip.endDate) ? (
-                <span>•</span>
-              ) : null}
-              {trip.startDate || trip.endDate ? (
-                <span className="inline-flex items-center gap-1 font-medium">
-                  🗓️ {trip.startDate ? formatDate(trip.startDate, locale) : ""}{" "}
-                  {trip.startDate && trip.endDate ? "—" : ""}{" "}
-                  {trip.endDate ? formatDate(trip.endDate, locale) : ""}
+              {tripDateRangeLabel ? (
+                <span className="inline-flex items-center gap-1 font-medium bg-[var(--color-surface-muted)] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
+                  🗓️ {tripDateRangeLabel}
                 </span>
               ) : null}
             </div>
           </div>
 
-          <form action={switchDeviceMemberAction}>
-            <input type="hidden" name="slug" value={trip.slug} />
-            <button
-              type="submit"
-              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-fg)] shadow-2xs hover:bg-[var(--color-surface-muted)] transition-colors"
-            >
-              <span>🔄</span>
-              <span>{tTrip("switchDevice")}</span>
-            </button>
-          </form>
+          <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl border border-[var(--color-border)] shadow-2xs">
+            <span className="text-base">{currentMember.emoji ?? "🎒"}</span>
+            <span className="font-extrabold whitespace-nowrap">
+              {currentMember.displayName}
+            </span>
+          </div>
         </div>
 
-        {/* Quick summary stats bar (2 cols on mobile, 4 cols on tablet and desktop) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-[var(--color-border)]">
-          <div className="rounded-xl bg-[var(--color-primary-light)]/40 p-3 border border-[var(--color-primary)]/15">
-            <span className="text-xs font-semibold text-[var(--color-fg-muted)] block">
-              {tMoney("totalTripSpend")}
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-[var(--color-primary)]">
-              {formatTaka(totalTripSpend, locale)}
-            </span>
-          </div>
-
-          <div className="rounded-xl bg-[var(--color-surface-muted)] p-3 border border-[var(--color-border)]">
-            <span className="text-xs font-semibold text-[var(--color-fg-muted)] block">
-              {locale === "bn" ? "আমার হিসাব" : "My Balance"}
-            </span>
-            <span
-              className={`text-lg sm:text-xl font-black ${
-                (myBalance?.netBalance ?? 0) > 0
-                  ? "text-[var(--color-primary)]"
-                  : (myBalance?.netBalance ?? 0) < 0
-                    ? "text-red-600"
-                    : "text-[var(--color-fg)]"
-              }`}
-            >
-              {(myBalance?.netBalance ?? 0) > 0
-                ? `+${formatTaka(myBalance!.netBalance, locale)}`
-                : (myBalance?.netBalance ?? 0) < 0
-                  ? formatTaka(myBalance!.netBalance, locale)
-                  : `৳${locale === "bn" ? "০" : "0"}`}
-            </span>
-          </div>
-
-          <div className="rounded-xl bg-[var(--color-surface-muted)] p-3 border border-[var(--color-border)]">
-            <span className="text-xs font-semibold text-[var(--color-fg-muted)] block">
-              {tTrip("membersHeading")}
-            </span>
-            <span className="text-lg sm:text-xl font-bold text-[var(--color-fg)]">
-              👥 {memberCountLabel} {locale === "bn" ? "জন" : "members"}
-            </span>
-          </div>
-
-          <div className="rounded-xl bg-[var(--color-surface-muted)] p-3 border border-[var(--color-border)] flex flex-col justify-center">
-            <span className="text-xs font-semibold text-[var(--color-fg-muted)] block">
-              {tTrip("signedInAs")}
-            </span>
-            <span className="text-sm font-bold text-[var(--color-fg)] truncate">
-              {currentMember.emoji ?? "🎒"} {currentMember.displayName}
-            </span>
-          </div>
+        {/* 2 Stat Cards: Shown in header on desktop (>= 1000px), on mobile moved into Expenses tab */}
+        <div className="hidden min-[1000px]:block pt-3 border-t border-[var(--color-border)]">
+          {statCardsNode}
         </div>
       </div>
 
-      {/* Tabs Container: Expenses, Balances, Plan, Members */}
+      {/* Prominent Invite Friends Card at TOP for desktop only if < 2 joined members */}
+      {joinedMembersCount < 2 ? (
+        <div className="hidden min-[1000px]:block">
+          <InviteFriendsCard
+            slug={trip.slug}
+            tripName={trip.name}
+            locale={locale}
+          />
+        </div>
+      ) : null}
+
+      {/* Tabs Container: খরচ (Expenses), হিসাব (Who owes whom), প্ল্যান (Plan), বন্ধুরা (Friends) */}
       <TripTabsContainer
         locale={locale}
         initialTab={editExpense ? "expenses" : "expenses"}
         expensesSlot={
-          <div
-            className={
-              !isLocked
-                ? "space-y-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0 lg:items-start"
-                : "space-y-5"
-            }
-          >
-            {!isLocked ? (
-              <div className="space-y-5 lg:col-span-5">
-                {/* Step 6: AI Expense Parser (Bangla + Banglish -> Confirm Card -> Save) */}
+          <div className="space-y-5">
+            {/* Mobile-only Stat Cards (< 1000px, displayed inside Expenses tab) */}
+            <div className="min-[1000px]:hidden">
+              {statCardsNode}
+            </div>
+
+            <div
+              className={
+                !isLocked
+                  ? "space-y-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0 lg:items-start"
+                  : "space-y-5"
+              }
+            >
+              {!isLocked ? (
+                <div id="expense-box" className="space-y-5 lg:col-span-5">
+                {/* AI Expense Parser Card */}
                 <AiExpenseParserCard
                   slug={trip.slug}
+                  locale={locale}
                   members={memberInputs}
                   defaultDateYyyyMmDd={defaultExpenseDate}
                   existingExpenses={existingExpenseSummaries}
@@ -663,7 +824,7 @@ export default async function TripPage({
                   }}
                 />
 
-                {/* Step 3.1 + Step 4: Manual Expense Form with Live Duplicate-Entry Warning */}
+                {/* Manual Expense Form Card (Collapsible) */}
                 <div id="expense-form">
                   <ExpenseFormCard
                     key={editingExpenseData?.id ?? "new-expense"}
@@ -674,6 +835,7 @@ export default async function TripPage({
                     editingExpense={editingExpenseData}
                     existingExpenses={existingExpenseSummaries}
                     forceShowDuplicateConfirm={error === "duplicate_expense_warning"}
+                    locale={locale}
                     labels={{
                       addExpenseTitle: tMoney("addExpenseTitle"),
                       editExpenseTitle: tMoney("editExpenseTitle"),
@@ -702,18 +864,25 @@ export default async function TripPage({
                       duplicateWarningBody: tMoney("duplicateWarningBody"),
                       confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
                       categories: categoryLabels,
+                      manualFormToggle: tMoney("manualFormToggle"),
+                      manualFormClose: tMoney("manualFormClose"),
+                      moreOptionsToggle: tMoney("moreOptionsToggle"),
+                      whoPaidLabel: tMoney("whoPaidLabel"),
+                      whoSharedLabel: tMoney("whoSharedLabel"),
                     }}
                   />
                 </div>
               </div>
             ) : null}
 
-            {/* Step 3.3 + Step 4: Per-Day View with Edit History & Post-Settlement Flagging */}
+            {/* Per-Day View */}
             <div className={!isLocked ? "space-y-5 lg:col-span-7" : "space-y-5"}>
               <PerDayExpensesView
                 slug={trip.slug}
                 locale={locale}
                 isLocked={isLocked}
+                currentMemberId={currentMember.id}
+                creatorMemberId={trip.creatorMemberId}
                 members={memberInputs}
                 dayGroups={dayGroups}
                 settlements={settlementInputs}
@@ -734,58 +903,97 @@ export default async function TripPage({
               />
             </div>
           </div>
-        }
+        </div>
+      }
         balancesSlot={
-          <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 lg:items-start">
-            {/* Step 3.2: Balances Computed on Read & Simplified Debts */}
-            <BalancesCard
-              locale={locale}
-              totalTripSpend={totalTripSpend}
-              balances={balances}
-              simplifiedDebts={simplifiedDebts}
-              labels={{
-                balancesTitle: tMoney("balancesTitle"),
-                totalTripSpend: tMoney("totalTripSpend"),
-                whoOwesWhomTitle: tMoney("whoOwesWhomTitle"),
-                allSettled: tMoney("allSettled"),
-                owesArrow: tMoney("owesArrow"),
-                memberBalancesSub: tMoney("memberBalancesSub"),
-                colMember: tMoney("colMember"),
-                colPaid: tMoney("colPaid"),
-                colOwed: tMoney("colOwed"),
-                colNet: tMoney("colNet"),
-                statusGets: tMoney("statusGets"),
-                statusOwes: tMoney("statusOwes"),
-                statusEven: tMoney("statusEven"),
-              }}
-            />
+          <div className="space-y-5">
+            <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 lg:items-start">
+              {/* Balances Card */}
+              <BalancesCard
+                locale={locale}
+                totalTripSpend={totalTripSpend}
+                balances={balances}
+                simplifiedDebts={simplifiedDebts}
+                labels={{
+                  balancesTitle: tMoney("balancesTitle"),
+                  totalTripSpend: tMoney("totalTripSpend"),
+                  whoOwesWhomTitle: tMoney("whoOwesWhomTitle"),
+                  allSettled: tMoney("allSettled"),
+                  owesArrow: tMoney("owesArrow"),
+                  memberBalancesSub: tMoney("memberBalancesSub"),
+                  colMember: tMoney("colMember"),
+                  colPaid: tMoney("colPaid"),
+                  colOwed: tMoney("colOwed"),
+                  colNet: tMoney("colNet"),
+                  statusGets: tMoney("statusGets"),
+                  statusOwes: tMoney("statusOwes"),
+                  statusEven: tMoney("statusEven"),
+                }}
+              />
 
-            {/* Step 3.4: Settlements (Repayments, separate from expenses) */}
-            <SettlementsCard
+              {/* Settlements Card */}
+              <SettlementsCard
+                slug={trip.slug}
+                locale={locale}
+                isLocked={isLocked}
+                currentMemberId={currentMember.id}
+                creatorMemberId={trip.creatorMemberId}
+                members={memberInputs}
+                settlements={settlementInputs}
+                labels={{
+                  settlementsTitle: tMoney("settlementsTitle"),
+                  settlementSubtitle: tMoney("settlementSubtitle"),
+                  fromMemberLabel: tMoney("fromMemberLabel"),
+                  toMemberLabel: tMoney("toMemberLabel"),
+                  settlementAmountLabel: tMoney("settlementAmountLabel"),
+                  recordSettlementButton: tMoney("recordSettlementButton"),
+                  recordedSettlementsList: tMoney("recordedSettlementsList"),
+                  paidBackText: tMoney("paidBackText"),
+                  toText: tMoney("toText"),
+                  deleteButton: tMoney("deleteButton"),
+                }}
+              />
+            </div>
+
+            {/* Share Card & Printable Cost Sheet (placed under হিসাব / Who owes whom for clear settlement sharing) */}
+            <ShareAndExportCard
               slug={trip.slug}
               locale={locale}
-              isLocked={isLocked}
-              currentMemberId={currentMember.id}
-              members={memberInputs}
-              settlements={settlementInputs}
+              tripName={trip.name}
+              destination={trip.destination}
+              dateRangeLabel={tripDateRangeLabel}
+              members={trip.members.map((m) => ({
+                displayName: m.displayName,
+                emoji: m.emoji,
+                isGuest: m.isGuest,
+              }))}
+              itineraryHighlights={itineraryDayGroups.flatMap((d) =>
+                d.items.map(
+                  (item) =>
+                    `${locale === "bn" ? `দিন ${toBanglaDigits(d.dayNumber)}` : `Day ${d.dayNumber}`}: ${item.title}`,
+                ),
+              )}
               labels={{
-                settlementsTitle: tMoney("settlementsTitle"),
-                settlementSubtitle: tMoney("settlementSubtitle"),
-                fromMemberLabel: tMoney("fromMemberLabel"),
-                toMemberLabel: tMoney("toMemberLabel"),
-                settlementAmountLabel: tMoney("settlementAmountLabel"),
-                recordSettlementButton: tMoney("recordSettlementButton"),
-                recordedSettlementsList: tMoney("recordedSettlementsList"),
-                paidBackText: tMoney("paidBackText"),
-                toText: tMoney("toText"),
-                deleteButton: tMoney("deleteButton"),
+                cardTitle: tShare("cardTitle"),
+                cardSubtitle: tShare("cardSubtitle"),
+                publicSummaryTitle: tShare("publicSummaryTitle"),
+                publicSummaryHint: tShare("publicSummaryHint"),
+                openPublicSummaryButton: tShare("openPublicSummaryButton"),
+                copyPublicLinkButton: tShare("copyPublicLinkButton"),
+                copiedPublicLink: tShare("copiedPublicLink"),
+                shareImageHeading: tShare("shareImageHeading"),
+                downloadShareImageButton: tShare("downloadShareImageButton"),
+                costSheetTitle: tShare("costSheetTitle"),
+                costSheetHint: tShare("costSheetHint"),
+                downloadCsvButton: tShare("downloadCsvButton"),
+                openPrintableSheetButton: tShare("openPrintableSheetButton"),
               }}
             />
           </div>
         }
         planSlot={
           <div className="space-y-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0 lg:items-start">
-            {/* Step 5.1: Destination Voting (1 vote per member) */}
+            {/* Destination Voting */}
             <div className="space-y-5 lg:col-span-5">
               <DestinationVotingCard
                 slug={trip.slug}
@@ -810,10 +1018,11 @@ export default async function TripPage({
               />
             </div>
 
-            {/* Step 5.2: Day-by-Day Itinerary */}
+            {/* Day-by-Day Itinerary */}
             <div className="space-y-5 lg:col-span-7">
               <ItineraryCard
                 slug={trip.slug}
+                locale={locale}
                 isLocked={isLocked}
                 dayGroups={itineraryDayGroups}
                 labels={{
@@ -839,63 +1048,97 @@ export default async function TripPage({
         membersSlot={
           <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 lg:items-start">
             <div className="space-y-5">
-              {/* Shareable invite link card */}
-              <ShareLinkCard
+              {/* Invite Card in Friends tab */}
+              <InviteFriendsCard
                 slug={trip.slug}
                 tripName={trip.name}
-                shareTitle={tTrip("shareTitle")}
-                shareSubtitle={tTrip("shareSubtitle")}
-                copyLabel={tTrip("copyLink")}
-                copiedLabel={tTrip("copied")}
-                shareNativeLabel={tTrip("shareNative")}
+                locale={locale}
               />
 
-              {/* Members list */}
+              {/* Members List */}
+              <MembersListCard
+                slug={trip.slug}
+                locale={locale}
+                isCreator={isCreator}
+                creatorMemberId={trip.creatorMemberId}
+                members={memberListItems}
+                membersWithTransactions={membersWithTransactions}
+                labels={{
+                  heading: tTrip("membersHeading"),
+                  creatorBadge: tTrip("creatorBadge"),
+                  guestBadge: tTrip("guestBadge"),
+                  joinedBadge: tTrip("joinedBadge"),
+                  hasTransactionsBadge: tTrip("hasTransactionsBadge"),
+                  deleteButton: tTrip("deleteMemberButton"),
+                  confirmDeleteTitle: tTrip("confirmDeleteMemberTitle"),
+                  confirmDeleteDesc: tTrip("confirmDeleteMemberDesc"),
+                  cancelButton: tTrip("cancelButton"),
+                  confirmDeleteButton: tTrip("confirmDeleteButton"),
+                  deletingButton: tTrip("deletingButton"),
+                }}
+              />
+
+              {/* My Profile Settings (Change my name, emoji, or PIN) */}
               <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-[var(--color-fg)]">
-                    {tTrip("membersHeading")} ({memberCountLabel})
-                  </h2>
-                </div>
+                <h2 className="text-base font-bold text-[var(--color-fg)] flex items-center gap-2">
+                  <span>⚙️</span>
+                  <span>{locale === "bn" ? "আমার প্রোফাইল ও সেটিংস" : "My Profile & Settings"}</span>
+                </h2>
 
-                <ul className="divide-y divide-[var(--color-border)]">
-                  {trip.members.map((member) => (
-                    <li
-                      key={member.id}
-                      className="flex items-center justify-between gap-2 py-3"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-surface-muted)] text-xl">
-                          {member.emoji ?? "🎒"}
-                        </span>
-                        <span className="font-bold text-[var(--color-fg)]">
-                          {member.displayName}
-                        </span>
-                      </div>
+                <form action={updateMyProfileAction} className="space-y-3">
+                  <input type="hidden" name="slug" value={trip.slug} />
 
-                      <div className="flex items-center gap-1.5">
-                        {member.id === trip.creatorMemberId ? (
-                          <span className="rounded-md bg-[var(--color-primary-light)] px-2 py-0.5 text-xs font-bold text-[var(--color-primary)]">
-                            {tTrip("creatorBadge")}
-                          </span>
-                        ) : null}
-                        {member.isGuest ? (
-                          <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                            {tTrip("guestBadge")}
-                          </span>
-                        ) : null}
-                        {member.pinHash ? (
-                          <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-0.5 text-xs font-medium text-[var(--color-fg-muted)]">
-                            🔒 {tTrip("pinSetBadge")}
-                          </span>
-                        ) : null}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                  <div className="space-y-1">
+                    <label htmlFor="my-name" className="block text-xs font-bold text-[var(--color-fg)]">
+                      {locale === "bn" ? "আমার নাম ও ইমোজি" : "My name & emoji"}
+                    </label>
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <SelectField
+                        id="my-emoji"
+                        name="emoji"
+                        emojiMode
+                        defaultValue={currentMember.emoji ?? "🎒"}
+                        options={MEMBER_EMOJIS.map((e) => ({
+                          value: e,
+                          label: e,
+                        }))}
+                      />
+                      <input
+                        id="my-name"
+                        name="displayName"
+                        type="text"
+                        required
+                        maxLength={40}
+                        defaultValue={currentMember.displayName}
+                        className="min-h-[40px] sm:min-h-[44px] flex-1 min-w-0 rounded-2xl border border-[var(--color-border)] bg-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label htmlFor="my-pin" className="block text-xs font-bold text-[var(--color-fg)]">
+                      {locale === "bn" ? "পিন (ঐচ্ছিক)" : "PIN (optional)"}
+                    </label>
+                    <input
+                      id="my-pin"
+                      name="pin"
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder={currentMember.pinHash ? "••••" : (locale === "bn" ? "৪-৬ ডিজিট" : "4-6 digits")}
+                      className="min-h-[44px] w-full rounded-2xl border border-[var(--color-border)] bg-white px-3.5 py-1.5 text-sm text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
+                    />
+                  </div>
+
+                  <Button type="submit" variant="secondary" className="w-full min-h-[42px] text-xs font-bold">
+                    {locale === "bn" ? "সেভ করুন" : "Save changes"}
+                  </Button>
+                </form>
               </div>
+            </div>
 
-              {/* Creator Controls (visible only to trip creator) */}
+            <div className="space-y-5">
+              {/* Creator Controls */}
               {isCreator ? (
                 <div className="space-y-5 rounded-2xl border-2 border-[var(--color-primary)]/30 bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
                   <h2 className="text-lg font-bold text-[var(--color-primary)] flex items-center gap-2">
@@ -914,11 +1157,11 @@ export default async function TripPage({
                         {tTrip("addGuestTitle")}{" "}
                         <span className="text-red-500 font-bold">*</span>
                       </label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
                         <SelectField
                           name="emoji"
                           defaultValue="👤"
-                          className="w-20 shrink-0 sm:w-24"
+                          emojiMode
                           options={[
                             { value: "👤", label: "👤" },
                             ...MEMBER_EMOJIS.map((emoji) => ({
@@ -934,11 +1177,11 @@ export default async function TripPage({
                           required
                           maxLength={40}
                           placeholder={tTrip("guestNamePlaceholder")}
-                          className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                          className="min-h-[40px] sm:min-h-[44px] flex-1 min-w-0 rounded-2xl border border-[var(--color-border)] bg-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
                         />
                         <button
                           type="submit"
-                          className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
+                          className="inline-flex min-h-[40px] sm:min-h-[44px] shrink-0 items-center justify-center rounded-full bg-[#e8f5ee] border border-emerald-300/80 px-2.5 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-[#0f6b4a] shadow-2xs hover:bg-[#daf0e3] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                         >
                           {tTrip("addGuestButton")}
                         </button>
@@ -957,14 +1200,14 @@ export default async function TripPage({
                           <form
                             key={member.id}
                             action={renameMemberAction}
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-1.5 sm:gap-2"
                           >
                             <input type="hidden" name="slug" value={trip.slug} />
                             <input type="hidden" name="memberId" value={member.id} />
                             <SelectField
                               name="emoji"
                               defaultValue={member.emoji ?? "🎒"}
-                              className="w-20 shrink-0 sm:w-24"
+                              emojiMode
                               options={[
                                 { value: "👤", label: "👤" },
                                 ...MEMBER_EMOJIS.map((emoji) => ({
@@ -979,11 +1222,11 @@ export default async function TripPage({
                               required
                               maxLength={40}
                               defaultValue={member.displayName}
-                              className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
+                              className="min-h-[40px] sm:min-h-[44px] flex-1 min-w-0 rounded-2xl border border-[var(--color-border)] bg-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none"
                             />
                             <button
                               type="submit"
-                              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3.5 py-2 text-xs font-bold text-[var(--color-fg)] hover:bg-[var(--color-border)] transition-colors"
+                              className="inline-flex min-h-[40px] sm:min-h-[44px] shrink-0 items-center justify-center rounded-full border border-gray-300 bg-white px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs font-bold text-gray-800 hover:bg-gray-50 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                             >
                               {tTrip("renameSaveButton")}
                             </button>
@@ -1008,31 +1251,8 @@ export default async function TripPage({
                   </form>
                 </div>
               ) : null}
-            </div>
 
-            <div className="space-y-5">
-              {/* Step 7: Share Card, Public Read-Only Summary & Downloadable Daily Cost Sheet */}
-              <ShareAndExportCard
-                slug={trip.slug}
-                tripName={trip.name}
-                labels={{
-                  cardTitle: tShare("cardTitle"),
-                  cardSubtitle: tShare("cardSubtitle"),
-                  publicSummaryTitle: tShare("publicSummaryTitle"),
-                  publicSummaryHint: tShare("publicSummaryHint"),
-                  openPublicSummaryButton: tShare("openPublicSummaryButton"),
-                  copyPublicLinkButton: tShare("copyPublicLinkButton"),
-                  copiedPublicLink: tShare("copiedPublicLink"),
-                  shareImageHeading: tShare("shareImageHeading"),
-                  downloadShareImageButton: tShare("downloadShareImageButton"),
-                  costSheetTitle: tShare("costSheetTitle"),
-                  costSheetHint: tShare("costSheetHint"),
-                  downloadCsvButton: tShare("downloadCsvButton"),
-                  openPrintableSheetButton: tShare("openPrintableSheetButton"),
-                }}
-              />
-
-              {/* Step 4: Activity Log & Dispute-Protection Audit Trail */}
+              {/* Activity Log */}
               <ActivityLogCard
                 locale={locale}
                 members={memberInputs}
@@ -1048,10 +1268,17 @@ export default async function TripPage({
                   act_settlement_delete: tMoney("act_settlement_delete"),
                   act_member_join: tMoney("act_member_join"),
                   act_member_create_guest: tMoney("act_member_create_guest"),
+                  act_member_claim: tMoney("act_member_claim"),
                   act_member_update: tMoney("act_member_update"),
+                  act_member_delete: tMoney("act_member_delete"),
                   act_trip_create: tMoney("act_trip_create"),
                   act_trip_lock: tMoney("act_trip_lock"),
                   act_trip_unlock: tMoney("act_trip_unlock"),
+                  act_vote_upsert: tMoney("act_vote_upsert"),
+                  act_destination_create: tMoney("act_destination_create"),
+                  act_trip_set_destination: tMoney("act_trip_set_destination"),
+                  act_itinerary_create: tMoney("act_itinerary_create"),
+                  act_itinerary_delete: tMoney("act_itinerary_delete"),
                 }}
               />
             </div>

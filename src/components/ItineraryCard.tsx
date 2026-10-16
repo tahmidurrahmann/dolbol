@@ -1,9 +1,14 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   addItineraryItemAction,
   deleteItineraryItemAction,
   moveItineraryItemAction,
 } from "@/app/trips/actions";
 import { Button } from "@/components/Button";
+import type { SupportedLocale } from "@/lib/format";
 import type { ItineraryDayGroup } from "@/lib/planning";
 
 export interface ItineraryCardLabels {
@@ -25,6 +30,7 @@ export interface ItineraryCardLabels {
 
 interface ItineraryCardProps {
   slug: string;
+  locale?: SupportedLocale;
   isLocked: boolean;
   dayGroups: ItineraryDayGroup[];
   labels: ItineraryCardLabels;
@@ -32,18 +38,43 @@ interface ItineraryCardProps {
 
 export function ItineraryCard({
   slug,
+  locale = "bn",
   isLocked,
   dayGroups,
   labels,
 }: ItineraryCardProps) {
+  const router = useRouter();
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete || isDeleting) return;
+    const target = pendingDelete;
+    setPendingDelete(null);
+    setIsDeleting(true);
+    try {
+      const formData = new FormData();
+      formData.append("slug", slug);
+      formData.append("itemId", target.id);
+      await deleteItineraryItemAction(formData);
+    } catch {
+      // Handled by Next.js redirect
+    } finally {
+      setIsDeleting(false);
+      router.refresh();
+    }
+  };
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+    <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-xs">
       <div className="space-y-1">
         <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
           <span>📅</span>
           <span>{labels.itineraryTitle}</span>
         </h2>
-        <p className="text-xs sm:text-sm text-[var(--color-fg-muted)]">
+        <p className="text-xs sm:text-sm text-neutral-400">
           {labels.itinerarySubtitle}
         </p>
       </div>
@@ -220,16 +251,19 @@ export function ItineraryCard({
                           </form>
                         ) : null}
 
-                        <form action={deleteItineraryItemAction}>
-                          <input type="hidden" name="slug" value={slug} />
-                          <input type="hidden" name="itemId" value={item.id} />
-                          <button
-                            type="submit"
-                            className="inline-flex min-h-[34px] items-center justify-center rounded-md border border-red-200 bg-white px-2 text-xs font-semibold text-red-700 hover:bg-red-50"
-                          >
-                            {labels.deleteItem}
-                          </button>
-                        </form>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPendingDelete({
+                              id: item.id,
+                              title: item.title,
+                            })
+                          }
+                          className="inline-flex min-h-[34px] items-center justify-center gap-1 rounded-md border border-red-200 bg-white px-2.5 text-xs font-semibold text-red-700 hover:bg-red-50 cursor-pointer active:scale-95 transition-all"
+                        >
+                          <span>🗑️</span>
+                          <span>{labels.deleteItem}</span>
+                        </button>
                       </div>
                     ) : null}
                   </li>
@@ -239,6 +273,63 @@ export function ItineraryCard({
           ))}
         </div>
       )}
+
+      {/* Floating Delete Itinerary Item Confirmation Toast */}
+      {pendingDelete ? (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          className="fixed bottom-20 min-[1000px]:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md animate-in fade-in slide-in-from-bottom-4 duration-200"
+        >
+          <div className="rounded-2xl border border-rose-200 bg-white/95 p-4 sm:p-5 shadow-2xl backdrop-blur-md space-y-3.5 ring-1 ring-black/5">
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-xl text-rose-600">
+                🗑️
+              </span>
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <p className="text-sm font-black text-gray-900">
+                  {locale === "bn"
+                    ? "এই আইটেমটি মুছে ফেলতে চান?"
+                    : "Delete this itinerary item?"}
+                </p>
+                <p className="text-xs text-gray-600 truncate">
+                  <span className="font-bold text-gray-950">
+                    &ldquo;{pendingDelete.title}&rdquo;
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setPendingDelete(null)}
+                className="rounded-full px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {locale === "bn" ? "বাতিল" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 hover:bg-rose-700 px-4 py-2 text-xs font-black text-white shadow-xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <span>{locale === "bn" ? "মুছছে..." : "Deleting..."}</span>
+                ) : (
+                  <>
+                    <span>🗑️</span>
+                    <span>
+                      {locale === "bn" ? "মুছে ফেলুন" : "Confirm Delete"}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

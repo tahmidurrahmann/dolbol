@@ -44,20 +44,20 @@ export function DestinationVotingCard({
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+    <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-xs">
       <div className="space-y-1">
         <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
           <span>🗳️</span>
           <span>{labels.votingTitle}</span>
         </h2>
-        <p className="text-xs sm:text-sm text-[var(--color-fg-muted)]">
+        <p className="text-xs sm:text-sm text-neutral-400">
           {labels.votingSubtitle}
         </p>
       </div>
 
       {/* Propose new destination option form */}
       {!isLocked ? (
-        <form action={proposeDestinationOptionAction} className="flex gap-2">
+        <form action={proposeDestinationOptionAction} className="flex gap-1.5 sm:gap-2">
           <input type="hidden" name="slug" value={slug} />
           <input
             name="name"
@@ -65,11 +65,11 @@ export function DestinationVotingCard({
             required
             maxLength={80}
             placeholder={labels.optionPlaceholder}
-            className="min-h-[44px] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+            className="min-h-[40px] sm:min-h-[44px] flex-1 min-w-0 rounded-xl border border-[var(--color-border)] bg-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
           />
           <button
             type="submit"
-            className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
+            className="inline-flex min-h-[40px] sm:min-h-[44px] shrink-0 items-center justify-center rounded-full bg-[#e8f5ee] border border-emerald-300/80 px-2.5 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-[#0f6b4a] shadow-2xs hover:bg-[#daf0e3] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
           >
             {labels.addOptionButton}
           </button>
@@ -150,27 +150,26 @@ export function DestinationVotingCard({
                 {/* Action buttons (Vote + Creator Set Final Destination) */}
                 {!isLocked ? (
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                    <form action={castDestinationVoteAction}>
-                      <input type="hidden" name="slug" value={slug} />
-                      <input
-                        type="hidden"
-                        name="optionId"
-                        value={opt.optionId}
-                      />
-                      <button
-                        type="submit"
-                        disabled={opt.isCurrentMemberVote}
-                        className={`inline-flex min-h-[38px] items-center justify-center rounded-lg px-3.5 py-1.5 text-xs font-semibold ${
-                          opt.isCurrentMemberVote
-                            ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)]"
-                            : "bg-[var(--color-primary)] text-[var(--color-primary-fg)] hover:bg-[var(--color-primary-hover)]"
-                        }`}
-                      >
-                        {opt.isCurrentMemberVote
-                          ? labels.votedBadge
-                          : labels.voteButton}
-                      </button>
-                    </form>
+                    {opt.isCurrentMemberVote ? (
+                      <span className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-emerald-100 border border-emerald-300 px-4 py-1.5 text-xs font-black text-[#0f6b4a] select-none cursor-default shadow-2xs">
+                        {labels.votedBadge}
+                      </span>
+                    ) : (
+                      <form action={castDestinationVoteAction}>
+                        <input type="hidden" name="slug" value={slug} />
+                        <input
+                          type="hidden"
+                          name="optionId"
+                          value={opt.optionId}
+                        />
+                        <button
+                          type="submit"
+                          className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-[#e8f5ee] border border-emerald-300/80 px-4 py-1.5 text-xs font-bold text-[#0f6b4a] hover:bg-[#daf0e3] active:scale-95 transition-all cursor-pointer shadow-2xs"
+                        >
+                          {labels.voteButton}
+                        </button>
+                      </form>
+                    )}
 
                     {isCreator && !isSelectedDestination ? (
                       <form action={setTripDestinationFromOptionAction}>
@@ -182,7 +181,7 @@ export function DestinationVotingCard({
                         />
                         <button
                           type="submit"
-                          className="inline-flex min-h-[38px] items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--color-fg)] hover:bg-[var(--color-surface-muted)]"
+                          className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-gray-300 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-800 hover:bg-gray-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
                         >
                           {labels.setAsDestinationButton}
                         </button>
