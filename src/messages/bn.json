@@ -1,169 +1,158 @@
 {
   "app": {
     "name": "ট্রিপ হাব",
-
     "tagline": "বন্ধুদের সাথে ভ্রমণ পরিকল্পনা ও খরচের সহজ হিসাব",
-
     "createTrip": "নতুন ট্রিপ তৈরি করুন",
-
     "joinTrip": "ট্রিপে যোগ দিন",
-
     "comingSoon": "শীঘ্রই আসছে",
-
     "footer": "বাংলাদেশের ভ্রমণপ্রেমী বন্ধুদের জন্য তৈরি • হিসাব সবসময় পূর্ণ টাকায় (৳)"
   },
-
   "header": {
     "languageLabelBn": "বাংলা",
-
     "languageLabelEn": "English",
-
     "switchLanguageAria": "ভাষা পরিবর্তন করুন"
   },
-
   "createTrip": {
     "title": "নতুন ট্রিপ তৈরি করুন",
-
     "subtitle": "ট্রিপের নাম ও আপনার নাম দিন, তারপর বন্ধুদের লিংক পাঠান",
-
     "tripNameLabel": "ট্রিপের নাম *",
-
     "tripNamePlaceholder": "যেমন: সুন্দরবন ট্যুর ২০২৬",
-
     "destinationLabel": "গন্তব্য (ঐচ্ছিক)",
-
     "destinationPlaceholder": "যেমন: কক্সবাজার / শ্রীমঙ্গল",
-
     "startDateLabel": "শুরুর তারিখ (ঐচ্ছিক)",
-
     "endDateLabel": "শেষের তারিখ (ঐচ্ছিক)",
-
     "yourNameLabel": "আপনার নাম (ট্রিপ ক্রিয়েটর) *",
-
     "yourNamePlaceholder": "যেমন: করিম",
-
     "emojiLabel": "আপনার ইমোজি চিহ্ন",
-
     "pinLabel": "৪-৬ সংখ্যার পিন (ঐচ্ছিক)",
-
     "pinHint": "ফোন বদলালে বা ব্রাউজার ক্লিয়ার হলে নাম ফিরে পেতে কাজে লাগবে",
-
     "submitButton": "ট্রিপ শুরু করুন",
-
     "backHome": "← হোমে ফিরে যান"
   },
-
   "joinByLink": {
     "title": "ট্রিপে যোগ দিন",
-
     "subtitle": "বন্ধুর পাঠানো ট্রিপ লিংক বা কোড নিচে পেস্ট করুন",
-
     "inputLabel": "ট্রিপ লিংক বা স্লাগ কোড *",
-
     "inputPlaceholder": "https://.../trips/AbCdEf... অথবা কোড",
-
     "submitButton": "ট্রিপ খুঁজুন",
-
     "backHome": "← হোমে ফিরে যান"
   },
-
   "whoAreYou": {
     "title": "আপনি কে?",
-
     "subtitle": "এই ট্রিপে যোগ দিতে নিজের নাম বেছে নিন বা নতুন নাম লিখুন",
-
     "reclaimTitle": "আগে থেকেই এই ট্রিপে আছেন? নিজের নামে ট্যাপ করুন",
-
     "reclaimButton": "এই নামে প্রবেশ করুন",
-
     "pinProtected": "পিন দেওয়া আছে",
-
     "noPinSet": "পিন ছাড়া এক ট্যাপে প্রবেশ",
-
     "enterPinPlaceholder": "৪-৬ সংখ্যার পিন দিন",
-
     "newMemberTitle": "নতুন সদস্য হিসেবে যোগ দিন",
-
     "yourNameLabel": "আপনার নাম *",
-
     "yourNamePlaceholder": "যেমন: তানভীর",
-
     "emojiLabel": "ইমোজি চিহ্ন (একই নামের বন্ধু আলাদা করতে)",
-
     "pinLabel": "৪-৬ সংখ্যার পিন (ঐচ্ছিক)",
-
     "pinPlaceholder": "যেমন: ১২৩৪",
-
     "joinButton": "ট্রিপে যোগ দিন",
-
     "lockedNotice": "এই ট্রিপটি লক করা আছে। নতুন সদস্য যোগ হতে পারবে না, তবে পুরনো সদস্যরা নিজের নাম সিলেক্ট করে দেখতে পারবেন।"
   },
-
   "tripPage": {
     "shareTitle": "বন্ধুদের আমন্ত্রণ জানান",
-
     "shareSubtitle": "এই লিংকটি হোয়াটসঅ্যাপ বা মেসেঞ্জারে শেয়ার করুন (লগইন লাগবে না)",
-
     "copyLink": "লিংক কপি করুন",
-
     "copied": "কপি হয়েছে!",
-
     "shareNative": "শেয়ার করুন",
-
     "signedInAs": "আপনি যুক্ত আছেন:",
-
     "switchDevice": "নাম পরিবর্তন / রিক্লেইম টেস্ট করুন",
-
     "lockedBadge": "🔒 ট্রিপ লকড",
-
     "unlockedBadge": "🔓 ট্রিপ চালু",
-
     "destinationPrefix": "গন্তব্য:",
-
     "membersHeading": "ট্রিপের সদস্যবৃন্দ",
-
     "creatorBadge": "ক্রিয়েটর",
-
     "guestBadge": "গেস্ট",
-
     "pinSetBadge": "পিন সেট",
-
     "creatorControlsTitle": "ক্রিয়েটর কন্ট্রোলস",
-
     "addGuestTitle": "গেস্ট সদস্য যোগ করুন (যার অ্যাপ নেই)",
-
     "guestNamePlaceholder": "গেস্টের নাম",
-
     "addGuestButton": "গেস্ট যোগ করুন",
-
     "renameTitle": "সদস্যের নাম বা ইমোজি পরিবর্তন করুন",
-
     "renameSaveButton": "আপডেট করুন",
-
     "lockTripButton": "ট্রিপ লক করুন",
-
     "unlockTripButton": "ট্রিপ আনলক করুন",
-
     "lockTripHint": "লক করলে কেউ নতুন করে যোগ হতে বা তথ্য বদলাতে পারবে না।",
-
-    "nextStepsTitle": "খরচের হিসাব, গন্তব্য ভোট ও প্ল্যান",
-
-    "nextStepsBody": "ধাপ ৩-৫ এ খরচের হিসাব ও ভাগ-বাটোয়ারা যুক্ত হবে।"
+    "nextStepsTitle": "গন্তব্য ভোট ও ভ্রমণ সূচি (ধাপ ৫)",
+    "nextStepsBody": "ধাপ ৫ এ গন্তব্যে ভোট দেওয়া এবং প্রতিদিনের ভ্রমণ সূচি যুক্ত হবে।"
   },
-
+  "money": {
+    "addExpenseTitle": "নতুন খরচ যোগ করুন",
+    "editExpenseTitle": "খরচ এডিট করুন",
+    "cancelEdit": "এডিট বাতিল করুন",
+    "titleLabel": "কিসের খরচ? *",
+    "titlePlaceholder": "যেমন: রাতের খাবার / সিএনজি ভাড়া",
+    "amountLabel": "পরিমাণ (পূর্ণ টাকা ৳) *",
+    "amountPlaceholder": "যেমন: ১২০০",
+    "categoryLabel": "ধরন",
+    "dateLabel": "তারিখ (ঢাকা সময়)",
+    "paidByLabel": "কে টাকা দিয়েছে?",
+    "splitTypeLabel": "কীভাবে ভাগ হবে?",
+    "splitEqual": "সমান ভাগে",
+    "splitExact": "নির্দিষ্ট টাকা",
+    "splitPercent": "শতাংশ (%)",
+    "participantsLabel": "কারা কারা অংশীদার?",
+    "selectAll": "সবাই",
+    "leftoverNote": "পূর্ণ টাকায় ভাগ করার পর অতিরিক্ত টাকা যিনি বিল দিয়েছেন তাঁর ভাগে যোগ হবে।",
+    "exactSumStatus": "মোট মিলতে বাকি:",
+    "percentSumStatus": "মোট শতাংশ:",
+    "noteLabel": "নোট (ঐচ্ছিক)",
+    "notePlaceholder": "অতিরিক্ত কোনো তথ্য...",
+    "saveExpenseButton": "খরচ সেভ করুন",
+    "updateExpenseButton": "খরচ আপডেট করুন",
+    "cat_TRANSPORT": "🚗 যাতায়াত",
+    "cat_HOTEL": "🏨 হোটেল",
+    "cat_FOOD": "🍛 খাবার",
+    "cat_TICKET": "🎟️ টিকিট",
+    "cat_OTHER": "📦 অন্যান্য",
+    "balancesTitle": "হিসাব ও লেনদেন সারসংক্ষেপ",
+    "totalTripSpend": "ট্রিপের মোট খরচ",
+    "whoOwesWhomTitle": "কে কাকে কত টাকা দেবে (সহজ হিসাব)",
+    "allSettled": "সব হিসাব সমান! কেউ কারো কাছে টাকা পায় না।",
+    "owesArrow": "দেবে",
+    "memberBalancesSub": "সদস্যদের বিস্তারিত ব্যালেন্স",
+    "colMember": "সদস্য",
+    "colPaid": "দিয়েছে",
+    "colOwed": "নিজের খরচ",
+    "colNet": "নিট ব্যালেন্স",
+    "statusGets": "পাবে",
+    "statusOwes": "দেবে",
+    "statusEven": "সমান",
+    "settlementsTitle": "পরিশোধ / লেনদেন নিষ্পত্তি (Settlements)",
+    "settlementSubtitle": "কেউ কাউকে টাকা ফেরত দিলে এখানে রেকর্ড করুন (এটি খরচের মধ্যে যোগ হবে না)",
+    "fromMemberLabel": "কে টাকা দিল?",
+    "toMemberLabel": "কে টাকা পেল?",
+    "settlementAmountLabel": "টাকার পরিমাণ (৳)",
+    "recordSettlementButton": "পরিশোধ রেকর্ড করুন",
+    "recordedSettlementsList": "রেকর্ড করা পরিশোধসমূহ",
+    "paidBackText": "পরিশোধ করেছে",
+    "toText": "-কে",
+    "deleteButton": "মুছুন",
+    "editButton": "এডিট",
+    "perDayTitle": "প্রতিদিনের খরচের হিসাব (ঢাকা সময়)",
+    "noExpensesYet": "এখনো কোনো খরচ যোগ করা হয়নি।",
+    "otherDatesLabel": "অন্যান্য তারিখ",
+    "dayTotalLabel": "দিনের মোট:",
+    "perPersonDayCostLabel": "জনপ্রতি এই দিনের খরচ:",
+    "paidByPrefix": "বিল দিয়েছে:",
+    "editedAfterSettlementBadge": "⚠️ লেনদেন নিষ্পত্তির পরে এডিট করা হয়েছে"
+  },
   "errors": {
     "invalid_input": "তথ্যগুলো সঠিকভাবে পূরণ করুন।",
-
     "invalid_pin": "পিন অবশ্যই ৪ থেকে ৬ সংখ্যার হতে হবে।",
-
     "wrong_pin": "পিনটি সঠিক নয়। আবার চেষ্টা করুন।",
-
     "duplicate_name": "এই নামে একজন সদস্য ইতিমধ্যে আছেন! নিচের তালিকা থেকে নামটি বেছে নিন অথবা নামের সাথে ডাকনাম/ইনিশিয়াল যোগ করুন।",
-
     "trip_not_found": "এই লিংকে কোনো ট্রিপ পাওয়া যায়নি।",
-
     "trip_locked": "ট্রিপটি লক করা আছে, তাই পরিবর্তন করা যাবে না।",
-
-    "not_creator": "শুধুমাত্র ট্রিপ ক্রিয়েটর এই কাজটি করতে পারবেন।"
+    "not_creator": "শুধুমাত্র ট্রিপ ক্রিয়েটর এই কাজটি করতে পারবেন।",
+    "invalid_amount": "টাকার পরিমাণ অবশ্যই ১ বা তার বেশি পূর্ণ সংখ্যা হতে হবে।",
+    "invalid_shares": "ভাগের হিসাব মেলেনি (সমান ভাগে অন্তত ১ জন, নির্দিষ্ট টাকায় মোট খরচের সমান, এবং শতাংশে মোট ১০০% হতে হবে)।",
+    "same_member_settlement": "যিনি টাকা দিচ্ছেন এবং যিনি পাচ্ছেন তাঁরা একই ব্যক্তি হতে পারবেন না।",
+    "unauthorized": "খরচ যোগ করতে আগে নিজের নামে ট্রিপে প্রবেশ করুন।"
   }
 }

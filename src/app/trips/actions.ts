@@ -1,55 +1,57 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-
 import { redirect } from "next/navigation";
-
 import {
+  banglaToAsciiDigits,
   extractSlugFromInput,
   generateTripSlug,
   hashPin,
   normalizeNameKey,
   verifyPin,
 } from "@/lib/crypto";
-
 import { db } from "@/lib/db";
-
+import {
+  computeExpenseShares,
+  type ExactShareInput,
+  type PercentShareInput,
+  type ShareOutput,
+  verifySharesSum,
+} from "@/lib/money";
 import {
   clearMemberDeviceSession,
   createMemberDeviceSession,
   getCurrentMemberForTrip,
 } from "@/lib/session";
-
 import {
   addGuestFormSchema,
   createTripFormSchema,
+  expenseFormSchema,
   joinTripFormSchema,
   reclaimMemberFormSchema,
   renameMemberFormSchema,
+  settlementFormSchema,
 } from "@/lib/trips";
 
 function parseOptionalDhakaDate(yyyyMmDd: string | undefined): Date | null {
   if (!yyyyMmDd) {
     return null;
   }
-
   return new Date(`${yyyyMmDd}T00:00:00+06:00`);
+}
+
+function parseDhakaExpenseDate(yyyyMmDd: string): Date {
+  return new Date(`${yyyyMmDd}T12:00:00+06:00`);
 }
 
 export async function createTripAction(formData: FormData): Promise<void> {
   const parsed = createTripFormSchema.safeParse({
     name: formData.get("name") ?? "",
-
     destination: formData.get("destination") ?? undefined,
-
     startDate: formData.get("startDate") ?? undefined,
-
     endDate: formData.get("endDate") ?? undefined,
-
     creatorName: formData.get("creatorName") ?? "",
-
     creatorEmoji: formData.get("creatorEmoji") ?? "🎒",
-
     creatorPin: formData.get("creatorPin") ?? undefined,
   });
 
@@ -57,45 +59,31 @@ export async function createTripAction(formData: FormData): Promise<void> {
     const hasPinErr = parsed.error.issues.some(
       (i) => i.message === "invalid_pin",
     );
-
     const code = hasPinErr ? "invalid_pin" : "invalid_input";
-
     redirect(`/trips/new?error=${code}`);
   }
 
   const {
     name,
-
     destination,
-
     startDate,
-
     endDate,
-
     creatorName,
-
     creatorEmoji,
-
     creatorPin,
   } = parsed.data;
 
   const slug = generateTripSlug();
-
   const nameKey = normalizeNameKey(creatorName);
-
   const pinHash = creatorPin ? hashPin(creatorPin) : null;
 
   const result = await db.$transaction(async (tx) => {
     const trip = await tx.trip.create({
       data: {
         slug,
-
         name,
-
         destination: destination ?? null,
-
         startDate: parseOptionalDhakaDate(startDate),
-
         endDate: parseOptionalDhakaDate(endDate),
       },
     });
@@ -103,42 +91,29 @@ export async function createTripAction(formData: FormData): Promise<void> {
     const creator = await tx.member.create({
       data: {
         tripId: trip.id,
-
         displayName: creatorName.trim(),
-
         nameKey,
-
         emoji: creatorEmoji,
-
         isGuest: false,
-
         pinHash,
       },
     });
 
     const updatedTrip = await tx.trip.update({
       where: { id: trip.id },
-
       data: { creatorMemberId: creator.id },
     });
 
     await tx.activityLog.create({
       data: {
         tripId: trip.id,
-
         memberId: creator.id,
-
         entityType: "trip",
-
         entityId: trip.id,
-
         action: "create",
-
         after: {
           name: updatedTrip.name,
-
           destination: updatedTrip.destination,
-
           creatorDisplayName: creator.displayName,
         },
       },
@@ -148,7 +123,6 @@ export async function createTripAction(formData: FormData): Promise<void> {
   });
 
   await createMemberDeviceSession(result.creator.id, result.trip.id);
-
   redirect(`/trips/${result.trip.slug}`);
 }
 
@@ -156,7 +130,6 @@ export async function lookupTripByLinkAction(
   formData: FormData,
 ): Promise<void> {
   const raw = String(formData.get("tripLinkOrSlug") ?? "");
-
   const slug = extractSlugFromInput(raw);
 
   if (!slug) {
@@ -165,7 +138,6 @@ export async function lookupTripByLinkAction(
 
   const trip = await db.trip.findUnique({
     where: { slug },
-
     select: { slug: true },
   });
 
@@ -178,14 +150,10 @@ export async function lookupTripByLinkAction(
 
 export async function joinTripAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
-
   const parsed = joinTripFormSchema.safeParse({
     slug,
-
     displayName: formData.get("displayName") ?? "",
-
     emoji: formData.get("emoji") ?? "🎒",
-
     pin: formData.get("pin") ?? undefined,
   });
 
@@ -193,9 +161,7 @@ export async function joinTripAction(formData: FormData): Promise<void> {
     const hasPinErr = parsed.error.issues.some(
       (i) => i.message === "invalid_pin",
     );
-
     const code = hasPinErr ? "invalid_pin" : "invalid_input";
-
     redirect(`/trips/${encodeURIComponent(slug)}?error=${code}`);
   }
 
@@ -212,14 +178,11 @@ export async function joinTripAction(formData: FormData): Promise<void> {
   }
 
   const displayName = parsed.data.displayName.trim();
-
   const nameKey = normalizeNameKey(displayName);
-
   const existing = await db.member.findUnique({
     where: {
       tripId_nameKey: {
         tripId: trip.id,
-
         nameKey,
       },
     },
@@ -235,15 +198,10 @@ export async function joinTripAction(formData: FormData): Promise<void> {
     const created = await tx.member.create({
       data: {
         tripId: trip.id,
-
         displayName,
-
         nameKey,
-
         emoji: parsed.data.emoji,
-
         isGuest: false,
-
         pinHash,
       },
     });
@@ -251,18 +209,12 @@ export async function joinTripAction(formData: FormData): Promise<void> {
     await tx.activityLog.create({
       data: {
         tripId: trip.id,
-
         memberId: created.id,
-
         entityType: "member",
-
         entityId: created.id,
-
         action: "join",
-
         after: {
           displayName: created.displayName,
-
           emoji: created.emoji,
         },
       },
@@ -272,20 +224,15 @@ export async function joinTripAction(formData: FormData): Promise<void> {
   });
 
   await createMemberDeviceSession(member.id, trip.id);
-
   revalidatePath(`/trips/${trip.slug}`);
-
   redirect(`/trips/${trip.slug}`);
 }
 
 export async function reclaimMemberAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
-
   const parsed = reclaimMemberFormSchema.safeParse({
     slug,
-
     memberId: formData.get("memberId") ?? "",
-
     pin: formData.get("pin") ?? undefined,
   });
 
@@ -316,9 +263,7 @@ export async function reclaimMemberAction(formData: FormData): Promise<void> {
   }
 
   await createMemberDeviceSession(member.id, trip.id);
-
   revalidatePath(`/trips/${trip.slug}`);
-
   redirect(`/trips/${trip.slug}`);
 }
 
@@ -326,18 +271,14 @@ export async function switchDeviceMemberAction(
   formData: FormData,
 ): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
-
   const trip = await db.trip.findUnique({
     where: { slug },
-
     select: { id: true, slug: true },
   });
 
   if (trip) {
     await clearMemberDeviceSession(trip.id);
-
     revalidatePath(`/trips/${trip.slug}`);
-
     redirect(`/trips/${trip.slug}`);
   }
 
@@ -346,12 +287,9 @@ export async function switchDeviceMemberAction(
 
 export async function addGuestMemberAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
-
   const parsed = addGuestFormSchema.safeParse({
     slug,
-
     displayName: formData.get("displayName") ?? "",
-
     emoji: formData.get("emoji") ?? "👤",
   });
 
@@ -372,20 +310,17 @@ export async function addGuestMemberAction(formData: FormData): Promise<void> {
   }
 
   const currentMember = await getCurrentMemberForTrip(trip.id);
-
   if (!currentMember || currentMember.id !== trip.creatorMemberId) {
     redirect(`/trips/${trip.slug}?error=not_creator`);
   }
 
   const displayName = parsed.data.displayName.trim();
-
   const nameKey = normalizeNameKey(displayName);
 
   const existing = await db.member.findUnique({
     where: {
       tripId_nameKey: {
         tripId: trip.id,
-
         nameKey,
       },
     },
@@ -399,13 +334,9 @@ export async function addGuestMemberAction(formData: FormData): Promise<void> {
     const guest = await tx.member.create({
       data: {
         tripId: trip.id,
-
         displayName,
-
         nameKey,
-
         emoji: parsed.data.emoji,
-
         isGuest: true,
       },
     });
@@ -413,20 +344,13 @@ export async function addGuestMemberAction(formData: FormData): Promise<void> {
     await tx.activityLog.create({
       data: {
         tripId: trip.id,
-
         memberId: currentMember.id,
-
         entityType: "member",
-
         entityId: guest.id,
-
         action: "create_guest",
-
         after: {
           displayName: guest.displayName,
-
           emoji: guest.emoji,
-
           isGuest: true,
         },
       },
@@ -434,20 +358,15 @@ export async function addGuestMemberAction(formData: FormData): Promise<void> {
   });
 
   revalidatePath(`/trips/${trip.slug}`);
-
   redirect(`/trips/${trip.slug}`);
 }
 
 export async function renameMemberAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
-
   const parsed = renameMemberFormSchema.safeParse({
     slug,
-
     memberId: formData.get("memberId") ?? "",
-
     displayName: formData.get("displayName") ?? "",
-
     emoji: formData.get("emoji") ?? "🎒",
   });
 
@@ -468,7 +387,6 @@ export async function renameMemberAction(formData: FormData): Promise<void> {
   }
 
   const currentMember = await getCurrentMemberForTrip(trip.id);
-
   if (!currentMember || currentMember.id !== trip.creatorMemberId) {
     redirect(`/trips/${trip.slug}?error=not_creator`);
   }
@@ -482,14 +400,12 @@ export async function renameMemberAction(formData: FormData): Promise<void> {
   }
 
   const displayName = parsed.data.displayName.trim();
-
   const nameKey = normalizeNameKey(displayName);
 
   const duplicate = await db.member.findUnique({
     where: {
       tripId_nameKey: {
         tripId: trip.id,
-
         nameKey,
       },
     },
@@ -502,12 +418,9 @@ export async function renameMemberAction(formData: FormData): Promise<void> {
   await db.$transaction(async (tx) => {
     const updated = await tx.member.update({
       where: { id: targetMember.id },
-
       data: {
         displayName,
-
         nameKey,
-
         emoji: parsed.data.emoji,
       },
     });
@@ -515,24 +428,16 @@ export async function renameMemberAction(formData: FormData): Promise<void> {
     await tx.activityLog.create({
       data: {
         tripId: trip.id,
-
         memberId: currentMember.id,
-
         entityType: "member",
-
         entityId: targetMember.id,
-
         action: "update",
-
         before: {
           displayName: targetMember.displayName,
-
           emoji: targetMember.emoji,
         },
-
         after: {
           displayName: updated.displayName,
-
           emoji: updated.emoji,
         },
       },
@@ -540,13 +445,11 @@ export async function renameMemberAction(formData: FormData): Promise<void> {
   });
 
   revalidatePath(`/trips/${trip.slug}`);
-
   redirect(`/trips/${trip.slug}`);
 }
 
 export async function toggleTripLockAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
-
   const trip = await db.trip.findUnique({
     where: { slug },
   });
@@ -556,7 +459,6 @@ export async function toggleTripLockAction(formData: FormData): Promise<void> {
   }
 
   const currentMember = await getCurrentMemberForTrip(trip.id);
-
   if (!currentMember || currentMember.id !== trip.creatorMemberId) {
     redirect(`/trips/${trip.slug}?error=not_creator`);
   }
@@ -566,30 +468,428 @@ export async function toggleTripLockAction(formData: FormData): Promise<void> {
   await db.$transaction(async (tx) => {
     await tx.trip.update({
       where: { id: trip.id },
-
       data: { lockedAt: nextLockedAt },
     });
 
     await tx.activityLog.create({
       data: {
         tripId: trip.id,
-
         memberId: currentMember.id,
-
         entityType: "trip",
-
         entityId: trip.id,
-
         action: nextLockedAt ? "lock" : "unlock",
-
         before: { lockedAt: trip.lockedAt?.toISOString() ?? null },
-
         after: { lockedAt: nextLockedAt?.toISOString() ?? null },
       },
     });
   });
 
   revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
 
+// ---- Step 3: Money Core Server Actions (Expenses & Settlements) ----------
+
+export async function saveExpenseAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const parsed = expenseFormSchema.safeParse({
+    slug,
+    expenseId: formData.get("expenseId") ?? undefined,
+    title: formData.get("title") ?? "",
+    amount: formData.get("amount") ?? "",
+    category: formData.get("category") ?? "OTHER",
+    expenseDate: formData.get("expenseDate") ?? "",
+    paidById: formData.get("paidById") ?? "",
+    splitType: formData.get("splitType") ?? "EQUAL",
+    note: formData.get("note") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    const hasAmountErr = parsed.error.issues.some(
+      (i) => i.message === "invalid_amount",
+    );
+    const code = hasAmountErr ? "invalid_amount" : "invalid_input";
+    redirect(`/trips/${encodeURIComponent(slug)}?error=${code}`);
+  }
+
+  const trip = await db.trip.findUnique({
+    where: { slug: parsed.data.slug },
+    include: { members: true },
+  });
+
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  if (trip.lockedAt) {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  const validMemberIds = new Set(trip.members.map((m) => m.id));
+  if (!validMemberIds.has(parsed.data.paidById)) {
+    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  }
+
+  let shares: ShareOutput[];
+  try {
+    if (parsed.data.splitType === "EQUAL") {
+      const selectedIds = formData
+        .getAll("participantIds")
+        .map((v) => String(v).trim())
+        .filter((id) => validMemberIds.has(id));
+      shares = computeExpenseShares({
+        amount: parsed.data.amount,
+        paidById: parsed.data.paidById,
+        splitType: "EQUAL",
+        participantIds: selectedIds,
+      });
+    } else if (parsed.data.splitType === "EXACT") {
+      const exactShares: ExactShareInput[] = [];
+      for (const m of trip.members) {
+        const rawVal = String(formData.get(`exact_${m.id}`) ?? "").trim();
+        if (!rawVal) continue;
+        const num = Number(banglaToAsciiDigits(rawVal.replace(/,/g, "")));
+        if (num > 0) {
+          exactShares.push({ memberId: m.id, amount: num });
+        }
+      }
+      shares = computeExpenseShares({
+        amount: parsed.data.amount,
+        paidById: parsed.data.paidById,
+        splitType: "EXACT",
+        exactShares,
+      });
+    } else {
+      const percentShares: PercentShareInput[] = [];
+      for (const m of trip.members) {
+        const rawVal = String(formData.get(`percent_${m.id}`) ?? "").trim();
+        if (!rawVal) continue;
+        const num = Number(banglaToAsciiDigits(rawVal.replace(/,/g, "")));
+        if (num > 0) {
+          percentShares.push({ memberId: m.id, percent: num });
+        }
+      }
+      shares = computeExpenseShares({
+        amount: parsed.data.amount,
+        paidById: parsed.data.paidById,
+        splitType: "PERCENT",
+        percentShares,
+      });
+    }
+
+    verifySharesSum(shares, parsed.data.amount);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=invalid_shares`);
+  }
+
+  const expenseDate = parseDhakaExpenseDate(parsed.data.expenseDate);
+
+  if (parsed.data.expenseId) {
+    // Update existing expense
+    const existingExpense = await db.expense.findUnique({
+      where: { id: parsed.data.expenseId },
+      include: { shares: true },
+    });
+
+    if (
+      !existingExpense ||
+      existingExpense.tripId !== trip.id ||
+      existingExpense.deletedAt
+    ) {
+      redirect(`/trips/${trip.slug}?error=invalid_input`);
+    }
+
+    await db.$transaction(async (tx) => {
+      await tx.expenseShare.deleteMany({
+        where: { expenseId: existingExpense.id },
+      });
+
+      const updated = await tx.expense.update({
+        where: { id: existingExpense.id },
+        data: {
+          title: parsed.data.title,
+          amount: parsed.data.amount,
+          category: parsed.data.category,
+          expenseDate,
+          paidById: parsed.data.paidById,
+          splitType: parsed.data.splitType,
+          note: parsed.data.note ?? null,
+          shares: {
+            create: shares.map((s) => ({
+              memberId: s.memberId,
+              amount: s.amount,
+            })),
+          },
+        },
+      });
+
+      await tx.activityLog.create({
+        data: {
+          tripId: trip.id,
+          memberId: currentMember.id,
+          entityType: "expense",
+          entityId: updated.id,
+          action: "update",
+          before: {
+            title: existingExpense.title,
+            amount: existingExpense.amount,
+            category: existingExpense.category,
+            paidById: existingExpense.paidById,
+            splitType: existingExpense.splitType,
+            shares: existingExpense.shares.map((s) => ({
+              memberId: s.memberId,
+              amount: s.amount,
+            })),
+          },
+          after: {
+            title: updated.title,
+            amount: updated.amount,
+            category: updated.category,
+            paidById: updated.paidById,
+            splitType: updated.splitType,
+            shares,
+          },
+        },
+      });
+    });
+  } else {
+    // Create new expense
+    await db.$transaction(async (tx) => {
+      const created = await tx.expense.create({
+        data: {
+          tripId: trip.id,
+          title: parsed.data.title,
+          amount: parsed.data.amount,
+          category: parsed.data.category,
+          expenseDate,
+          paidById: parsed.data.paidById,
+          createdById: currentMember.id,
+          splitType: parsed.data.splitType,
+          note: parsed.data.note ?? null,
+          shares: {
+            create: shares.map((s) => ({
+              memberId: s.memberId,
+              amount: s.amount,
+            })),
+          },
+        },
+      });
+
+      await tx.activityLog.create({
+        data: {
+          tripId: trip.id,
+          memberId: currentMember.id,
+          entityType: "expense",
+          entityId: created.id,
+          action: "create",
+          after: {
+            title: created.title,
+            amount: created.amount,
+            category: created.category,
+            paidById: created.paidById,
+            splitType: created.splitType,
+            shares,
+          },
+        },
+      });
+    });
+  }
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+export async function deleteExpenseAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const expenseId = String(formData.get("expenseId") ?? "").trim();
+
+  const trip = await db.trip.findUnique({ where: { slug } });
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+  if (trip.lockedAt) {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  const existing = await db.expense.findUnique({
+    where: { id: expenseId },
+  });
+
+  if (!existing || existing.tripId !== trip.id || existing.deletedAt) {
+    redirect(`/trips/${trip.slug}`);
+  }
+
+  const deletedAt = new Date();
+  await db.$transaction(async (tx) => {
+    await tx.expense.update({
+      where: { id: existing.id },
+      data: { deletedAt },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "expense",
+        entityId: existing.id,
+        action: "delete",
+        before: {
+          title: existing.title,
+          amount: existing.amount,
+          paidById: existing.paidById,
+        },
+        after: { deletedAt: deletedAt.toISOString() },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+export async function createSettlementAction(
+  formData: FormData,
+): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const parsed = settlementFormSchema.safeParse({
+    slug,
+    fromMemberId: formData.get("fromMemberId") ?? "",
+    toMemberId: formData.get("toMemberId") ?? "",
+    amount: formData.get("amount") ?? "",
+  });
+
+  if (!parsed.success) {
+    const hasSameErr = parsed.error.issues.some(
+      (i) => i.message === "same_member_settlement",
+    );
+    const hasAmountErr = parsed.error.issues.some(
+      (i) => i.message === "invalid_amount",
+    );
+    const code = hasSameErr
+      ? "same_member_settlement"
+      : hasAmountErr
+        ? "invalid_amount"
+        : "invalid_input";
+    redirect(`/trips/${encodeURIComponent(slug)}?error=${code}`);
+  }
+
+  const trip = await db.trip.findUnique({
+    where: { slug: parsed.data.slug },
+    include: { members: true },
+  });
+
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+  if (trip.lockedAt) {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  const validMemberIds = new Set(trip.members.map((m) => m.id));
+  if (
+    !validMemberIds.has(parsed.data.fromMemberId) ||
+    !validMemberIds.has(parsed.data.toMemberId)
+  ) {
+    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  }
+
+  await db.$transaction(async (tx) => {
+    const settlement = await tx.settlement.create({
+      data: {
+        tripId: trip.id,
+        fromMemberId: parsed.data.fromMemberId,
+        toMemberId: parsed.data.toMemberId,
+        amount: parsed.data.amount,
+        createdById: currentMember.id,
+      },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "settlement",
+        entityId: settlement.id,
+        action: "create",
+        after: {
+          fromMemberId: settlement.fromMemberId,
+          toMemberId: settlement.toMemberId,
+          amount: settlement.amount,
+        },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+export async function deleteSettlementAction(
+  formData: FormData,
+): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const settlementId = String(formData.get("settlementId") ?? "").trim();
+
+  const trip = await db.trip.findUnique({ where: { slug } });
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+  if (trip.lockedAt) {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember) {
+    redirect(`/trips/${trip.slug}?error=unauthorized`);
+  }
+
+  const existing = await db.settlement.findUnique({
+    where: { id: settlementId },
+  });
+
+  if (!existing || existing.tripId !== trip.id || existing.deletedAt) {
+    redirect(`/trips/${trip.slug}`);
+  }
+
+  const deletedAt = new Date();
+  await db.$transaction(async (tx) => {
+    await tx.settlement.update({
+      where: { id: existing.id },
+      data: { deletedAt },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "settlement",
+        entityId: existing.id,
+        action: "delete",
+        before: {
+          fromMemberId: existing.fromMemberId,
+          toMemberId: existing.toMemberId,
+          amount: existing.amount,
+        },
+        after: { deletedAt: deletedAt.toISOString() },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
   redirect(`/trips/${trip.slug}`);
 }
