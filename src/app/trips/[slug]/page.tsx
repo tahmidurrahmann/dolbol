@@ -84,7 +84,8 @@ type ErrorKey =
   | "cross_trip_option"
   | "duplicate_option"
   | "member_has_transactions"
-  | "cannot_delete_creator";
+  | "cannot_delete_creator"
+  | "invalid_dates";
 
 const ERROR_KEYS = new Set<ErrorKey>([
   "invalid_input",
@@ -104,6 +105,7 @@ const ERROR_KEYS = new Set<ErrorKey>([
   "duplicate_option",
   "member_has_transactions",
   "cannot_delete_creator",
+  "invalid_dates",
 ]);
 
 function asSnapshot(val: unknown): ActivityLogSnapshot | null {
@@ -1070,6 +1072,7 @@ export default async function TripPage({
                   cancelButton: tTrip("cancelButton"),
                   startDateLabel: tPlan("startDateLabel"),
                   endDateLabel: tPlan("endDateLabel"),
+                  invalidDatesError: tPlan("invalidDatesError"),
                 }}
               />
 

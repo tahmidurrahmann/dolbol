@@ -291,7 +291,8 @@
     "setDatesButton": "তারিখ নির্ধারণ করুন",
     "saveDatesButton": "সেভ করুন",
     "startDateLabel": "শুরুর তারিখ",
-    "endDateLabel": "শেষের তারিখ"
+    "endDateLabel": "শেষের তারিখ",
+    "invalidDatesError": "শেষের তারিখ শুরুর তারিখের আগের হতে পারবে না।"
   },
   "shareExport": {
     "cardTitle": "শেয়ার কার্ড ও ডেইলি কস্ট শিট",

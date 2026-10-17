@@ -291,7 +291,8 @@
     "setDatesButton": "Set dates",
     "saveDatesButton": "Save dates",
     "startDateLabel": "Start date",
-    "endDateLabel": "End date"
+    "endDateLabel": "End date",
+    "invalidDatesError": "End date cannot be earlier than start date."
   },
   "shareExport": {
     "cardTitle": "Share Card & Cost Sheet",

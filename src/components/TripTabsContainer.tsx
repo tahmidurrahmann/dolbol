@@ -32,6 +32,13 @@ export function TripTabsContainer({
       router.refresh();
       try {
         localStorage.setItem("triphub_active_tab", tabId);
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", tabId);
+        window.history.replaceState(
+          {},
+          "",
+          url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : "") + url.hash,
+        );
       } catch {
         // ignore
       }
@@ -66,6 +73,18 @@ export function TripTabsContainer({
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get("tab");
+        if (
+          tabParam === "expenses" ||
+          tabParam === "balances" ||
+          tabParam === "plan" ||
+          tabParam === "members"
+        ) {
+          setActiveTab(tabParam);
+          return;
+        }
+
         const hash = window.location.hash.replace("#", "");
         if (
           hash === "expenses" ||

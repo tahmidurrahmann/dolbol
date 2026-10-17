@@ -1931,19 +1931,19 @@ export async function updateTripDatesAction(formData: FormData): Promise<void> {
   try {
     assertTripWritable(trip);
   } catch {
-    redirect(`/trips/${trip.slug}?error=trip_locked`);
+    redirect(`/trips/${trip.slug}?error=trip_locked&tab=plan`);
   }
 
   const currentMember = await getCurrentMemberForTrip(trip.id);
   if (!currentMember || currentMember.id !== trip.creatorMemberId) {
-    redirect(`/trips/${trip.slug}?error=not_creator`);
+    redirect(`/trips/${trip.slug}?error=not_creator&tab=plan`);
   }
 
   const parsedStart = parseOptionalDhakaDate(startDateRaw || undefined);
   const parsedEnd = parseOptionalDhakaDate(endDateRaw || undefined);
 
   if (parsedStart && parsedEnd && parsedStart > parsedEnd) {
-    redirect(`/trips/${trip.slug}?error=invalid_dates`);
+    redirect(`/trips/${trip.slug}?error=invalid_dates&tab=plan`);
   }
 
   await db.$transaction(async (tx) => {
@@ -1972,6 +1972,6 @@ export async function updateTripDatesAction(formData: FormData): Promise<void> {
 
   revalidatePath(`/trips/${trip.slug}`);
   revalidatePath(`/trips/${trip.slug}/summary`);
-  redirect(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}?tab=plan`);
 }
 

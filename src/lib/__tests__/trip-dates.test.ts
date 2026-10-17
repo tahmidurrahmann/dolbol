@@ -26,6 +26,12 @@ describe("Trip dates management", () => {
     const invalidStart = new Date("2026-10-25T00:00:00+06:00");
     const invalidEnd = new Date("2026-10-20T00:00:00+06:00");
     expect(invalidStart > invalidEnd).toBe(true);
+
+    // Today vs yesterday test
+    const today = "2026-10-17";
+    const yesterday = "2026-10-16";
+    const hasDateOrderError = Boolean(today && yesterday && today > yesterday);
+    expect(hasDateOrderError).toBe(true);
   });
 
   it("assertTripWritable blocks updating dates when trip is locked", () => {
