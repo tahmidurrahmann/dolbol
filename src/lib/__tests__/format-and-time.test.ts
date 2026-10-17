@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatTaka, toBanglaDigits } from "@/lib/format";
+import { formatDate, formatTaka, formatTime, toBanglaDigits } from "@/lib/format";
 import { dayKey, TRIP_TZ } from "@/lib/time";
 
 describe("toBanglaDigits", () => {
@@ -81,5 +81,18 @@ describe("formatDate", () => {
 
     expect(enFormatted).toContain("17");
     expect(bnFormatted).toContain("১৭");
+  });
+});
+
+describe("formatTime", () => {
+  it("formats time in Asia/Dhaka time zone, not UTC (6 hours ahead of UTC)", () => {
+    // 08:39 UTC on 2026-10-17 is 14:39 (2:39 PM) in Asia/Dhaka (UTC+6)
+    const timestamp = new Date("2026-10-17T08:39:00.000Z");
+    const enFormatted = formatTime(timestamp, "en");
+    const bnFormatted = formatTime(timestamp, "bn");
+
+    expect(enFormatted).toContain("2:39");
+    expect(enFormatted).toContain("PM");
+    expect(bnFormatted).toContain("২:৩৯");
   });
 });

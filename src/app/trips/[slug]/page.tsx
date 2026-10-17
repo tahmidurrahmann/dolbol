@@ -39,6 +39,7 @@ import { db } from "@/lib/db";
 import {
   formatDate,
   formatTaka,
+  formatTime,
   type SupportedLocale,
   toBanglaDigits,
 } from "@/lib/format";
@@ -726,10 +727,7 @@ export default async function TripPage({
     );
 
     if (claimLog) {
-      const formattedClaimTime = claimLog.createdAt.toLocaleTimeString(
-        locale === "bn" ? "bn-BD" : "en-US",
-        { hour: "numeric", minute: "2-digit" },
-      );
+      const formattedClaimTime = formatTime(claimLog.createdAt, locale);
       const noticeText = tTrip("newDeviceNotice", { time: formattedClaimTime });
       otherDeviceClaimNotice = (
         <NewDeviceNoticeBanner

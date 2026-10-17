@@ -105,3 +105,26 @@ export function formatRelativeTime(
     locale === "bn" ? toBanglaDigits(diffDays) : String(diffDays);
   return locale === "bn" ? `${days} দিন আগে` : `${days}d ago`;
 }
+
+/**
+ * Formats a Date's time in the Asia/Dhaka time zone (UTC+6) for the given locale.
+ */
+export function formatTime(date: Date, locale: SupportedLocale): string {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    throw new RangeError("Invalid Date provided to formatTime.");
+  }
+
+  const formatter = new Intl.DateTimeFormat(
+    locale === "bn" ? "bn-BD" : "en-US",
+    {
+      timeZone: TRIP_TZ,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    },
+  );
+
+  const formatted = formatter.format(date);
+  return locale === "bn" ? toBanglaDigits(formatted) : formatted;
+}
+
