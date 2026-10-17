@@ -13,7 +13,7 @@ const FREEZE_POINTS = [
   { t: "5", label: "5.0s: Rows Pop Up" },
   { t: "6.3", label: "6.3s: Footer & Add All" },
   { t: "7", label: "7.0s: Tap Ripple" },
-  { t: "8", label: "8.0s: Result & Debt Chip" },
+  { t: "8", label: "8.0s: Daily Expenses View" },
   { t: "9.5", label: "9.5s: Hold Before Fade" },
 ];
 

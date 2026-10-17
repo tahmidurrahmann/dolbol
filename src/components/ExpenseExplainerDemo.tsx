@@ -44,6 +44,13 @@ export interface ExpenseExplainerDemoProps {
     addAllButton?: string;
     reviewCaption?: string;
     addedSuccess?: string;
+    dailyExpensesTitle?: string;
+    day1Label?: string;
+    dayTotalLabel?: string;
+    perPersonCostLabel?: string;
+    paidByPrefix?: string;
+    editBtn?: string;
+    deleteBtn?: string;
     settlementHeader?: string;
     perPersonShare?: string;
     debtTransfer?: string;
@@ -63,7 +70,7 @@ export function ExpenseExplainerDemo({
   const [isOffScreen, setIsOffScreen] = useState(false);
   const [isTabHidden, setIsTabHidden] = useState(false);
 
-  // Localized strings matching real AiExpenseParserCard UI
+  // Localized strings matching real AiExpenseParserCard & PerDayExpensesView UI
   const labels = {
     badge: customLabels?.badge ?? (locale === "bn" ? "উদাহরণ" : "Example"),
     ariaLabel:
@@ -111,13 +118,13 @@ export function ExpenseExplainerDemo({
       (locale === "bn" ? "এআই পড়ছে…" : "AI is reading…"),
     line1:
       customLabels?.line1 ??
-      (locale === "bn" ? "rater khabar 1200" : "dinner 1200"),
+      (locale === "bn" ? "সকালের নাস্তা ২৫০" : "shokaler nasta 250"),
     line2:
       customLabels?.line2 ??
-      (locale === "bn" ? "shokaler nasta 200" : "breakfast 200"),
+      (locale === "bn" ? "দুপুরের খাবার ৮০০" : "dupurer khabar 800"),
     line3:
       customLabels?.line3 ??
-      (locale === "bn" ? "DUPURER khabar 600" : "lunch 600"),
+      (locale === "bn" ? "রাতের ডিনার ১২০০" : "rater dinner 1200"),
     draftBanner:
       customLabels?.draftBanner ??
       (locale === "bn"
@@ -136,24 +143,25 @@ export function ExpenseExplainerDemo({
       customLabels?.categoryBreakfast ??
       (locale === "bn" ? "☕ নাস্তা" : "☕ Breakfast"),
     item1Title:
-      customLabels?.item1Title ?? (locale === "bn" ? "রাতের খাবার" : "Dinner"),
+      customLabels?.item1Title ?? "রাতের ডিনার 1200",
     item2Title:
       customLabels?.item2Title ??
       (locale === "bn" ? "সকালের নাস্তা" : "Breakfast"),
     item3Title:
       customLabels?.item3Title ?? (locale === "bn" ? "দুপুরের খাবার" : "Lunch"),
     itemPayer:
-      customLabels?.itemPayer ?? (locale === "bn" ? "করিম" : "Karim"),
-    member1: customLabels?.member1 ?? (locale === "bn" ? "করিম" : "Karim"),
-    member2: customLabels?.member2 ?? (locale === "bn" ? "সুমি" : "Sumi"),
+      customLabels?.itemPayer ??
+      (locale === "bn" ? "কে দিলেন: 🏔️ Tahmidur" : "Paid by: 🏔️ Tahmidur"),
+    member1: customLabels?.member1 ?? "Tahmidur",
+    member2: customLabels?.member2 ?? "Rahman",
     member3: customLabels?.member3 ?? (locale === "bn" ? "তানভীর" : "Tanvir"),
     member4: customLabels?.member4 ?? (locale === "bn" ? "নাবিলা" : "Nabila"),
     footerSummary:
       customLabels?.footerSummary ??
-      (locale === "bn" ? "৩টি খরচ · মোট {total}" : "3 expenses · Total {total}"),
+      (locale === "bn" ? "৩টি খরচ, মোট ৳২,২৫০" : "3 expenses, total ৳2,250"),
     addAllButton:
       customLabels?.addAllButton ??
-      (locale === "bn" ? "সবগুলো যোগ করুন (৩)" : "Add all (3)"),
+      (locale === "bn" ? "সবগুলো যোগ করুন" : "Add all"),
     reviewCaption:
       customLabels?.reviewCaption ??
       (locale === "bn"
@@ -164,6 +172,26 @@ export function ExpenseExplainerDemo({
       (locale === "bn"
         ? "৩টি খরচ সফলভাবে যোগ করা হয়েছে।"
         : "3 expenses saved successfully."),
+    dailyExpensesTitle:
+      customLabels?.dailyExpensesTitle ??
+      (locale === "bn" ? "দৈনিক খরচ" : "Daily expenses"),
+    day1Label:
+      customLabels?.day1Label ??
+      (locale === "bn" ? "১ম দিন · ৬ অক্টো, ২০২৬" : "Day 1 · Oct 6, 2026"),
+    dayTotalLabel:
+      customLabels?.dayTotalLabel ??
+      (locale === "bn" ? "দিনের মোট:" : "Day total:"),
+    perPersonCostLabel:
+      customLabels?.perPersonCostLabel ??
+      (locale === "bn"
+        ? "জনপ্রতি এই দিনের খরচ:"
+        : "Cost per person today:"),
+    paidByPrefix:
+      customLabels?.paidByPrefix ??
+      (locale === "bn" ? "কে দিলেন:" : "Paid by:"),
+    editBtn: customLabels?.editBtn ?? (locale === "bn" ? "এডিট" : "Edit"),
+    deleteBtn:
+      customLabels?.deleteBtn ?? (locale === "bn" ? "মুছুন" : "Delete"),
     settlementHeader:
       customLabels?.settlementHeader ??
       (locale === "bn"
@@ -248,8 +276,8 @@ export function ExpenseExplainerDemo({
     if (input) {
       const demoText =
         locale === "bn"
-          ? "rater khabar 1200\nshokaler nasta 200\nDUPURER khabar 600"
-          : "dinner 1200\nbreakfast 200\nlunch 600";
+          ? "সকালের নাস্তা ২৫০\nদুপুরের খাবার ৮০০\nরাতের ডিনার ১২০০"
+          : "shokaler nasta 250\ndupurer khabar 800\nrater dinner 1200";
 
       // Dispatch native input event to ensure React state updates
       const nativeSetter = Object.getOwnPropertyDescriptor(
@@ -267,7 +295,11 @@ export function ExpenseExplainerDemo({
     }
   };
 
-  const formattedShare = formatTaka(500, locale);
+  const dayTotalFormatted = formatTaka(14750, locale);
+  const costTahmidurFormatted = formatTaka(7375, locale);
+  const costRahmanFormatted = formatTaka(7375, locale);
+  const item1AmountFormatted = formatTaka(1200, locale);
+  const item1ShareFormatted = formatTaka(600, locale);
 
   return (
     <div
@@ -465,392 +497,151 @@ export function ExpenseExplainerDemo({
 
           {/* -------------------------------------------------------------
               PHASE 2 (4.0s - 7.4s):
-              Real Generated Draft Review Form Card identically matching AiExpenseParserCard
+              Real Generated Draft Review Form Card with the exact same fields
+              from AiExpenseParserCard, scrolling down smoothly
               ------------------------------------------------------------- */}
           <div
-            className="demo-anim absolute inset-0 flex flex-col justify-between rounded-2xl border border-[var(--color-primary)]/40 bg-[var(--color-surface-muted)] p-2 sm:p-2.5 shadow-xs"
+            className="demo-anim absolute inset-0 overflow-hidden rounded-2xl border border-[var(--color-primary)]/40 bg-[var(--color-surface-muted)] p-2 sm:p-2.5 shadow-xs"
             style={animStyle("demo-confirm-phase")}
           >
-            {/* Top Draft Indicator Banner matching real feedback banner */}
-            <div className="flex items-center justify-between gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-emerald-950 shadow-2xs">
-              <span className="flex items-center gap-1 truncate">
-                <span>👇</span>
-                <span className="truncate">{labels.draftBanner}</span>
-              </span>
-              <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-200/80 text-emerald-900 border border-emerald-300">
-                {labels.draftBadge}
-              </span>
-            </div>
-
-            {/* Active item tabs indicating item 1, 2, 3 */}
-            <div className="flex items-center gap-1 pt-0.5">
-              <span
-                className="demo-anim flex-1 text-center py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold transition-all shadow-2xs"
-                style={animStyle("demo-tab-1")}
-              >
-                1. {labels.item1Title} (৳1,200)
-              </span>
-              <span
-                className="demo-anim flex-1 text-center py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold transition-all shadow-2xs"
-                style={animStyle("demo-tab-2")}
-              >
-                2. {labels.item2Title} (৳200)
-              </span>
-              <span
-                className="demo-anim flex-1 text-center py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold transition-all shadow-2xs"
-                style={animStyle("demo-tab-3")}
-              >
-                3. {labels.item3Title} (৳600)
-              </span>
-            </div>
-
-            {/* The Real Form Cards (Card 1, Card 2, Card 3) matching user's exact specifications */}
-            <div className="relative my-auto min-h-[144px]">
-              {/* Card 1: রাতের খাবার ৳1,200 */}
-              <div
-                className="demo-anim absolute inset-0 space-y-1.5 rounded-xl border border-[var(--color-border)] bg-white p-2 shadow-2xs"
-                style={animStyle("demo-draft-card-1")}
-              >
-                {/* Header: 1 | Category Badge | Remove */}
-                <div className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-neutral-200 text-[10px] font-extrabold text-neutral-800">
-                      1
-                    </span>
-                    <span className="inline-block rounded-md bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-900 border border-emerald-200">
-                      {labels.categoryFood}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-semibold text-neutral-400">
-                    ✕ {locale === "bn" ? "মুছুন" : "Remove"}
-                  </span>
-                </div>
-
-                {/* What was it for? & Amount (৳) Grid */}
-                <div className="grid grid-cols-12 gap-1.5 items-start">
-                  <div className="col-span-7 sm:col-span-8 space-y-0.5">
-                    <span className="block text-[9px] sm:text-[10px] font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "কিসের খরচ?" : "What was it for?"}
-                    </span>
-                    <div className="min-h-[26px] w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-0.5 text-[11px] font-semibold text-[var(--color-fg)] flex items-center shadow-2xs truncate">
-                      {labels.item1Title}
-                    </div>
-                  </div>
-
-                  <div className="col-span-5 sm:col-span-4 space-y-0.5">
-                    <span className="block text-[9px] sm:text-[10px] font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "টাকা (৳)" : "Amount (৳)"}
-                    </span>
-                    <div className="relative flex items-center">
-                      <span className="absolute left-2 text-[11px] font-bold text-[var(--color-primary)]">
-                        ৳
-                      </span>
-                      <div className="min-h-[26px] w-full rounded-lg border border-[var(--color-border)] bg-white pl-5 pr-1.5 py-0.5 text-[11px] sm:text-xs font-bold text-[var(--color-primary)] flex items-center shadow-2xs">
-                        1,200
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category, Who paid? & Date Grid */}
-                <div className="grid grid-cols-3 gap-1.5">
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "ক্যাটাগরি" : "Category"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">{labels.categoryFood}</span>
-                      <span className="text-[8px] text-neutral-400">▾</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "কে দিলেন?*" : "Who paid?*"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">🐅 {labels.member1}</span>
-                      <span className="text-[8px] text-neutral-400">▾</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "তারিখ*" : "Date*"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">
-                        {locale === "bn" ? "১৭ অক্টো, ২০২৬" : "Oct 17, 2026"}
-                      </span>
-                      <span className="text-[8px] text-neutral-400">📅</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Who shared this? */}
-                <div className="space-y-0.5 rounded-lg border border-[var(--color-border)] bg-gray-50/70 p-1.5 text-[9px]">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "কারা ভাগ করবে?" : "Who shared this?"}
-                    </span>
-                    <span className="font-bold text-[var(--color-primary)]">
-                      {locale === "bn" ? "সবাই" : "Everyone"}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 pt-0.5">
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🐅</span> <span>{labels.member1}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🌴</span> <span>{labels.member2}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🚤</span> <span>{labels.member3}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🎒</span> <span>{labels.member4}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 2: সকালের নাস্তা ৳200 */}
-              <div
-                className="demo-anim absolute inset-0 space-y-1.5 rounded-xl border border-[var(--color-border)] bg-white p-2 shadow-2xs"
-                style={animStyle("demo-draft-card-2")}
-              >
-                {/* Header: 2 | Category Badge | Remove */}
-                <div className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-neutral-200 text-[10px] font-extrabold text-neutral-800">
-                      2
-                    </span>
-                    <span className="inline-block rounded-md bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-900 border border-emerald-200">
-                      {labels.categoryBreakfast}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-semibold text-neutral-400">
-                    ✕ {locale === "bn" ? "মুছুন" : "Remove"}
-                  </span>
-                </div>
-
-                {/* What was it for? & Amount (৳) Grid */}
-                <div className="grid grid-cols-12 gap-1.5 items-start">
-                  <div className="col-span-7 sm:col-span-8 space-y-0.5">
-                    <span className="block text-[9px] sm:text-[10px] font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "কিসের খরচ?" : "What was it for?"}
-                    </span>
-                    <div className="min-h-[26px] w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-0.5 text-[11px] font-semibold text-[var(--color-fg)] flex items-center shadow-2xs truncate">
-                      {labels.item2Title}
-                    </div>
-                  </div>
-
-                  <div className="col-span-5 sm:col-span-4 space-y-0.5">
-                    <span className="block text-[9px] sm:text-[10px] font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "টাকা (৳)" : "Amount (৳)"}
-                    </span>
-                    <div className="relative flex items-center">
-                      <span className="absolute left-2 text-[11px] font-bold text-[var(--color-primary)]">
-                        ৳
-                      </span>
-                      <div className="min-h-[26px] w-full rounded-lg border border-[var(--color-border)] bg-white pl-5 pr-1.5 py-0.5 text-[11px] sm:text-xs font-bold text-[var(--color-primary)] flex items-center shadow-2xs">
-                        200
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category, Who paid? & Date Grid */}
-                <div className="grid grid-cols-3 gap-1.5">
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "ক্যাটাগরি" : "Category"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">{labels.categoryBreakfast}</span>
-                      <span className="text-[8px] text-neutral-400">▾</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "কে দিলেন?*" : "Who paid?*"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">🐅 {labels.member1}</span>
-                      <span className="text-[8px] text-neutral-400">▾</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "তারিখ*" : "Date*"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">
-                        {locale === "bn" ? "১৭ অক্টো, ২০২৬" : "Oct 17, 2026"}
-                      </span>
-                      <span className="text-[8px] text-neutral-400">📅</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Who shared this? */}
-                <div className="space-y-0.5 rounded-lg border border-[var(--color-border)] bg-gray-50/70 p-1.5 text-[9px]">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "কারা ভাগ করবে?" : "Who shared this?"}
-                    </span>
-                    <span className="font-bold text-[var(--color-primary)]">
-                      {locale === "bn" ? "সবাই" : "Everyone"}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 pt-0.5">
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🐅</span> <span>{labels.member1}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🌴</span> <span>{labels.member2}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🚤</span> <span>{labels.member3}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🎒</span> <span>{labels.member4}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3: দুপুরের খাবার ৳600 */}
-              <div
-                className="demo-anim absolute inset-0 space-y-1.5 rounded-xl border border-[var(--color-border)] bg-white p-2 shadow-2xs"
-                style={animStyle("demo-draft-card-3")}
-              >
-                {/* Header: 3 | Category Badge | Remove */}
-                <div className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-neutral-200 text-[10px] font-extrabold text-neutral-800">
-                      3
-                    </span>
-                    <span className="inline-block rounded-md bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-900 border border-emerald-200">
-                      {labels.categoryFood}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-semibold text-neutral-400">
-                    ✕ {locale === "bn" ? "মুছুন" : "Remove"}
-                  </span>
-                </div>
-
-                {/* What was it for? & Amount (৳) Grid */}
-                <div className="grid grid-cols-12 gap-1.5 items-start">
-                  <div className="col-span-7 sm:col-span-8 space-y-0.5">
-                    <span className="block text-[9px] sm:text-[10px] font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "কিসের খরচ?" : "What was it for?"}
-                    </span>
-                    <div className="min-h-[26px] w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-0.5 text-[11px] font-semibold text-[var(--color-fg)] flex items-center shadow-2xs truncate">
-                      {labels.item3Title}
-                    </div>
-                  </div>
-
-                  <div className="col-span-5 sm:col-span-4 space-y-0.5">
-                    <span className="block text-[9px] sm:text-[10px] font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "টাকা (৳)" : "Amount (৳)"}
-                    </span>
-                    <div className="relative flex items-center">
-                      <span className="absolute left-2 text-[11px] font-bold text-[var(--color-primary)]">
-                        ৳
-                      </span>
-                      <div className="min-h-[26px] w-full rounded-lg border border-[var(--color-border)] bg-white pl-5 pr-1.5 py-0.5 text-[11px] sm:text-xs font-bold text-[var(--color-primary)] flex items-center shadow-2xs">
-                        600
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category, Who paid? & Date Grid */}
-                <div className="grid grid-cols-3 gap-1.5">
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "ক্যাটাগরি" : "Category"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">{labels.categoryFood}</span>
-                      <span className="text-[8px] text-neutral-400">▾</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "কে দিলেন?*" : "Who paid?*"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">🐅 {labels.member1}</span>
-                      <span className="text-[8px] text-neutral-400">▾</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <span className="block text-[9px] font-bold text-neutral-500 truncate">
-                      {locale === "bn" ? "তারিখ*" : "Date*"}
-                    </span>
-                    <div className="min-h-[24px] rounded-md border border-[var(--color-border)] bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-800 flex items-center justify-between shadow-2xs truncate">
-                      <span className="truncate">
-                        {locale === "bn" ? "১৭ অক্টো, ২০২৬" : "Oct 17, 2026"}
-                      </span>
-                      <span className="text-[8px] text-neutral-400">📅</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Who shared this? */}
-                <div className="space-y-0.5 rounded-lg border border-[var(--color-border)] bg-gray-50/70 p-1.5 text-[9px]">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[var(--color-fg)]">
-                      {locale === "bn" ? "কারা ভাগ করবে?" : "Who shared this?"}
-                    </span>
-                    <span className="font-bold text-[var(--color-primary)]">
-                      {locale === "bn" ? "সবাই" : "Everyone"}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 pt-0.5">
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🐅</span> <span>{labels.member1}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🌴</span> <span>{labels.member2}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🚤</span> <span>{labels.member3}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.2 font-bold bg-[var(--color-primary)] text-white shadow-2xs">
-                      <span>🎒</span> <span>{labels.member4}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* + Add another expense & Real Footer bar matching AiExpenseParserCard */}
-            <div className="space-y-1 pt-0.5 border-t border-[var(--color-border)]">
-              <div className="flex items-center gap-1 text-[10px] font-bold text-[var(--color-primary)]">
-                <span>+</span>
-                <span>
-                  {locale === "bn"
-                    ? "আরেকটি খরচ যোগ করুন"
-                    : "Add another expense"}
+            {/* Scrollable Form Viewport gliding down smoothly to reveal bottom fields */}
+            <div
+              className="demo-anim space-y-2"
+              style={animStyle("demo-form-scroll")}
+            >
+              {/* Top Draft Indicator Banner */}
+              <div className="flex items-center justify-between gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-bold text-emerald-950 shadow-2xs">
+                <span className="flex items-center gap-1.5 truncate">
+                  <span>👇</span>
+                  <span className="truncate">{labels.draftBanner}</span>
+                </span>
+                <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 border border-emerald-300">
+                  {labels.draftBadge}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
-                  {locale === "bn"
-                    ? "৩টি খরচ, মোট ৳২,০০০"
-                    : "3 expenses, total ৳2,000"}
+              {/* The Real Add Expense Form Card with the Exact Fields */}
+              <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2.5 sm:p-3 shadow-xs">
+                {/* 1. Header: Number badge | Category badge | Remove button */}
+                <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-200 text-[11px] font-extrabold text-neutral-800">
+                      1
+                    </span>
+                    <span className="inline-block rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-900 border border-emerald-200">
+                      {labels.categoryFood}
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-neutral-400">
+                    ✕ {locale === "bn" ? "মুছুন" : "Remove"}
+                  </span>
                 </div>
 
+                {/* 2. What was it for? */}
+                <div className="space-y-0.5">
+                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
+                    {locale === "bn" ? "কিসের খরচ?" : "What was it for?"}
+                  </label>
+                  <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-fg)] flex items-center shadow-2xs">
+                    {labels.item1Title}
+                  </div>
+                </div>
+
+                {/* 3. Amount (৳) */}
+                <div className="space-y-0.5">
+                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
+                    {locale === "bn" ? "টাকা (৳)" : "Amount (৳)"}
+                  </label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-2.5 text-xs font-bold text-[var(--color-primary)]">
+                      ৳
+                    </span>
+                    <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white pl-7 pr-2.5 py-1 text-xs font-bold text-[var(--color-primary)] flex items-center shadow-2xs">
+                      1,200
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Category */}
+                <div className="space-y-0.5">
+                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
+                    {locale === "bn" ? "ক্যাটাগরি" : "Category"}
+                  </label>
+                  <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                    <span className="flex items-center gap-1.5">
+                      <span>{labels.categoryFood}</span>
+                    </span>
+                    <span className="text-xs text-neutral-400">▾</span>
+                  </div>
+                </div>
+
+                {/* 5. Who paid?* */}
+                <div className="space-y-0.5">
+                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
+                    {locale === "bn" ? "কে দিলেন?*" : "Who paid?*"}
+                  </label>
+                  <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                    <span className="flex items-center gap-1.5">
+                      <span>🏔️</span>
+                      <span>{labels.member1}</span>
+                    </span>
+                    <span className="text-xs text-neutral-400">▾</span>
+                  </div>
+                </div>
+
+                {/* 6. Date* */}
+                <div className="space-y-0.5">
+                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
+                    {locale === "bn" ? "তারিখ*" : "Date*"}
+                  </label>
+                  <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                    <span>
+                      {locale === "bn" ? "৬ অক্টো, ২০২৬" : "Oct 6, 2026"}
+                    </span>
+                    <span className="text-xs text-neutral-400">📅</span>
+                  </div>
+                </div>
+
+                {/* 7. Who shared this? */}
+                <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-gray-50/70 p-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-[var(--color-fg)]">
+                      {locale === "bn" ? "কারা ভাগ করবে?" : "Who shared this?"}
+                    </span>
+                    <span className="text-[11px] font-bold text-[var(--color-primary)]">
+                      {locale === "bn" ? "সবাই" : "Everyone"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold bg-[var(--color-primary)] text-white shadow-2xs">
+                      <span>🏔️</span> <span>{labels.member1}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold bg-[var(--color-primary)] text-white shadow-2xs">
+                      <span>🎒</span> <span>{labels.member2}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 8. + Add another expense */}
+              <div className="pt-0.5">
+                <div className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--color-primary)]/60 bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-primary)] shadow-2xs">
+                  <span>+</span>
+                  <span>
+                    {locale === "bn"
+                      ? "আরেকটি খরচ যোগ করুন"
+                      : "Add another expense"}
+                  </span>
+                </div>
+              </div>
+
+              {/* 9. Footer: 3 expenses, total ৳2,250 + Add all */}
+              <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2">
+                <div className="text-xs sm:text-sm font-bold text-[var(--color-fg)]">
+                  {labels.footerSummary}
+                </div>
                 <div
-                  className="demo-anim rounded-full bg-[#0f6b4a] text-white font-bold px-3 py-1 text-[10px] sm:text-[11px] shadow-2xs shrink-0 cursor-pointer"
+                  className="demo-anim rounded-full bg-[#0f6b4a] text-white font-bold px-3.5 py-1.5 text-xs sm:text-sm shadow-xs cursor-pointer"
                   style={animStyle("demo-add-all-tap")}
                 >
                   ✓ {labels.addAllButton}
@@ -861,16 +652,16 @@ export function ExpenseExplainerDemo({
 
           {/* -------------------------------------------------------------
               PHASE 3 (7.4s - 8.8s):
-              Real Direct Success Notification & Settlement Result
+              Real Daily Expenses (দৈনিক খরচ) section copying PerDayExpensesView.tsx
               ------------------------------------------------------------- */}
           <div
-            className="demo-anim absolute inset-0 flex flex-col justify-between rounded-2xl border-2 border-emerald-400 bg-emerald-50/95 p-3 sm:p-3.5 shadow-md"
+            className="demo-anim absolute inset-0 flex flex-col justify-between rounded-2xl border-2 border-emerald-400 bg-emerald-50/95 p-2.5 sm:p-3 shadow-md"
             style={animStyle("demo-success-phase")}
           >
-            {/* Real Success Notification Banner */}
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs sm:text-sm font-bold text-emerald-900 shadow-2xs">
-              <div className="flex items-center gap-2 truncate">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-xs font-extrabold text-white shrink-0">
+            {/* Top Success Banner */}
+            <div className="flex items-center justify-between gap-1.5 rounded-xl border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-900 shadow-2xs">
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-extrabold text-white shrink-0">
                   ✓
                 </span>
                 <span className="truncate">{labels.addedSuccess}</span>
@@ -878,26 +669,83 @@ export function ExpenseExplainerDemo({
               <span className="text-neutral-400 text-xs shrink-0">✕</span>
             </div>
 
-            {/* Real Settlement Result Card (সুমি → করিম ৳৫০০) */}
-            <div className="my-auto rounded-2xl border border-emerald-200 bg-white p-2.5 sm:p-3 shadow-xs space-y-1.5">
+            {/* Real Daily Expenses Card matching PerDayExpensesView */}
+            <div className="my-auto space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2.5 sm:p-3 shadow-xs">
+              {/* Section Header: 🧾 দৈনিক খরচ (Daily expenses) */}
               <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                  {labels.settlementHeader}
-                </span>
-                <span className="text-[10px] font-extrabold text-emerald-700">
-                  {labels.perPersonShare}
-                </span>
+                <div className="flex items-center gap-1.5 text-xs font-black text-[var(--color-fg)]">
+                  <span>🧾</span>
+                  <span>{labels.dailyExpensesTitle}</span>
+                </div>
+                <div className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-900 border border-emerald-200">
+                  <span>{labels.dayTotalLabel}</span>
+                  <span>{dayTotalFormatted}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-2 bg-emerald-50/80 rounded-xl p-2 border border-emerald-200">
-                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-900">
-                  <span className="text-sm">👤</span>
-                  <span>
-                    {labels.debtTransfer.replace("{amount}", formattedShare)}
+
+              {/* Day Title */}
+              <div className="flex items-center gap-1 text-[11px] font-extrabold text-[var(--color-fg)]">
+                <span>🗓️</span>
+                <span>{labels.day1Label}</span>
+              </div>
+
+              {/* Cost per person today pills */}
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-wider">
+                  {labels.perPersonCostLabel}
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                    <span>🏔️ {labels.member1}:</span>
+                    <strong className="font-extrabold text-[var(--color-primary)]">
+                      {costTahmidurFormatted}
+                    </strong>
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                    <span>🎒 {labels.member2}:</span>
+                    <strong className="font-extrabold text-[var(--color-primary)]">
+                      {costRahmanFormatted}
+                    </strong>
                   </span>
                 </div>
-                <span className="text-xs sm:text-sm font-black text-emerald-800">
-                  {formattedShare}
-                </span>
+              </div>
+
+              {/* Real Expense Row in Daily Expenses */}
+              <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-neutral-50/60 p-2 shadow-2xs">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="rounded bg-white px-1.5 py-0.2 text-[9px] font-bold text-gray-700 border border-gray-200">
+                        {labels.categoryFood}
+                      </span>
+                      <span className="text-xs font-bold text-[var(--color-fg)] truncate">
+                        {labels.item1Title}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-neutral-400">
+                      {labels.paidByPrefix}{" "}
+                      <strong className="text-gray-700">
+                        🏔️ {labels.member1}
+                      </strong>
+                    </p>
+                  </div>
+
+                  <div className="text-sm font-black text-[var(--color-fg)]">
+                    {item1AmountFormatted}
+                  </div>
+                </div>
+
+                {/* Individual share pills + Edit / Delete buttons */}
+                <div className="flex items-center justify-between gap-1 pt-1 border-t border-gray-200/60 text-[9px]">
+                  <div className="flex items-center gap-1.5 text-neutral-600 font-medium">
+                    <span>🏔️ {labels.member1}: <strong className="font-bold text-[var(--color-primary)]">{item1ShareFormatted}</strong></span>
+                    <span>🎒 {labels.member2}: <strong className="font-bold text-[var(--color-primary)]">{item1ShareFormatted}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-neutral-400 shrink-0 font-medium">
+                    <span>✏️ {labels.editBtn}</span>
+                    <span>🗑️ {labels.deleteBtn}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -905,7 +753,7 @@ export function ExpenseExplainerDemo({
             {mode === "landing" ? (
               <Link
                 href="/trips/new"
-                className="inline-flex min-h-[40px] sm:min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[#0f6b4a] px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#0c593d] transition-all cursor-pointer"
+                className="inline-flex min-h-[36px] sm:min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-[#0f6b4a] px-3 py-1.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#0c593d] transition-all cursor-pointer"
               >
                 🚀 {labels.tryYourself}
               </Link>
@@ -913,7 +761,7 @@ export function ExpenseExplainerDemo({
               <button
                 type="button"
                 onClick={handleTrySelf}
-                className="inline-flex min-h-[40px] sm:min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[#0f6b4a] px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#0c593d] transition-all cursor-pointer"
+                className="inline-flex min-h-[36px] sm:min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-[#0f6b4a] px-3 py-1.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#0c593d] transition-all cursor-pointer"
               >
                 ✍️ {labels.tryYourself}
               </button>
@@ -927,12 +775,12 @@ export function ExpenseExplainerDemo({
             ========================================================= */}
         <div
           aria-hidden="true"
-          className="demo-reduced-show hidden flex-col justify-between h-full w-full rounded-2xl border-2 border-emerald-400 bg-emerald-50/95 p-3 sm:p-3.5 shadow-md"
+          className="demo-reduced-show hidden flex-col justify-between h-full w-full rounded-2xl border-2 border-emerald-400 bg-emerald-50/95 p-2.5 sm:p-3 shadow-md"
         >
           {/* Top Success Banner */}
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs sm:text-sm font-bold text-emerald-900 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
+          <div className="flex items-center justify-between gap-1.5 rounded-xl border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-900 shadow-2xs">
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
                 ✓
               </span>
               <span>{labels.addedSuccess}</span>
@@ -940,60 +788,77 @@ export function ExpenseExplainerDemo({
             <span className="text-neutral-400 text-xs">✕</span>
           </div>
 
-          {/* Three Summary Expense Lines */}
-          <div className="space-y-1 my-auto">
-            <div className="flex items-center justify-between text-xs font-semibold text-gray-800 bg-white p-1.5 rounded-lg border border-emerald-100">
-              <span className="flex items-center gap-1.5">
-                <span>🍛</span>
-                <span>{labels.item1Title}</span>
-                <span className="text-[10px] text-neutral-500">
-                  (🐅 {labels.member1})
-                </span>
-              </span>
-              <span className="font-bold text-emerald-800">৳1,200</span>
-            </div>
-            <div className="flex items-center justify-between text-xs font-semibold text-gray-800 bg-white p-1.5 rounded-lg border border-emerald-100">
-              <span className="flex items-center gap-1.5">
-                <span>☕</span>
-                <span>{labels.item2Title}</span>
-                <span className="text-[10px] text-neutral-500">
-                  (🐅 {labels.member1})
-                </span>
-              </span>
-              <span className="font-bold text-emerald-800">৳200</span>
-            </div>
-            <div className="flex items-center justify-between text-xs font-semibold text-gray-800 bg-white p-1.5 rounded-lg border border-emerald-100">
-              <span className="flex items-center gap-1.5">
-                <span>🍲</span>
-                <span>{labels.item3Title}</span>
-                <span className="text-[10px] text-neutral-500">
-                  (🐅 {labels.member1})
-                </span>
-              </span>
-              <span className="font-bold text-emerald-800">৳600</span>
-            </div>
-          </div>
-
-          {/* Result Chip: Who owes whom (সুমি → করিম ৳৫০০) */}
-          <div className="rounded-2xl border border-emerald-200 bg-white p-2.5 sm:p-3 shadow-xs space-y-1.5">
+          {/* Daily Expenses View in Static Frame */}
+          <div className="my-auto space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2.5 sm:p-3 shadow-xs">
             <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                {labels.settlementHeader}
-              </span>
-              <span className="text-[10px] font-extrabold text-emerald-700">
-                {labels.perPersonShare}
-              </span>
+              <div className="flex items-center gap-1.5 text-xs font-black text-[var(--color-fg)]">
+                <span>🧾</span>
+                <span>{labels.dailyExpensesTitle}</span>
+              </div>
+              <div className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-900 border border-emerald-200">
+                <span>{labels.dayTotalLabel}</span>
+                <span>{dayTotalFormatted}</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between gap-2 bg-emerald-50/80 rounded-xl p-2 border border-emerald-200">
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-900">
-                <span>👤</span>
-                <span>
-                  {labels.debtTransfer.replace("{amount}", formattedShare)}
+
+            <div className="flex items-center gap-1 text-[11px] font-extrabold text-[var(--color-fg)]">
+              <span>🗓️</span>
+              <span>{labels.day1Label}</span>
+            </div>
+
+            <div className="space-y-0.5">
+              <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-wider">
+                {labels.perPersonCostLabel}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                  <span>🏔️ {labels.member1}:</span>
+                  <strong className="font-extrabold text-[var(--color-primary)]">
+                    {costTahmidurFormatted}
+                  </strong>
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                  <span>🎒 {labels.member2}:</span>
+                  <strong className="font-extrabold text-[var(--color-primary)]">
+                    {costRahmanFormatted}
+                  </strong>
                 </span>
               </div>
-              <span className="text-xs font-black text-emerald-800">
-                {formattedShare}
-              </span>
+            </div>
+
+            <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-neutral-50/60 p-2 shadow-2xs">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded bg-white px-1.5 py-0.2 text-[9px] font-bold text-gray-700 border border-gray-200">
+                      {labels.categoryFood}
+                    </span>
+                    <span className="text-xs font-bold text-[var(--color-fg)] truncate">
+                      {labels.item1Title}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-neutral-400">
+                    {labels.paidByPrefix}{" "}
+                    <strong className="text-gray-700">
+                      🏔️ {labels.member1}
+                    </strong>
+                  </p>
+                </div>
+                <div className="text-sm font-black text-[var(--color-fg)]">
+                  {item1AmountFormatted}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-1 pt-1 border-t border-gray-200/60 text-[9px]">
+                <div className="flex items-center gap-1.5 text-neutral-600 font-medium">
+                  <span>🏔️ {labels.member1}: <strong className="font-bold text-[var(--color-primary)]">{item1ShareFormatted}</strong></span>
+                  <span>🎒 {labels.member2}: <strong className="font-bold text-[var(--color-primary)]">{item1ShareFormatted}</strong></span>
+                </div>
+                <div className="flex items-center gap-1.5 text-neutral-400 shrink-0 font-medium">
+                  <span>✏️ {labels.editBtn}</span>
+                  <span>🗑️ {labels.deleteBtn}</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1001,7 +866,7 @@ export function ExpenseExplainerDemo({
           {mode === "landing" ? (
             <Link
               href="/trips/new"
-              className="mt-1 inline-flex min-h-[38px] w-full items-center justify-center gap-2 rounded-full bg-[#0f6b4a] py-1.5 text-center text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#0c593d] transition-all cursor-pointer"
+              className="mt-1 inline-flex min-h-[36px] sm:min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-[#0f6b4a] py-1.5 text-center text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#0c593d] transition-all cursor-pointer"
             >
               🚀 {labels.tryYourself}
             </Link>
@@ -1009,7 +874,7 @@ export function ExpenseExplainerDemo({
             <button
               type="button"
               onClick={handleTrySelf}
-              className="mt-1 inline-flex min-h-[38px] w-full items-center justify-center gap-2 rounded-full bg-[#0f6b4a] py-1.5 text-center text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#0c593d] transition-all cursor-pointer"
+              className="mt-1 inline-flex min-h-[36px] sm:min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full bg-[#0f6b4a] py-1.5 text-center text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-[#0c593d] transition-all cursor-pointer"
             >
               ✍️ {labels.tryYourself}
             </button>
