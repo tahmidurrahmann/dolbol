@@ -282,13 +282,13 @@ export default async function TripPage({
       locale === "bn" ? toBanglaDigits(joinedCount) : String(joinedCount);
 
     return (
-      <section className="space-y-5 py-4 max-w-xl mx-auto w-full">
+      <section className="space-y-4 sm:space-y-5 py-3 sm:py-4 max-w-xl mx-auto w-full">
         {/* Header Invitation Card */}
-        <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs text-center sm:text-left">
+        <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:p-5 shadow-xs text-center sm:text-left">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center justify-center sm:justify-start gap-2">
               <span className="text-2xl">🌴</span>
-              <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
+              <h1 className="text-xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
                 {trip.name}
               </h1>
             </div>
@@ -306,7 +306,7 @@ export default async function TripPage({
               : "invited you to this trip"}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-xs text-[var(--color-fg-muted)] pt-1">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs text-[var(--color-fg-muted)] pt-1">
             {trip.destination ? (
               <span className="font-semibold text-[var(--color-fg)] flex items-center gap-1">
                 📍 {trip.destination}
@@ -334,9 +334,9 @@ export default async function TripPage({
 
         {/* 1-Tap Name Selection for Pre-Added Friends */}
         {unclaimedMembers.length > 0 ? (
-          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:p-5 shadow-xs">
             <div className="space-y-1">
-              <h2 className="text-base font-extrabold text-[var(--color-fg)] flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-extrabold text-[var(--color-fg)] flex items-center gap-2">
                 <span>👇</span>
                 <span>
                   {locale === "bn"
@@ -358,24 +358,24 @@ export default async function TripPage({
                   <input type="hidden" name="memberId" value={member.id} />
                   <button
                     type="submit"
-                    className="group w-full flex min-h-[58px] items-center justify-between gap-3 rounded-2xl border-2 border-[var(--color-primary)]/30 bg-white p-3 sm:px-4 sm:py-3.5 text-base font-bold text-[var(--color-fg)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/20 hover:shadow-xs active:scale-[0.99] transition-all cursor-pointer"
+                    className="group w-full flex min-h-[52px] sm:min-h-[58px] items-center justify-between gap-2.5 sm:gap-3 rounded-2xl border-2 border-[var(--color-primary)]/30 bg-white p-2.5 sm:px-4 sm:py-3.5 text-sm sm:text-base font-bold text-[var(--color-fg)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/20 hover:shadow-xs active:scale-[0.99] transition-all cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 truncate">
-                      <span className="flex size-11 items-center justify-center rounded-xl bg-[var(--color-primary-light)]/60 text-2xl border border-[var(--color-primary)]/20 shrink-0">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 truncate">
+                      <span className="flex size-10 sm:size-11 items-center justify-center rounded-xl bg-[var(--color-primary-light)]/60 text-xl sm:text-2xl border border-[var(--color-primary)]/20 shrink-0">
                         {member.emoji ?? "🎒"}
                       </span>
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="truncate text-base font-extrabold text-[var(--color-fg)]">
+                      <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                        <span className="truncate text-sm sm:text-base font-extrabold text-[var(--color-fg)]">
                           {member.displayName}
                         </span>
                         {member.isGuest ? (
-                          <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200 shrink-0">
-                            {locale === "bn" ? "গেস্ট প্রোফাইল" : "Guest profile"}
+                          <span className="rounded-md bg-amber-50 px-1.5 sm:px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200 shrink-0">
+                            {locale === "bn" ? "গেস্ট" : "Guest"}
                           </span>
                         ) : null}
                       </div>
                     </div>
-                    <span className="flex items-center gap-1.5 rounded-full bg-[#18201a] px-4 py-2 text-xs font-black text-white shadow-2xs shrink-0 group-hover:bg-[#253229] group-hover:scale-105 transition-all">
+                    <span className="flex items-center gap-1 sm:gap-1.5 rounded-full bg-[#18201a] px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-black text-white shadow-2xs shrink-0 group-hover:bg-[#253229] group-hover:scale-105 transition-all">
                       <span>{locale === "bn" ? "আমি এটা" : "This is me"}</span>
                       <span>→</span>
                     </span>
@@ -414,7 +414,7 @@ export default async function TripPage({
 
         {/* "My name isn't here" Expandable Form */}
         {!isLocked ? (
-          <details className="group space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs">
+          <details className="group space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:p-4 shadow-xs">
             <summary className="cursor-pointer list-none font-bold text-sm text-[var(--color-primary)] hover:underline flex items-center justify-between select-none">
               <span>➕ {locale === "bn" ? "আমার নাম এখানে নেই" : "My name isn't here"}</span>
               <span className="transition-transform group-open:rotate-180 text-xs text-[var(--color-fg-muted)]">
