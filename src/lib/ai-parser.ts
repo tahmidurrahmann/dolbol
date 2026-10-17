@@ -86,22 +86,25 @@ function splitIntoExpenseLines(text: string): string[] {
       .filter((p) => p.length > 0);
 
     for (const part of sentenceParts) {
+      let segmentsToProcess: string[] = [part];
+
       if (part.includes(",")) {
-        const commaSegments = part.split(",").map((s) => s.trim());
+        const commaSegments = part
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
         const segmentsWithNumbers = commaSegments.filter((s) => /\d+/.test(s));
-        if (
-          segmentsWithNumbers.length >= 2 &&
-          segmentsWithNumbers.length === commaSegments.length
-        ) {
-          result.push(...commaSegments.filter((s) => s.length > 0));
-          continue;
+        if (segmentsWithNumbers.length >= 2) {
+          segmentsToProcess = commaSegments;
         }
       }
 
-      // Check if this part contains multiple space-separated expenses ending with numbers
-      // e.g. "rater khabar 1200  dupurer khawon 200 bikaler khawon 400 bus vara 200"
-      const subParts = splitByAmountBoundaries(part);
-      result.push(...subParts);
+      for (const seg of segmentsToProcess) {
+        // Check if this segment contains multiple space-separated expenses ending with numbers
+        // e.g. "Shokaler nasta 250 dupurer khabar 800" or "rater khabar 1200 dupurer khawon 200"
+        const subParts = splitByAmountBoundaries(seg);
+        result.push(...subParts);
+      }
     }
   }
 
@@ -617,6 +620,12 @@ export function extractCleanTitle(
     .replace(
       /(সবাই|সবার\s*জন্য|বিল\s*দিয়েছে|টাকা\s*দিয়েছে|দিয়েছে|দিছে|দিল|দিলো|পে\s*করেছে|আমি\s*দিয়েছি|আমি\s*দিছি|ami\s*disi|ami\s*dilo|dilo|dise|paid)/gi,
       " ",
+    )
+    // Strip standalone numbers representing prices/amounts so the amount isn't duplicated in "What was it for?"
+    // Preserves quantities like "2 ta", "২ টি", "3 pcs"
+    .replace(
+      /(?:^|\s)[০-৯0-9,]+(?:\.[0-9]+)?\s*k?(?=\s+(?!ta\b|টা\b|টি\b|ti\b|jon\b|জন\b|piece\b|pc\b|copies\b|kg\b|plate\b|cup\b)[a-zA-Z\u0980-\u09FF]|\s*(?:$|[;,.]))/gi,
+      " ",
     );
 
   const aliasIndex = buildMemberAliasIndex(members);
@@ -894,7 +903,7 @@ export async function parseExpenseTextWithAI(args: {
       `Current signed-in member (for 'আমি'/'ami'/'I'/'me'): ${currentMember?.displayName ?? "unknown"}.`,
       "",
       "Rules:",
-      "1. Each numbered line is one expense or settlement. Return items in order. lineIndex is 0-based corresponding to line 1 = 0, line 2 = 1, etc.",
+      "1. Each numbered line is one expense or settlement. Return items in order. lineIndex is 0-based corresponding to line 1 = 0, line 2 = 1, etc. Set title to the clean item description WITHOUT repeating the price/amount number (e.g. for 'Shokaler nasta 250', title is 'Shokaler nasta', amount is 250).",
       "2. A line may produce more than one item only if it clearly contains several distinct expenses.",
       "3. If a line is a money transfer/settlement between members (e.g. 'Sumi ke 500 dilam', 'gave 500 to Karim'), set isSettlement: true, payerName to the giver, receiverName to recipient, category: 'OTHER', title: descriptive title.",
       "4. If a line names a person who is NOT in the trip members list, set question: 'Is [Name] in the trip?', confidence: 'medium', needsAttention: true.",
@@ -910,7 +919,7 @@ export async function parseExpenseTextWithAI(args: {
     ].join("\n");
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(geminiKey)}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(geminiKey)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1037,9 +1046,23 @@ export async function parseExpenseTextWithAI(args: {
         rawItem.confidence === "low" ||
         rawItem.confidence === "medium";
 
+      let resolvedTitle = (rawItem.title || associatedLine.slice(0, 100)).trim();
+      if (finalAmount && resolvedTitle.length > 2) {
+        const amtStr = String(finalAmount);
+        const withoutAmt = resolvedTitle
+          .replace(
+            new RegExp(`(?:^|\\s)${amtStr}(?:\\s|tk|taka|টাকা|\\/-)?$`, "i"),
+            "",
+          )
+          .trim();
+        if (withoutAmt.length >= 2) {
+          resolvedTitle = withoutAmt;
+        }
+      }
+
       const draft = parsedExpenseDraftSchema.parse({
         lineIndex: lineIdx,
-        title: rawItem.title || associatedLine.slice(0, 100),
+        title: resolvedTitle,
         amount: finalAmount,
         category: rawItem.category ?? "OTHER",
         paidByMemberId: finalPayer.id,

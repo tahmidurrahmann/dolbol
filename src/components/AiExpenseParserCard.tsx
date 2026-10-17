@@ -58,6 +58,16 @@ export interface AiExpenseParserLabels {
   parsedSuccessButton?: string;
   newSectionIndicator?: string;
   newSectionBadge?: string;
+  inputHelperText?: string;
+  clearInputButton?: string;
+  exampleDailyMealsTitle?: string;
+  exampleDailyMealsBadge?: string;
+  exampleTransportTitle?: string;
+  exampleTransportBadge?: string;
+  exampleHotelTitle?: string;
+  exampleHotelBadge?: string;
+  exampleSettlementTitle?: string;
+  exampleSettlementBadge?: string;
 }
 
 export interface EditableExpenseItem {
@@ -107,12 +117,13 @@ export function AiExpenseParserCard({
   members,
   currentMemberId,
   defaultDateYyyyMmDd,
-  existingExpenses: _existingExpenses,
+  existingExpenses,
   labels,
   locale = "bn",
 }: AiExpenseParserCardProps) {
   const router = useRouter();
   const [rawText, setRawText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -129,25 +140,14 @@ export function AiExpenseParserCard({
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
 
-  // Undo 30s banner state
-  const [undoBatchId, setUndoBatchId] = useState<string | null>(null);
-  const [undoCount, setUndoCount] = useState<number>(0);
-  const [undoSecondsLeft, setUndoSecondsLeft] = useState<number>(0);
-  const [undoing, setUndoing] = useState<boolean>(false);
-
+  // Auto-dismiss submit success notification after 4.5s
   useEffect(() => {
-    if (undoSecondsLeft <= 0 || !undoBatchId) return;
-    const timer = setInterval(() => {
-      setUndoSecondsLeft((prev) => {
-        if (prev <= 1) {
-          setUndoBatchId(null);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [undoSecondsLeft, undoBatchId]);
+    if (!submitSuccessMsg) return;
+    const timer = setTimeout(() => {
+      setSubmitSuccessMsg(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [submitSuccessMsg]);
 
   const myMemberId =
     currentMemberId ||
@@ -160,17 +160,59 @@ export function AiExpenseParserCard({
   const secondMemberName =
     members[1]?.displayName ?? (locale === "bn" ? "সুমি" : "Sumi");
 
-  const samplePrompts =
+  interface SamplePromptItem {
+    id: string;
+    displayText: string;
+    text: string;
+  }
+
+  const samplePrompts: SamplePromptItem[] =
     locale === "bn"
       ? [
-          "রাতের খাবার ১২০০\nসকালের নাস্তা ২০০\nদুপুরের খাবার ৬০০",
-          `${secondMemberName} কে ৫০০ দিলাম`,
-          `সিএনজি ভাড়া ৪৫০ টাকা ${firstMemberName} দিল`,
+          {
+            id: "daily-meals",
+            displayText:
+              "সকালের নাস্তা ২৫০, দুপুরের খাবার ৮০০, রাতের ডিনার ১২০০",
+            text: "সকালের নাস্তা ২৫০, দুপুরের খাবার ৮০০, রাতের ডিনার ১২০০",
+          },
+          {
+            id: "transport",
+            displayText: `সিএনজি ভাড়া ৪৫০ টাকা ${firstMemberName} দিল`,
+            text: `সিএনজি ভাড়া ৪৫০ টাকা ${firstMemberName} দিল`,
+          },
+          {
+            id: "hotel",
+            displayText: "হোটেল রুম ৩৫০০ টাকা",
+            text: "হোটেল রুম ৩৫০০ টাকা",
+          },
+          {
+            id: "settlement",
+            displayText: `${secondMemberName} কে ৫০০ টাকা দিলাম`,
+            text: `${secondMemberName} কে ৫০০ টাকা দিলাম`,
+          },
         ]
       : [
-          "rater khabar 1200\nshokaler nasta 200\nDUPURER khabar 600",
-          `${secondMemberName} ke 500 dilam`,
-          `CNG fare 450 tk ${firstMemberName} paid for all`,
+          {
+            id: "daily-meals",
+            displayText:
+              "Shokaler nasta 250, dupurer khabar 800, rater dinner 1200",
+            text: "Shokaler nasta 250, dupurer khabar 800, rater dinner 1200",
+          },
+          {
+            id: "transport",
+            displayText: `CNG fare 450 tk paid by ${firstMemberName}`,
+            text: `CNG fare 450 tk paid by ${firstMemberName}`,
+          },
+          {
+            id: "hotel",
+            displayText: "Hotel room 3500 tk",
+            text: "Hotel room 3500 tk",
+          },
+          {
+            id: "settlement",
+            displayText: `${secondMemberName} ke 500 dilam`,
+            text: `${secondMemberName} ke 500 dilam`,
+          },
         ];
 
   async function handleParse(
@@ -438,10 +480,12 @@ export function AiExpenseParserCard({
         count: number;
       };
 
-      setUndoBatchId(data.batchId);
-      setUndoCount(data.count);
-      setUndoSecondsLeft(30);
-      setSubmitSuccessMsg(null);
+      const successNotice =
+        locale === "bn"
+          ? `${data.count}টি খরচ সফলভাবে যোগ করা হয়েছে।`
+          : `${data.count} expense${data.count === 1 ? "" : "s"} added successfully.`;
+
+      setSubmitSuccessMsg(successNotice);
       setItems([]);
       setParseSource(null);
       setRawText("");
@@ -455,56 +499,12 @@ export function AiExpenseParserCard({
     }
   }
 
-  async function handleUndo(): Promise<void> {
-    if (!undoBatchId || undoing) return;
-    setUndoing(true);
-    setErrorMsg(null);
-
-    try {
-      const res = await fetch(`/api/trips/${slug}/undo-batch`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ batchId: undoBatchId }),
-      });
-
-      if (!res.ok) {
-        setErrorMsg(
-          labels.undoFailed ||
-            (locale === "bn"
-              ? "ফিরিয়ে নেওয়া যায়নি, অনুগ্রহ করে আবার চেষ্টা করুন।"
-              : "Failed to undo, please try again."),
-        );
-        return;
-      }
-
-      setUndoBatchId(null);
-      setUndoSecondsLeft(0);
-      setSubmitSuccessMsg(
-        labels.undoSuccess ||
-          (locale === "bn"
-            ? "খরচগুলো সফলভাবে ফিরিয়ে নেওয়া হয়েছে।"
-            : "Expenses successfully undone."),
-      );
-      router.refresh();
-    } catch {
-      setErrorMsg(
-        labels.undoFailed ||
-          (locale === "bn"
-            ? "ফিরিয়ে নেওয়া যায়নি, অনুগ্রহ করে আবার চেষ্টা করুন।"
-            : "Failed to undo, please try again."),
-      );
-    } finally {
-      setUndoing(false);
-    }
-  }
-
   const isPromptUnchanged =
     items.length > 0 &&
     lastParsedText !== null &&
     rawText.trim() === lastParsedText;
 
-  const isParseButtonDisabled =
-    loading || !rawText.trim() || isPromptUnchanged;
+  const isParseButtonDisabled = loading || !rawText.trim() || isPromptUnchanged;
 
   return (
     <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-xs">
@@ -516,93 +516,85 @@ export function AiExpenseParserCard({
         <p className="text-sm text-neutral-400">{labels.cardSubtitle}</p>
       </div>
 
-      {/* 30-Second Undo Banner */}
-      {undoBatchId ? (
-        <div
-          role="status"
-          className="flex items-center justify-between gap-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-3.5 sm:p-4 text-emerald-950 shadow-md"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-base font-bold text-emerald-700">✓</span>
-            <span className="text-xs sm:text-sm font-bold">
-              {labels.undoCountNotice
-                ? labels.undoCountNotice.replace("{count}", String(undoCount))
-                : locale === "bn"
-                  ? `${undoCount} টি খরচ যোগ করা হয়েছে।`
-                  : `${undoCount} expenses added.`}
-            </span>
-          </div>
+      {/* Input Form accepting multi-line Bangla/Banglish */}
+      <form onSubmit={handleParse} className="space-y-3.5">
+        <div className="relative rounded-2xl border border-[var(--color-border)] bg-white p-3 sm:p-3.5 shadow-2xs transition-all focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/15">
+          <textarea
+            ref={textareaRef}
+            id="ai-expense-input"
+            name="rawExpenseText"
+            aria-label={labels.cardTitle}
+            rows={3}
+            required
+            maxLength={1500}
+            value={rawText}
+            onChange={(e) => {
+              setRawText(e.target.value);
+              if (justParsed) setJustParsed(false);
+              if (submitSuccessMsg) setSubmitSuccessMsg(null);
+            }}
+            placeholder={
+              labels.inputPlaceholder ||
+              (locale === "bn"
+                ? "যেমন: সকালের নাস্তা ২৫০, সিএনজি ভাড়া ৪৫০ (করিম দিল), রাতের ডিনার ১২০০"
+                : "e.g.: shokaler nasta 250, CNG fare 450 (Karim paid), rater dinner 1200")
+            }
+            className="w-full bg-transparent text-base text-[var(--color-fg)] placeholder:text-neutral-400 placeholder:leading-relaxed focus:outline-none resize-y min-h-[95px] leading-relaxed"
+          />
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleUndo}
-              disabled={undoing}
-              className="rounded-xl border border-emerald-600 bg-white hover:bg-emerald-100 text-emerald-900 font-extrabold text-xs sm:text-sm px-3.5 py-1.5 min-h-[38px] shadow-2xs cursor-pointer transition-colors"
-            >
-              {undoing
-                ? labels.undoingButton ||
-                  (locale === "bn" ? "বাতিল হচ্ছে..." : "Undoing...")
-                : labels.undoButton
-                  ? labels.undoButton.replace(
-                      "{seconds}",
-                      String(undoSecondsLeft),
-                    )
-                  : locale === "bn"
-                    ? `ফিরিয়ে নিন (${undoSecondsLeft}s)`
-                    : `Undo (${undoSecondsLeft}s)`}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setUndoBatchId(null);
-                setUndoSecondsLeft(0);
-              }}
-              aria-label="Dismiss undo banner"
-              className="rounded-lg p-1 text-sm font-bold text-emerald-800 hover:text-emerald-950 hover:bg-emerald-200/60 cursor-pointer"
-            >
-              ✕
-            </button>
+          {/* Bottom helper bar inside input container - fully responsive with no truncation */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-gray-100 text-xs">
+            <span className="text-neutral-500 text-[11px] sm:text-xs leading-relaxed">
+              {labels.inputHelperText ||
+                (locale === "bn"
+                  ? "💡 মেসেজের মতো স্বাভাবিক বাংলায় বা বাংলিশে লিখুন, নিচে যাচাই ও এডিট করতে পারবেন।"
+                  : "💡 Type naturally in Bangla or Banglish, you can review and edit details below.")}
+            </span>
+
+            {rawText.trim().length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setRawText("");
+                  if (justParsed) setJustParsed(false);
+                  setErrorMsg(null);
+                  if (submitSuccessMsg) setSubmitSuccessMsg(null);
+                  textareaRef.current?.focus();
+                }}
+                className="self-end sm:self-auto inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer shrink-0"
+                title={
+                  labels.clearInputButton ||
+                  (locale === "bn" ? "মুছে ফেলুন" : "Clear")
+                }
+              >
+                ✕{" "}
+                {labels.clearInputButton ||
+                  (locale === "bn" ? "মুছে ফেলুন" : "Clear")}
+              </button>
+            ) : null}
           </div>
         </div>
-      ) : null}
 
-      {/* Input Form accepting multi-line Bangla/Banglish */}
-      <form onSubmit={handleParse} className="space-y-3">
-        <textarea
-          rows={3}
-          required
-          maxLength={1500}
-          value={rawText}
-          onChange={(e) => {
-            setRawText(e.target.value);
-            if (justParsed) setJustParsed(false);
-          }}
-          placeholder={
-            locale === "bn"
-              ? "যেমন: রাতের খাবার ১২০০\nসকালের নাস্তা ২০০\nদুপুরের খাবার ৬০০"
-              : "e.g.: rater khabar 1200\nshokaler nasta 200\nDUPURER khabar 600"
-          }
-          className="w-full rounded-2xl border border-[var(--color-border)] bg-white p-3.5 text-base text-[var(--color-fg)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15 focus:outline-none resize-y min-h-[90px] shadow-xs"
-        />
-
-        {/* Quick example chips */}
-        <div className="space-y-1">
-          <span className="block text-xs font-semibold text-neutral-400">
+        {/* Quick realistic example chips */}
+        <div className="space-y-1.5">
+          <span className="block text-xs font-bold text-neutral-600">
             {labels.tryExamplesLabel}
           </span>
           <div className="flex flex-wrap gap-1.5">
             {samplePrompts.map((sample) => (
               <button
-                key={sample}
+                key={sample.id}
                 type="button"
                 onClick={() => {
-                  setRawText(sample);
+                  setRawText(sample.text);
                   if (justParsed) setJustParsed(false);
+                  setErrorMsg(null);
+                  if (submitSuccessMsg) setSubmitSuccessMsg(null);
+                  textareaRef.current?.focus();
                 }}
-                className="rounded-full border border-gray-200/90 bg-[#f4f7f5] px-3 py-1 text-left text-xs font-semibold text-gray-700 hover:bg-[#e8f5ee] hover:border-emerald-200 hover:text-[#0f6b4a] transition-all cursor-pointer shadow-2xs whitespace-pre-line"
+                className="rounded-full border border-gray-200/90 bg-[#f4f7f5] px-3 py-1 text-left text-xs font-semibold text-gray-700 hover:bg-[#e8f5ee] hover:border-emerald-300 hover:text-emerald-900 transition-all cursor-pointer shadow-2xs whitespace-pre-line"
               >
-                &ldquo;{sample.replace(/\n/g, " / ")}&rdquo;
+                &ldquo;{sample.displayText}&rdquo;
               </button>
             ))}
           </div>
@@ -620,9 +612,20 @@ export function AiExpenseParserCard({
         {submitSuccessMsg ? (
           <div
             role="status"
-            className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-900"
+            className="flex items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs sm:text-sm font-bold text-emerald-900 shadow-2xs"
           >
-            ✓ {submitSuccessMsg}
+            <div className="flex items-center gap-2">
+              <span className="text-base text-emerald-600">✓</span>
+              <span>{submitSuccessMsg}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubmitSuccessMsg(null)}
+              aria-label="Dismiss message"
+              className="rounded-lg p-1 text-xs font-bold text-emerald-700 hover:text-emerald-900 hover:bg-emerald-200/50 cursor-pointer"
+            >
+              ✕
+            </button>
           </div>
         ) : null}
 

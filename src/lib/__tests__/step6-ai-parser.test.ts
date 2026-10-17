@@ -262,6 +262,40 @@ describe("Multi-line parsing, settlements, questions, and completeness", () => {
     expect(itemsNewline).toHaveLength(2);
     expect(itemsNewline[0]?.amount).toBe(400);
     expect(itemsNewline[1]?.amount).toBe(500);
+
+    // 4. Mixture of space and comma ('Shokaler nasta 250 dupurer khabar 800, rater dinner 1200')
+    const itemsMixed = parseExpensesDeterministicMulti({
+      rawText: "Shokaler nasta 250 dupurer khabar 800, rater dinner 1200",
+      members: BENCHMARK_MEMBERS,
+      currentMemberId: "karim",
+    });
+    expect(itemsMixed).toHaveLength(3);
+    expect(itemsMixed[0]?.amount).toBe(250);
+    expect(itemsMixed[0]?.title.toLowerCase()).toContain("shokaler nasta");
+    expect(itemsMixed[0]?.title).not.toContain("250");
+    expect(itemsMixed[1]?.amount).toBe(800);
+    expect(itemsMixed[1]?.title.toLowerCase()).toContain("dupurer khabar");
+    expect(itemsMixed[1]?.title).not.toContain("800");
+    expect(itemsMixed[2]?.amount).toBe(1200);
+    expect(itemsMixed[2]?.title.toLowerCase()).toContain("rater dinner");
+    expect(itemsMixed[2]?.title).not.toContain("1200");
+
+    // 5. Bangla comma-separated ('সকালের নাস্তা ২৫০, দুপুরের খাবার ৮০০, রাতের ডিনার ১২০০')
+    const itemsBn = parseExpensesDeterministicMulti({
+      rawText: "সকালের নাস্তা ২৫০, দুপুরের খাবার ৮০০, রাতের ডিনার ১২০০",
+      members: BENCHMARK_MEMBERS,
+      currentMemberId: "karim",
+    });
+    expect(itemsBn).toHaveLength(3);
+    expect(itemsBn[0]?.amount).toBe(250);
+    expect(itemsBn[0]?.title).toContain("সকালের নাস্তা");
+    expect(itemsBn[0]?.title).not.toContain("২৫০");
+    expect(itemsBn[1]?.amount).toBe(800);
+    expect(itemsBn[1]?.title).toContain("দুপুরের খাবার");
+    expect(itemsBn[1]?.title).not.toContain("৮০০");
+    expect(itemsBn[2]?.amount).toBe(1200);
+    expect(itemsBn[2]?.title).toContain("রাতের ডিনার");
+    expect(itemsBn[2]?.title).not.toContain("১২০০");
   });
 
   it("handles line without amount ('tickets') by keeping amount=null and asking question", () => {

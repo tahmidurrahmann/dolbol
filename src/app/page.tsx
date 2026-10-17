@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { BackToTripBar } from "@/components/BackToTripBar";
+import { ExpenseExplainerDemo } from "@/components/ExpenseExplainerDemo";
 import { RecentTripsList } from "@/components/RecentTripsList";
 import type { SupportedLocale } from "@/lib/format";
 
@@ -9,25 +10,6 @@ export default async function HomePage() {
   const tRecent = await getTranslations("recentTrips");
   const locale = await getLocale();
   const bn = locale === "bn";
-
-  // Whole-taka formatter
-  const fmt = new Intl.NumberFormat(bn ? "bn-BD" : "en-BD", {
-    maximumFractionDigits: 0,
-  });
-  const taka = (n: number) => `৳ ${fmt.format(n)}`;
-
-  const people = {
-    rahim: bn ? "রহিম" : "Rahim",
-    nusrat: bn ? "নুসরাত" : "Nusrat",
-    tanvir: bn ? "তানভীর" : "Tanvir",
-    mim: bn ? "মিম" : "Mim",
-  };
-
-  const settlements = [
-    { from: people.nusrat, to: people.rahim, amount: 3000 },
-    { from: people.tanvir, to: people.rahim, amount: 3000 },
-    { from: people.mim, to: people.rahim, amount: 3000 },
-  ];
 
   const steps = [
     {
@@ -185,101 +167,9 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Right Column: Live Mockup Snapshot Preview */}
-        <div className="w-full lg:col-span-5">
-          <div className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-md transition-all hover:shadow-lg">
-            {/* Top header badge */}
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🌴</span>
-                <div>
-                  <p className="text-sm font-extrabold text-[var(--color-fg)]">
-                    {bn ? "সাজেক ভ্যালি ট্যুর ২০২৬" : "Sajek Tour 2026"}
-                  </p>
-                  <p className="text-[11px] text-neutral-400">
-                    {bn ? "৪ জন সদস্য • পূর্ণ টাকা" : "4 members • Whole BDT"}
-                  </p>
-                </div>
-              </div>
-              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-300">
-                {bn ? "উদাহরণ" : "Example"}
-              </span>
-            </div>
-
-            {/* Chat message input snippet */}
-            <div className="mt-4 space-y-1.5">
-              <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
-                {bn ? "১. গ্রুপে মেসেজ দিন" : "1. Type naturally"}
-              </span>
-              <div className="flex items-start gap-2 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-sm font-medium text-[var(--color-fg)] border border-[var(--color-border)]">
-                <span className="text-base">💬</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-[var(--color-fg)]">
-                    {bn
-                      ? '"হোটেল ১২০০০ রহিম দিছে, সবাই ভাগ"'
-                      : '"hotel 12000 rahim dilo, sobai bhag"'}
-                  </p>
-                  <span className="text-[10px] text-[var(--color-primary)] font-bold mt-0.5 block">
-                    🤖 {bn ? "এআই নিমেষেই পার্স করেছে" : "AI auto-parsed"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Auto-created expense card */}
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-[var(--color-primary)]/30 bg-[var(--color-primary-light)]/40 px-3.5 py-2.5">
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-[var(--color-fg)] flex items-center gap-1.5">
-                  <span>🏨</span>
-                  <span>{bn ? "হোটেল রুম" : "Hotel Room"}</span>
-                </p>
-                <p className="text-[11px] text-neutral-400">
-                  {bn
-                    ? `${people.rahim} দিয়েছেন • ৪ জনে সমান ভাগ`
-                    : `Paid by ${people.rahim} • 4 equal shares`}
-                </p>
-              </div>
-              <p className="text-base font-black text-[var(--color-primary)] shrink-0">
-                {taka(12000)}
-              </p>
-            </div>
-
-            {/* Simplified Settle-up transfers */}
-            <div className="mt-4 border-t border-[var(--color-border)] pt-3.5">
-              <div className="flex items-baseline justify-between gap-2 mb-2">
-                <p className="text-xs font-bold text-[var(--color-fg)] flex items-center gap-1">
-                  <span>🤝</span>
-                  <span>{bn ? "কে কাকে কত দেবে (সহজ হিসাব)" : "Who owes whom (simplified)"}</span>
-                </p>
-                <span className="text-[11px] font-semibold text-[var(--color-primary)]">
-                  {bn ? `মোট ${taka(12000)}` : `${taka(12000)} total`}
-                </span>
-              </div>
-
-              <ul className="space-y-1.5">
-                {settlements.map((s) => (
-                  <li
-                    key={s.from}
-                    className="flex items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-xs shadow-2xs"
-                  >
-                    <div className="flex items-center gap-1.5 font-bold text-[var(--color-fg)]">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-surface-muted)] text-[10px]">
-                        👤
-                      </span>
-                      <span>{s.from}</span>
-                      <span className="text-[10px] text-neutral-400 font-normal">
-                        → {bn ? "দেবে" : "pays"} →
-                      </span>
-                      <span>{s.to}</span>
-                    </div>
-                    <span className="font-extrabold text-[var(--color-primary)]">
-                      {taka(s.amount)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+        {/* Right Column: AI Expense Explainer Demo */}
+        <div className="w-full lg:col-span-5 flex justify-center">
+          <ExpenseExplainerDemo locale={locale as "bn" | "en"} mode="landing" />
         </div>
       </section>
 

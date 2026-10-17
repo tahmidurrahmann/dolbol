@@ -10,7 +10,7 @@ export function MobileAddExpenseButton({ label }: { label: string }) {
         }}
         className="flex min-h-[52px] w-full items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-[#18201a] via-[#1b2b20] to-[#0b724f] py-3.5 px-6 text-sm font-black text-white shadow-xl hover:shadow-2xl active:scale-[0.98] transition-all cursor-pointer"
       >
-        <span className="text-base">➕</span>
+        <span className="text-base">+</span>
         <span>{label}</span>
       </button>
     </div>

@@ -97,7 +97,6 @@ function normalizeTitle(s: string): string {
   return s.normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-
 export function ExpenseFormCard({
   slug,
   members,
@@ -115,9 +114,9 @@ export function ExpenseFormCard({
   const [showMoreOptions, setShowMoreOptions] = useState<boolean>(
     Boolean(
       editingExpense &&
-        (editingExpense.splitType !== "EQUAL" ||
-          editingExpense.category !== "FOOD" ||
-          editingExpense.note),
+      (editingExpense.splitType !== "EQUAL" ||
+        editingExpense.category !== "FOOD" ||
+        editingExpense.note),
     ),
   );
 
@@ -227,7 +226,7 @@ export function ExpenseFormCard({
   const candidateNormTitle = normalizeTitle(titleStr);
   const matchingDuplicate =
     totalAmount > 0
-      ? existingExpenses.find((exp) => {
+      ? (existingExpenses.find((exp) => {
           if (editingExpense && exp.id === editingExpense.id) return false;
           if (exp.amount !== totalAmount) return false;
           if (exp.expenseDateYyyyMmDd !== dateStr) return false;
@@ -237,7 +236,7 @@ export function ExpenseFormCard({
           const samePayerAndCat =
             exp.paidById === paidByVal && exp.category === categoryVal;
           return sameTitle || samePayerAndCat;
-        }) ?? null
+        }) ?? null)
       : null;
 
   const showDuplicateWarning =
@@ -507,7 +506,8 @@ export function ExpenseFormCard({
                         {m.emoji ?? "🎒"}
                       </span>
                       <span className="whitespace-nowrap font-bold text-[var(--color-fg)]">
-                        {m.displayName}{checked && equalSharePerPerson > 0 ? ":" : ""}
+                        {m.displayName}
+                        {checked && equalSharePerPerson > 0 ? ":" : ""}
                       </span>
                       {checked && equalSharePerPerson > 0 ? (
                         <strong className="font-extrabold text-[var(--color-primary)] shrink-0">
@@ -527,9 +527,7 @@ export function ExpenseFormCard({
               </p>
             ) : null}
 
-            <p className="text-xs text-neutral-400">
-              💡 {labels.leftoverNote}
-            </p>
+            <p className="text-xs text-neutral-400">💡 {labels.leftoverNote}</p>
           </div>
         ) : null}
 
@@ -551,7 +549,6 @@ export function ExpenseFormCard({
 
           {showMoreOptions ? (
             <div className="mt-3 space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-4 animate-in fade-in">
-
               {/* Split Type Selector */}
               <div className="space-y-2 pt-1">
                 <span className="block text-xs font-bold text-[var(--color-fg)]">
@@ -760,7 +757,7 @@ export function ExpenseFormCard({
         >
           {editingExpense
             ? `✓ ${labels.updateExpenseButton}`
-            : `➕ ${labels.saveExpenseButton}`}
+            : `+ ${labels.saveExpenseButton}`}
         </Button>
       </form>
     </div>

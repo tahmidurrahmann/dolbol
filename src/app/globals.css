@@ -108,4 +108,190 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .demo-anim {
+    animation: none !important;
+  }
+  .demo-reduced-hide {
+    display: none !important;
+  }
+  .demo-reduced-show {
+    display: flex !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .demo-pause-btn {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   AI Expense Parser Explainer Demo Keyframes (10s Timeline)
+   ========================================================================== */
+:root {
+  --demo-duration: 10s;
+}
+
+@keyframes demo-scene-fade {
+  0% { opacity: 0; transform: scale(0.98); }
+  6% { opacity: 1; transform: scale(1); }
+  88% { opacity: 1; transform: scale(1); }
+  98%, 100% { opacity: 0; transform: scale(0.98); }
+}
+
+@keyframes demo-input-phase {
+  0% { opacity: 0; transform: translateY(10px); }
+  6% { opacity: 1; transform: translateY(0); }
+  37% { opacity: 1; transform: translateY(0); }
+  41% { opacity: 0; transform: translateY(-12px); pointer-events: none; }
+  100% { opacity: 0; transform: translateY(-12px); pointer-events: none; }
+}
+
+@keyframes demo-type-line-1 {
+  0%, 5.9% { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-4px); }
+  6% { opacity: 1; clip-path: inset(0 100% 0 0); transform: translateX(-4px); }
+  14% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
+  100% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
+}
+
+@keyframes demo-type-line-2 {
+  0%, 13.9% { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-4px); }
+  14% { opacity: 1; clip-path: inset(0 100% 0 0); transform: translateX(-4px); }
+  22% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
+  100% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
+}
+
+@keyframes demo-type-line-3 {
+  0%, 21.9% { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-4px); }
+  22% { opacity: 1; clip-path: inset(0 100% 0 0); transform: translateX(-4px); }
+  32% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
+  100% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
+}
+
+@keyframes demo-btn-tap {
+  0%, 31.9% { transform: scale(1); }
+  33% { transform: scale(0.92); }
+  35%, 100% { transform: scale(1); }
+}
+
+@keyframes demo-btn-label-idle {
+  0%, 31.9% { opacity: 1; transform: scale(1); }
+  33%, 100% { opacity: 0; transform: scale(0.88); pointer-events: none; }
+}
+
+@keyframes demo-btn-label-reading {
+  0%, 31.9% { opacity: 0; transform: scale(0.88); pointer-events: none; }
+  33%, 39% { opacity: 1; transform: scale(1); }
+  41%, 100% { opacity: 0; transform: scale(0.9); pointer-events: none; }
+}
+
+@keyframes demo-chip-idle {
+  0%, 31.9% { opacity: 1; transform: scale(1); }
+  33%, 100% { opacity: 0; transform: scale(0.85); pointer-events: none; }
+}
+
+@keyframes demo-chip-active {
+  0%, 31.9% { opacity: 0; transform: scale(0.85); pointer-events: none; }
+  33% { opacity: 1; transform: scale(1); }
+  39% { opacity: 1; transform: scale(1); }
+  41%, 100% { opacity: 0; transform: scale(0.9); pointer-events: none; }
+}
+
+@keyframes demo-pulse-dot {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes demo-confirm-phase {
+  0%, 39.9% { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  41% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  69% { opacity: 1; transform: translateY(0); }
+  73%, 100% { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+}
+
+@keyframes demo-draft-card-1 {
+  0%, 39.9% { opacity: 0; transform: translateY(8px); pointer-events: none; }
+  41% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  50% { opacity: 1; transform: translateY(0); }
+  52%, 100% { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+}
+
+@keyframes demo-draft-card-2 {
+  0%, 51.9% { opacity: 0; transform: translateY(8px); pointer-events: none; }
+  53% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  61% { opacity: 1; transform: translateY(0); }
+  63%, 100% { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+}
+
+@keyframes demo-draft-card-3 {
+  0%, 62.9% { opacity: 0; transform: translateY(8px); pointer-events: none; }
+  64% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  69% { opacity: 1; transform: translateY(0); }
+  73%, 100% { opacity: 0; transform: translateY(-8px) scale(0.97); pointer-events: none; }
+}
+
+@keyframes demo-tab-1 {
+  0%, 39.9% { opacity: 0.5; background-color: #f3f4f6; color: #4b5563; }
+  41%, 50% { opacity: 1; background-color: #0f6b4a; color: #ffffff; }
+  52%, 100% { opacity: 0.8; background-color: #e5e7eb; color: #4b5563; }
+}
+
+@keyframes demo-tab-2 {
+  0%, 51.9% { opacity: 0.8; background-color: #e5e7eb; color: #4b5563; }
+  53%, 61% { opacity: 1; background-color: #0f6b4a; color: #ffffff; }
+  63%, 100% { opacity: 0.8; background-color: #e5e7eb; color: #4b5563; }
+}
+
+@keyframes demo-tab-3 {
+  0%, 62.9% { opacity: 0.8; background-color: #e5e7eb; color: #4b5563; }
+  64%, 72% { opacity: 1; background-color: #0f6b4a; color: #ffffff; }
+  73%, 100% { opacity: 0.8; background-color: #e5e7eb; color: #4b5563; }
+}
+
+@keyframes demo-row-1 {
+  0%, 39.9% { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  41% { opacity: 0.4; transform: translateY(8px); }
+  46% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  69% { opacity: 1; transform: translateY(0); }
+  73%, 100% { opacity: 0; transform: translateY(-8px) scale(0.96); pointer-events: none; }
+}
+
+@keyframes demo-row-2 {
+  0%, 46.9% { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  48% { opacity: 0.4; transform: translateY(8px); }
+  53% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  69% { opacity: 1; transform: translateY(0); }
+  73%, 100% { opacity: 0; transform: translateY(-8px) scale(0.96); pointer-events: none; }
+}
+
+@keyframes demo-row-3 {
+  0%, 53.9% { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  55% { opacity: 0.4; transform: translateY(8px); }
+  60% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  69% { opacity: 1; transform: translateY(0); }
+  73%, 100% { opacity: 0; transform: translateY(-8px) scale(0.96); pointer-events: none; }
+}
+
+@keyframes demo-footer {
+  0%, 59.9% { opacity: 0; transform: translateY(10px); pointer-events: none; }
+  64% { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  69% { opacity: 1; transform: translateY(0); }
+  73%, 100% { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+}
+
+@keyframes demo-add-all-tap {
+  0%, 69.9% { transform: scale(1); }
+  70.8% { transform: scale(0.93); }
+  72%, 100% { transform: scale(1); }
+}
+
+@keyframes demo-success-phase {
+  0%, 72.9% { opacity: 0; transform: translateY(12px) scale(0.96); pointer-events: none; }
+  75% { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  88% { opacity: 1; transform: translateY(0) scale(1); }
+  96%, 100% { opacity: 0; transform: translateY(-8px) scale(0.96); pointer-events: none; }
+}
+
+@keyframes demo-sparkle {
+  0%, 100% { opacity: 0.2; transform: translateY(0) scale(0.85); }
+  50% { opacity: 0.9; transform: translateY(-4px) scale(1.1); }
 }

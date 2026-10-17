@@ -22,6 +22,8 @@ import {
   type ExistingExpenseSummary,
   ExpenseFormCard,
 } from "@/components/ExpenseFormCard";
+import { ExpenseExplainerDemo } from "@/components/ExpenseExplainerDemo";
+import { ExpenseDemoToggle } from "@/components/ExpenseDemoToggle";
 import { ErrorMessageBanner } from "@/components/ErrorMessageBanner";
 import { InviteFriendsCard } from "@/components/InviteFriendsCard";
 import { ItineraryCard } from "@/components/ItineraryCard";
@@ -266,9 +268,7 @@ export default async function TripPage({
   if (!currentMember) {
     const unclaimedMembers = trip.members.filter(
       (m) =>
-        m.sessions.length === 0 &&
-        m.id !== trip.creatorMemberId &&
-        !m.pinHash,
+        m.sessions.length === 0 && m.id !== trip.creatorMemberId && !m.pinHash,
     );
 
     const claimedMembers = trip.members.filter(
@@ -301,7 +301,9 @@ export default async function TripPage({
           </div>
 
           <p className="text-sm font-semibold text-[var(--color-primary)]">
-            👋 {creator?.displayName ?? (locale === "bn" ? "আপনার বন্ধু" : "A friend")}{" "}
+            👋{" "}
+            {creator?.displayName ??
+              (locale === "bn" ? "আপনার বন্ধু" : "A friend")}{" "}
             {locale === "bn"
               ? "আপনাকে এই ট্রিপে আমন্ত্রণ জানিয়েছেন"
               : "invited you to this trip"}
@@ -321,7 +323,8 @@ export default async function TripPage({
               </span>
             ) : null}
             <span className="font-bold text-[var(--color-fg)]">
-              👥 {joinedCountLabel} {locale === "bn" ? "জন যুক্ত আছেন" : "joined"}
+              👥 {joinedCountLabel}{" "}
+              {locale === "bn" ? "জন যুক্ত আছেন" : "joined"}
             </span>
           </div>
         </div>
@@ -399,7 +402,10 @@ export default async function TripPage({
             isGuest: m.isGuest,
           }))}
           labels={{
-            heading: locale === "bn" ? "আগে যোগ দিয়েছেন এমন সদস্যরা:" : "Already joined:",
+            heading:
+              locale === "bn"
+                ? "আগে যোগ দিয়েছেন এমন সদস্যরা:"
+                : "Already joined:",
             claimedBadge: tWho("claimedBadge"),
             thisIsMeButton: tWho("claimThisIsMe"),
             pinModalTitle: tWho("claimPinTitle"),
@@ -417,13 +423,19 @@ export default async function TripPage({
         {!isLocked ? (
           <details className="group space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:p-4 shadow-xs">
             <summary className="cursor-pointer list-none font-bold text-sm text-[var(--color-primary)] hover:underline flex items-center justify-between select-none">
-              <span>➕ {locale === "bn" ? "আমার নাম এখানে নেই" : "My name isn't here"}</span>
+              <span>
+                +{" "}
+                {locale === "bn" ? "আমার নাম এখানে নেই" : "My name isn't here"}
+              </span>
               <span className="transition-transform group-open:rotate-180 text-xs text-[var(--color-fg-muted)]">
                 ▼
               </span>
             </summary>
 
-            <form action={joinTripAction} className="pt-3 space-y-3 border-t border-[var(--color-border)]">
+            <form
+              action={joinTripAction}
+              className="pt-3 space-y-3 border-t border-[var(--color-border)]"
+            >
               <input type="hidden" name="slug" value={trip.slug} />
               <div className="space-y-1.5">
                 <label
@@ -440,12 +452,18 @@ export default async function TripPage({
                   required
                   minLength={1}
                   maxLength={40}
-                  placeholder={locale === "bn" ? "যেমন: তানভীর" : "e.g., Tanvir"}
+                  placeholder={
+                    locale === "bn" ? "যেমন: তানভীর" : "e.g., Tanvir"
+                  }
                   className="min-h-[48px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2.5 text-base text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 shadow-xs"
                 />
               </div>
 
-              <Button type="submit" variant="primary" className="w-full min-h-[48px] font-bold">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full min-h-[48px] font-bold"
+              >
                 {locale === "bn" ? "ট্রিপে যুক্ত হোন" : "Join trip"}
               </Button>
             </form>
@@ -596,17 +614,17 @@ export default async function TripPage({
   const editingExpenseData: EditableExpenseData | null =
     targetEditExpense && canEditTargetExpense
       ? {
-        id: targetEditExpense.id,
-        title: targetEditExpense.title,
-        amount: targetEditExpense.amount,
-        category: targetEditExpense.category,
-        expenseDateYyyyMmDd: dayKey(targetEditExpense.expenseDate),
-        paidById: targetEditExpense.paidById,
-        splitType: targetEditExpense.splitType,
-        note: targetEditExpense.note ?? null,
-        shares: targetEditExpense.shares,
-      }
-    : null;
+          id: targetEditExpense.id,
+          title: targetEditExpense.title,
+          amount: targetEditExpense.amount,
+          category: targetEditExpense.category,
+          expenseDateYyyyMmDd: dayKey(targetEditExpense.expenseDate),
+          paidById: targetEditExpense.paidById,
+          splitType: targetEditExpense.splitType,
+          note: targetEditExpense.note ?? null,
+          shares: targetEditExpense.shares,
+        }
+      : null;
 
   const categoryLabels: Record<ExpenseCategoryValue, string> = {
     HOTEL: tMoney("cat_HOTEL"),
@@ -702,12 +720,12 @@ export default async function TripPage({
                   {badgeText}
                 </span>
               </div>
-              <div className={`text-2xl sm:text-3xl font-black tracking-tight ${amountColor}`}>
+              <div
+                className={`text-2xl sm:text-3xl font-black tracking-tight ${amountColor}`}
+              >
                 {amountText}
               </div>
-              <p className="text-xs text-neutral-400">
-                {hintText}
-              </p>
+              <p className="text-xs text-neutral-400">{hintText}</p>
             </div>
             <div className="size-12 rounded-2xl bg-white text-2xl flex items-center justify-center shrink-0 shadow-2xs border border-[var(--color-border)]">
               {icon}
@@ -832,9 +850,7 @@ export default async function TripPage({
         expensesSlot={
           <div className="space-y-5">
             {/* Mobile-only Stat Cards (< 1000px, displayed inside Expenses tab) */}
-            <div className="min-[1000px]:hidden">
-              {statCardsNode}
-            </div>
+            <div className="min-[1000px]:hidden">{statCardsNode}</div>
 
             <div
               className={
@@ -845,146 +861,173 @@ export default async function TripPage({
             >
               {!isLocked ? (
                 <div id="expense-box" className="space-y-5 lg:col-span-5">
-                {/* AI Expense Parser Card */}
-                <AiExpenseParserCard
-                  slug={trip.slug}
-                  locale={locale}
-                  members={memberInputs}
-                  currentMemberId={currentMember.id}
-                  defaultDateYyyyMmDd={defaultExpenseDate}
-                  existingExpenses={existingExpenseSummaries}
-                  labels={{
-                    cardTitle: tAi("cardTitle"),
-                    cardSubtitle: tAi("cardSubtitle"),
-                    inputPlaceholder: tAi("inputPlaceholder"),
-                    tryExamplesLabel: tAi("tryExamplesLabel"),
-                    parseButton: tAi("parseButton"),
-                    parsingButton: tAi("parsingButton"),
-                    confirmCardBadge: tAi("confirmCardBadge"),
-                    confirmCardNote: tAi("confirmCardNote"),
-                    rawInputLabel: tAi("rawInputLabel"),
-                    titleLabel: tMoney("titleLabel"),
-                    amountLabel: tMoney("amountLabel"),
-                    categoryLabel: tMoney("categoryLabel"),
-                    dateLabel: tMoney("dateLabel"),
-                    paidByLabel: tMoney("paidByLabel"),
-                    participantsLabel: tMoney("participantsLabel"),
-                    selectAll: tMoney("selectAll"),
-                    confirmSaveButton: tAi("confirmSaveButton"),
-                    discardDraftButton: tAi("discardDraftButton"),
-                    duplicateWarningTitle: tMoney("duplicateWarningTitle"),
-                    duplicateWarningBody: tMoney("duplicateWarningBody"),
-                    confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
-                    errMissingAmount: tAi("errMissingAmount"),
-                    errRateLimited: tAi("errRateLimited"),
-                    errGeneric: tAi("errGeneric"),
-                    fallbackNotice: tAi("fallbackNotice"),
-                    errInputTooLong: tAi("errInputTooLong"),
-                    errLineTooLong: tAi("errLineTooLong"),
-                    errTooManyLines: tAi("errTooManyLines"),
-                    errEmptyInput: tAi("errEmptyInput"),
-                    needsReviewBadge: tAi("needsReviewBadge"),
-                    settlementBadge: tAi("settlementBadge"),
-                    resolveQuestion: tAi("resolveQuestion"),
-                    addAnotherExpense: tAi("addAnotherExpense"),
-                    removeRow: tAi("removeRow"),
-                    unresolvedQuestionsWarning: tAi("unresolvedQuestionsWarning"),
-                    missingAmountPrompt: tAi("missingAmountPrompt"),
-                    itemCountAndTotal: String(tAi.raw("itemCountAndTotal")),
-                    saveAllButton: String(tAi.raw("saveAllButton")),
-                    undoButton: String(tAi.raw("undoButton")),
-                    undoingButton: tAi("undoingButton"),
-                    undoSuccess: tAi("undoSuccess"),
-                    undoFailed: tAi("undoFailed"),
-                    undoCountNotice: String(tAi.raw("undoCountNotice")),
-                    parsedSuccessButton: tAi("parsedSuccessButton"),
-                    newSectionIndicator: String(tAi.raw("newSectionIndicator")),
-                    newSectionBadge: tAi("newSectionBadge"),
-                    categories: categoryLabels,
-                  }}
-                />
+                  {/* Explainer Demo: Full when 0 expenses; collapsed toggle when >0 expenses */}
+                  {expenseInputs.length === 0 ? (
+                    <ExpenseExplainerDemo locale={locale} mode="trip" />
+                  ) : (
+                    <ExpenseDemoToggle locale={locale} />
+                  )}
 
-                {/* Manual Expense Form Card (Collapsible) */}
-                <div id="expense-form">
-                  <ExpenseFormCard
-                    key={editingExpenseData?.id ?? "new-expense"}
+                  {/* AI Expense Parser Card */}
+                  <AiExpenseParserCard
                     slug={trip.slug}
+                    locale={locale}
                     members={memberInputs}
                     currentMemberId={currentMember.id}
                     defaultDateYyyyMmDd={defaultExpenseDate}
-                    editingExpense={editingExpenseData}
                     existingExpenses={existingExpenseSummaries}
-                    forceShowDuplicateConfirm={error === "duplicate_expense_warning"}
-                    locale={locale}
                     labels={{
-                      addExpenseTitle: tMoney("addExpenseTitle"),
-                      editExpenseTitle: tMoney("editExpenseTitle"),
-                      cancelEdit: tMoney("cancelEdit"),
+                      cardTitle: tAi("cardTitle"),
+                      cardSubtitle: tAi("cardSubtitle"),
+                      inputPlaceholder: tAi("inputPlaceholder"),
+                      inputHelperText: tAi("inputHelperText"),
+                      clearInputButton: tAi("clearInputButton"),
+                      tryExamplesLabel: tAi("tryExamplesLabel"),
+                      exampleDailyMealsTitle: tAi("exampleDailyMealsTitle"),
+                      exampleDailyMealsBadge: tAi("exampleDailyMealsBadge"),
+                      exampleTransportTitle: tAi("exampleTransportTitle"),
+                      exampleTransportBadge: tAi("exampleTransportBadge"),
+                      exampleHotelTitle: tAi("exampleHotelTitle"),
+                      exampleHotelBadge: tAi("exampleHotelBadge"),
+                      exampleSettlementTitle: tAi("exampleSettlementTitle"),
+                      exampleSettlementBadge: tAi("exampleSettlementBadge"),
+                      parseButton: tAi("parseButton"),
+                      parsingButton: tAi("parsingButton"),
+                      confirmCardBadge: tAi("confirmCardBadge"),
+                      confirmCardNote: tAi("confirmCardNote"),
+                      rawInputLabel: tAi("rawInputLabel"),
                       titleLabel: tMoney("titleLabel"),
-                      titlePlaceholder: tMoney("titlePlaceholder"),
                       amountLabel: tMoney("amountLabel"),
-                      amountPlaceholder: tMoney("amountPlaceholder"),
                       categoryLabel: tMoney("categoryLabel"),
                       dateLabel: tMoney("dateLabel"),
                       paidByLabel: tMoney("paidByLabel"),
-                      splitTypeLabel: tMoney("splitTypeLabel"),
-                      splitEqual: tMoney("splitEqual"),
-                      splitExact: tMoney("splitExact"),
-                      splitPercent: tMoney("splitPercent"),
                       participantsLabel: tMoney("participantsLabel"),
                       selectAll: tMoney("selectAll"),
-                      leftoverNote: tMoney("leftoverNote"),
-                      exactSumStatus: tMoney("exactSumStatus"),
-                      percentSumStatus: tMoney("percentSumStatus"),
-                      noteLabel: tMoney("noteLabel"),
-                      notePlaceholder: tMoney("notePlaceholder"),
-                      saveExpenseButton: tMoney("saveExpenseButton"),
-                      updateExpenseButton: tMoney("updateExpenseButton"),
+                      confirmSaveButton: tAi("confirmSaveButton"),
+                      discardDraftButton: tAi("discardDraftButton"),
                       duplicateWarningTitle: tMoney("duplicateWarningTitle"),
                       duplicateWarningBody: tMoney("duplicateWarningBody"),
                       confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
+                      errMissingAmount: tAi("errMissingAmount"),
+                      errRateLimited: tAi("errRateLimited"),
+                      errGeneric: tAi("errGeneric"),
+                      fallbackNotice: tAi("fallbackNotice"),
+                      errInputTooLong: tAi("errInputTooLong"),
+                      errLineTooLong: tAi("errLineTooLong"),
+                      errTooManyLines: tAi("errTooManyLines"),
+                      errEmptyInput: tAi("errEmptyInput"),
+                      needsReviewBadge: tAi("needsReviewBadge"),
+                      settlementBadge: tAi("settlementBadge"),
+                      resolveQuestion: tAi("resolveQuestion"),
+                      addAnotherExpense: tAi("addAnotherExpense"),
+                      removeRow: tAi("removeRow"),
+                      unresolvedQuestionsWarning: tAi(
+                        "unresolvedQuestionsWarning",
+                      ),
+                      missingAmountPrompt: tAi("missingAmountPrompt"),
+                      itemCountAndTotal: String(tAi.raw("itemCountAndTotal")),
+                      saveAllButton: String(tAi.raw("saveAllButton")),
+                      undoButton: String(tAi.raw("undoButton")),
+                      undoingButton: tAi("undoingButton"),
+                      undoSuccess: tAi("undoSuccess"),
+                      undoFailed: tAi("undoFailed"),
+                      undoCountNotice: String(tAi.raw("undoCountNotice")),
+                      parsedSuccessButton: tAi("parsedSuccessButton"),
+                      newSectionIndicator: String(
+                        tAi.raw("newSectionIndicator"),
+                      ),
+                      newSectionBadge: tAi("newSectionBadge"),
                       categories: categoryLabels,
-                      manualFormToggle: tMoney("manualFormToggle"),
-                      manualFormClose: tMoney("manualFormClose"),
-                      moreOptionsToggle: tMoney("moreOptionsToggle"),
-                      whoPaidLabel: tMoney("whoPaidLabel"),
-                      whoSharedLabel: tMoney("whoSharedLabel"),
                     }}
                   />
-                </div>
-              </div>
-            ) : null}
 
-            {/* Per-Day View */}
-            <div className={!isLocked ? "space-y-5 lg:col-span-7" : "space-y-5"}>
-              <PerDayExpensesView
-                slug={trip.slug}
-                locale={locale}
-                isLocked={isLocked}
-                currentMemberId={currentMember.id}
-                creatorMemberId={trip.creatorMemberId}
-                members={memberInputs}
-                dayGroups={dayGroups}
-                settlements={settlementInputs}
-                activityLogs={activityLogInputs}
-                labels={{
-                  perDayTitle: tMoney("perDayTitle"),
-                  noExpensesYet: tMoney("noExpensesYet"),
-                  dayTotalLabel: tMoney("dayTotalLabel"),
-                  perPersonDayCostLabel: tMoney("perPersonDayCostLabel"),
-                  paidByPrefix: tMoney("paidByPrefix"),
-                  editedAfterSettlementBadge: tMoney("editedAfterSettlementBadge"),
-                  editHistoryToggle: tMoney("editHistoryToggle"),
-                  editedByPrefix: tMoney("editedByPrefix"),
-                  editButton: tMoney("editButton"),
-                  deleteButton: tMoney("deleteButton"),
-                  categories: categoryLabels,
-                }}
-              />
+                  {/* Manual Expense Form Card (Collapsible) */}
+                  <div id="expense-form">
+                    <ExpenseFormCard
+                      key={editingExpenseData?.id ?? "new-expense"}
+                      slug={trip.slug}
+                      members={memberInputs}
+                      currentMemberId={currentMember.id}
+                      defaultDateYyyyMmDd={defaultExpenseDate}
+                      editingExpense={editingExpenseData}
+                      existingExpenses={existingExpenseSummaries}
+                      forceShowDuplicateConfirm={
+                        error === "duplicate_expense_warning"
+                      }
+                      locale={locale}
+                      labels={{
+                        addExpenseTitle: tMoney("addExpenseTitle"),
+                        editExpenseTitle: tMoney("editExpenseTitle"),
+                        cancelEdit: tMoney("cancelEdit"),
+                        titleLabel: tMoney("titleLabel"),
+                        titlePlaceholder: tMoney("titlePlaceholder"),
+                        amountLabel: tMoney("amountLabel"),
+                        amountPlaceholder: tMoney("amountPlaceholder"),
+                        categoryLabel: tMoney("categoryLabel"),
+                        dateLabel: tMoney("dateLabel"),
+                        paidByLabel: tMoney("paidByLabel"),
+                        splitTypeLabel: tMoney("splitTypeLabel"),
+                        splitEqual: tMoney("splitEqual"),
+                        splitExact: tMoney("splitExact"),
+                        splitPercent: tMoney("splitPercent"),
+                        participantsLabel: tMoney("participantsLabel"),
+                        selectAll: tMoney("selectAll"),
+                        leftoverNote: tMoney("leftoverNote"),
+                        exactSumStatus: tMoney("exactSumStatus"),
+                        percentSumStatus: tMoney("percentSumStatus"),
+                        noteLabel: tMoney("noteLabel"),
+                        notePlaceholder: tMoney("notePlaceholder"),
+                        saveExpenseButton: tMoney("saveExpenseButton"),
+                        updateExpenseButton: tMoney("updateExpenseButton"),
+                        duplicateWarningTitle: tMoney("duplicateWarningTitle"),
+                        duplicateWarningBody: tMoney("duplicateWarningBody"),
+                        confirmDuplicateLabel: tMoney("confirmDuplicateLabel"),
+                        categories: categoryLabels,
+                        manualFormToggle: tMoney("manualFormToggle"),
+                        manualFormClose: tMoney("manualFormClose"),
+                        moreOptionsToggle: tMoney("moreOptionsToggle"),
+                        whoPaidLabel: tMoney("whoPaidLabel"),
+                        whoSharedLabel: tMoney("whoSharedLabel"),
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Per-Day View */}
+              <div
+                className={!isLocked ? "space-y-5 lg:col-span-7" : "space-y-5"}
+              >
+                <PerDayExpensesView
+                  slug={trip.slug}
+                  locale={locale}
+                  isLocked={isLocked}
+                  currentMemberId={currentMember.id}
+                  creatorMemberId={trip.creatorMemberId}
+                  members={memberInputs}
+                  dayGroups={dayGroups}
+                  settlements={settlementInputs}
+                  activityLogs={activityLogInputs}
+                  labels={{
+                    perDayTitle: tMoney("perDayTitle"),
+                    noExpensesYet: tMoney("noExpensesYet"),
+                    dayTotalLabel: tMoney("dayTotalLabel"),
+                    perPersonDayCostLabel: tMoney("perPersonDayCostLabel"),
+                    paidByPrefix: tMoney("paidByPrefix"),
+                    editedAfterSettlementBadge: tMoney(
+                      "editedAfterSettlementBadge",
+                    ),
+                    editHistoryToggle: tMoney("editHistoryToggle"),
+                    editedByPrefix: tMoney("editedByPrefix"),
+                    editButton: tMoney("editButton"),
+                    deleteButton: tMoney("deleteButton"),
+                    categories: categoryLabels,
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      }
+        }
         balancesSlot={
           <div className="space-y-5">
             <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 lg:items-start">
@@ -1080,7 +1123,9 @@ export default async function TripPage({
                 locale={locale}
                 isLocked={isLocked}
                 isCreator={isCreator}
-                startDateYyyyMmDd={trip.startDate ? dayKey(trip.startDate) : null}
+                startDateYyyyMmDd={
+                  trip.startDate ? dayKey(trip.startDate) : null
+                }
                 endDateYyyyMmDd={trip.endDate ? dayKey(trip.endDate) : null}
                 dateRangeLabel={tripDateRangeLabel}
                 labels={{
@@ -1205,14 +1250,21 @@ export default async function TripPage({
               <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:p-5 shadow-xs">
                 <h2 className="text-base font-bold text-[var(--color-fg)] flex items-center gap-2">
                   <span>⚙️</span>
-                  <span>{locale === "bn" ? "আমার প্রোফাইল ও সেটিংস" : "My Profile & Settings"}</span>
+                  <span>
+                    {locale === "bn"
+                      ? "আমার প্রোফাইল ও সেটিংস"
+                      : "My Profile & Settings"}
+                  </span>
                 </h2>
 
                 <form action={updateMyProfileAction} className="space-y-3">
                   <input type="hidden" name="slug" value={trip.slug} />
 
                   <div className="space-y-1">
-                    <label htmlFor="my-name" className="block text-xs font-bold text-[var(--color-fg)]">
+                    <label
+                      htmlFor="my-name"
+                      className="block text-xs font-bold text-[var(--color-fg)]"
+                    >
                       {locale === "bn" ? "আমার নাম ও ইমোজি" : "My name & emoji"}
                     </label>
                     <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1239,7 +1291,10 @@ export default async function TripPage({
                   </div>
 
                   <div className="space-y-1">
-                    <label htmlFor="my-pin" className="block text-xs font-bold text-[var(--color-fg)]">
+                    <label
+                      htmlFor="my-pin"
+                      className="block text-xs font-bold text-[var(--color-fg)]"
+                    >
                       {locale === "bn" ? "পিন (ঐচ্ছিক)" : "PIN (optional)"}
                     </label>
                     <input
@@ -1248,12 +1303,22 @@ export default async function TripPage({
                       type="password"
                       inputMode="numeric"
                       maxLength={6}
-                      placeholder={currentMember.pinHash ? "••••" : (locale === "bn" ? "৪-৬ ডিজিট" : "4-6 digits")}
+                      placeholder={
+                        currentMember.pinHash
+                          ? "••••"
+                          : locale === "bn"
+                            ? "৪-৬ ডিজিট"
+                            : "4-6 digits"
+                      }
                       className="min-h-[44px] w-full rounded-2xl border border-[var(--color-border)] bg-white px-3.5 py-1.5 text-sm text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
                     />
                   </div>
 
-                  <Button type="submit" variant="secondary" className="w-full min-h-[42px] text-xs font-bold">
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    className="w-full min-h-[42px] text-xs font-bold"
+                  >
                     {locale === "bn" ? "সেভ করুন" : "Save changes"}
                   </Button>
                 </form>
@@ -1325,8 +1390,16 @@ export default async function TripPage({
                             action={renameMemberAction}
                             className="flex items-center gap-1.5 sm:gap-2"
                           >
-                            <input type="hidden" name="slug" value={trip.slug} />
-                            <input type="hidden" name="memberId" value={member.id} />
+                            <input
+                              type="hidden"
+                              name="slug"
+                              value={trip.slug}
+                            />
+                            <input
+                              type="hidden"
+                              name="memberId"
+                              value={member.id}
+                            />
                             <SelectField
                               name="emoji"
                               defaultValue={member.emoji ?? "🎒"}
@@ -1388,8 +1461,13 @@ export default async function TripPage({
                     <p className="text-xs text-[var(--color-fg-muted)]">
                       {tTrip("lockTripHint")}
                     </p>
-                    <Button type="submit" variant={isLocked ? "primary" : "secondary"}>
-                      {isLocked ? tTrip("unlockTripButton") : tTrip("lockTripButton")}
+                    <Button
+                      type="submit"
+                      variant={isLocked ? "primary" : "secondary"}
+                    >
+                      {isLocked
+                        ? tTrip("unlockTripButton")
+                        : tTrip("lockTripButton")}
                     </Button>
                   </form>
                 </div>
