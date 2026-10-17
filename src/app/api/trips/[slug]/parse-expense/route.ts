@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { parseExpenseTextWithAI } from "@/lib/ai-parser";
+import { NormalizeInputError, parseExpenseTextWithAI } from "@/lib/ai-parser";
 import { db } from "@/lib/db";
 import { parserRateLimiter } from "@/lib/rate-limit";
 import { assertTripWritable } from "@/lib/safety";
 import { getCurrentMemberForTrip } from "@/lib/session";
 
 const parseRequestSchema = z.object({
-  text: z.string().trim().min(2).max(500),
+  text: z.string().trim().min(1).max(1500),
 });
 
 function extractClientIp(request: Request): string {
@@ -78,7 +78,7 @@ export async function POST(
     );
   }
 
-  // Enforce per-trip and per-IP sliding window rate limits
+  // Enforce per-trip and per-IP sliding window rate limits (1 parse request per submit)
   const clientIp = extractClientIp(request);
   const rateCheck = parserRateLimiter.checkAndRecord({
     tripId: trip.id,
@@ -103,7 +103,7 @@ export async function POST(
   }
 
   try {
-    const draft = await parseExpenseTextWithAI({
+    const result = await parseExpenseTextWithAI({
       rawText: parsedBody.data.text,
       members: trip.members.map((m) => ({
         id: m.id,
@@ -114,13 +114,21 @@ export async function POST(
       currentMemberId: currentMember.id,
     });
 
-    // Returns the parsed draft ONLY for the Confirm Card — never auto-saves to DB
-    return NextResponse.json({ ok: true, draft }, { status: 200 });
+    // Returns array of items and source ("llm" | "fallback") for Confirm UI
+    return NextResponse.json(
+      { ok: true, items: result.items, source: result.source },
+      { status: 200 },
+    );
   } catch (err) {
-    const code =
-      err instanceof Error && err.message === "missing_amount"
-        ? "missing_amount"
-        : "parse_failed";
-    return NextResponse.json({ ok: false, error: code }, { status: 422 });
+    if (err instanceof NormalizeInputError) {
+      return NextResponse.json(
+        { ok: false, error: err.code, message: err.message },
+        { status: 400 },
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: "parse_failed" },
+      { status: 422 },
+    );
   }
 }

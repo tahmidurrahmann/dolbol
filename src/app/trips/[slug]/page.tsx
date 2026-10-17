@@ -850,6 +850,7 @@ export default async function TripPage({
                   slug={trip.slug}
                   locale={locale}
                   members={memberInputs}
+                  currentMemberId={currentMember.id}
                   defaultDateYyyyMmDd={defaultExpenseDate}
                   existingExpenses={existingExpenseSummaries}
                   labels={{
@@ -877,6 +878,28 @@ export default async function TripPage({
                     errMissingAmount: tAi("errMissingAmount"),
                     errRateLimited: tAi("errRateLimited"),
                     errGeneric: tAi("errGeneric"),
+                    fallbackNotice: tAi("fallbackNotice"),
+                    errInputTooLong: tAi("errInputTooLong"),
+                    errLineTooLong: tAi("errLineTooLong"),
+                    errTooManyLines: tAi("errTooManyLines"),
+                    errEmptyInput: tAi("errEmptyInput"),
+                    needsReviewBadge: tAi("needsReviewBadge"),
+                    settlementBadge: tAi("settlementBadge"),
+                    resolveQuestion: tAi("resolveQuestion"),
+                    addAnotherExpense: tAi("addAnotherExpense"),
+                    removeRow: tAi("removeRow"),
+                    unresolvedQuestionsWarning: tAi("unresolvedQuestionsWarning"),
+                    missingAmountPrompt: tAi("missingAmountPrompt"),
+                    itemCountAndTotal: String(tAi.raw("itemCountAndTotal")),
+                    saveAllButton: String(tAi.raw("saveAllButton")),
+                    undoButton: String(tAi.raw("undoButton")),
+                    undoingButton: tAi("undoingButton"),
+                    undoSuccess: tAi("undoSuccess"),
+                    undoFailed: tAi("undoFailed"),
+                    undoCountNotice: String(tAi.raw("undoCountNotice")),
+                    parsedSuccessButton: tAi("parsedSuccessButton"),
+                    newSectionIndicator: String(tAi.raw("newSectionIndicator")),
+                    newSectionBadge: tAi("newSectionBadge"),
                     categories: categoryLabels,
                   }}
                 />

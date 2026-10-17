@@ -53,7 +53,6 @@ export default async function JoinTripByLinkPage({
           href="/"
           className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] hover:underline"
         >
-          <span>←</span>
           <span>{t("backHome")}</span>
         </Link>
 
@@ -61,14 +60,10 @@ export default async function JoinTripByLinkPage({
           {t("title")}
         </h1>
 
-        <p className="mt-1 text-sm text-neutral-400">
-          {t("subtitle")}
-        </p>
+        <p className="mt-1 text-sm text-neutral-400">{t("subtitle")}</p>
       </div>
 
-      {error ? (
-        <ErrorMessageBanner message={tErr("trip_not_found")} />
-      ) : null}
+      {error ? <ErrorMessageBanner message={tErr("trip_not_found")} /> : null}
 
       <JoinTripForm
         locale={locale}
