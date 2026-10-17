@@ -1917,3 +1917,61 @@ export async function deleteItineraryItemAction(
   revalidatePath(`/trips/${trip.slug}`);
   redirect(`/trips/${trip.slug}`);
 }
+
+export async function updateTripDatesAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const startDateRaw = String(formData.get("startDate") ?? "").trim();
+  const endDateRaw = String(formData.get("endDate") ?? "").trim();
+
+  const trip = await db.trip.findUnique({ where: { slug } });
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const currentMember = await getCurrentMemberForTrip(trip.id);
+  if (!currentMember || currentMember.id !== trip.creatorMemberId) {
+    redirect(`/trips/${trip.slug}?error=not_creator`);
+  }
+
+  const parsedStart = parseOptionalDhakaDate(startDateRaw || undefined);
+  const parsedEnd = parseOptionalDhakaDate(endDateRaw || undefined);
+
+  if (parsedStart && parsedEnd && parsedStart > parsedEnd) {
+    redirect(`/trips/${trip.slug}?error=invalid_dates`);
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.trip.update({
+      where: { id: trip.id },
+      data: {
+        startDate: parsedStart,
+        endDate: parsedEnd,
+      },
+    });
+
+    await tx.activityLog.create({
+      data: {
+        tripId: trip.id,
+        memberId: currentMember.id,
+        entityType: "trip",
+        entityId: trip.id,
+        action: "update_dates",
+        after: {
+          startDate: parsedStart ? parsedStart.toISOString() : null,
+          endDate: parsedEnd ? parsedEnd.toISOString() : null,
+        },
+      },
+    });
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  revalidatePath(`/trips/${trip.slug}/summary`);
+  redirect(`/trips/${trip.slug}`);
+}
+

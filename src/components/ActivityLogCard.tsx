@@ -22,6 +22,7 @@ export interface ActivityLogCardLabels {
   act_vote_upsert: string;
   act_destination_create: string;
   act_trip_set_destination: string;
+  act_trip_update_dates?: string;
   act_itinerary_create: string;
   act_itinerary_delete: string;
   act_member_claim_device: string;
@@ -136,6 +137,18 @@ export function ActivityLogCard({
         return dest
           ? `${labels.act_trip_set_destination} "${dest}"`
           : labels.act_trip_set_destination;
+      }
+      case "trip_update_dates": {
+        const start = log.after?.startDate
+          ? formatDate(new Date(String(log.after.startDate)), locale)
+          : "";
+        const end = log.after?.endDate
+          ? formatDate(new Date(String(log.after.endDate)), locale)
+          : "";
+        const range = start && end ? `${start} — ${end}` : start || end || "";
+        return range
+          ? `${labels.act_trip_update_dates ?? "Updated dates:"} ${range}`
+          : (labels.act_trip_update_dates ?? "Updated trip dates");
       }
       case "itinerary_create": {
         const title = log.after?.title ?? "";

@@ -22,6 +22,7 @@ import {
   type ExistingExpenseSummary,
   ExpenseFormCard,
 } from "@/components/ExpenseFormCard";
+import { ErrorMessageBanner } from "@/components/ErrorMessageBanner";
 import { InviteFriendsCard } from "@/components/InviteFriendsCard";
 import { ItineraryCard } from "@/components/ItineraryCard";
 import { MembersListCard } from "@/components/MembersListCard";
@@ -32,6 +33,7 @@ import { SelectField } from "@/components/SelectField";
 import { SettlementsCard } from "@/components/SettlementsCard";
 import { ShareAndExportCard } from "@/components/ShareAndExportCard";
 import { SoftPinPromptCard } from "@/components/SoftPinPromptCard";
+import { TripDatesCard } from "@/components/TripDatesCard";
 import { TripTabsContainer } from "@/components/TripTabsContainer";
 import { db } from "@/lib/db";
 import {
@@ -322,13 +324,10 @@ export default async function TripPage({
         </div>
 
         {errorMessage ? (
-          <div
-            role="alert"
-            className="flex items-start gap-2.5 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-900 shadow-2xs"
-          >
-            <span className="text-lg">⚠️</span>
-            <div className="flex-1">{errorMessage}</div>
-          </div>
+          <ErrorMessageBanner
+            message={errorMessage}
+            dismissLabel={tTrip("dismiss")}
+          />
         ) : null}
 
         {/* 1-Tap Name Selection for Pre-Added Friends */}
@@ -765,13 +764,10 @@ export default async function TripPage({
       ) : null}
 
       {errorMessage ? (
-        <div
-          role="alert"
-          className="flex items-start gap-2.5 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-900 shadow-2xs"
-        >
-          <span className="text-lg">⚠️</span>
-          <div className="flex-1">{errorMessage}</div>
-        </div>
+        <ErrorMessageBanner
+          message={errorMessage}
+          dismissLabel={tTrip("dismiss")}
+        />
       ) : null}
 
       {/* Header Card */}
@@ -1054,8 +1050,29 @@ export default async function TripPage({
         }
         planSlot={
           <div className="space-y-5 lg:grid lg:grid-cols-12 lg:gap-6 lg:space-y-0 lg:items-start">
-            {/* Destination Voting */}
+            {/* Trip Dates & Destination Voting */}
             <div className="space-y-5 lg:col-span-5">
+              <TripDatesCard
+                slug={trip.slug}
+                locale={locale}
+                isLocked={isLocked}
+                isCreator={isCreator}
+                startDateYyyyMmDd={trip.startDate ? dayKey(trip.startDate) : null}
+                endDateYyyyMmDd={trip.endDate ? dayKey(trip.endDate) : null}
+                dateRangeLabel={tripDateRangeLabel}
+                labels={{
+                  datesTitle: tPlan("datesTitle"),
+                  datesSubtitle: tPlan("datesSubtitle"),
+                  datesNotSet: tPlan("datesNotSet"),
+                  editDatesButton: tPlan("editDatesButton"),
+                  setDatesButton: tPlan("setDatesButton"),
+                  saveDatesButton: tPlan("saveDatesButton"),
+                  cancelButton: tTrip("cancelButton"),
+                  startDateLabel: tPlan("startDateLabel"),
+                  endDateLabel: tPlan("endDateLabel"),
+                }}
+              />
+
               <DestinationVotingCard
                 slug={trip.slug}
                 locale={locale}
@@ -1383,6 +1400,7 @@ export default async function TripPage({
                   act_itinerary_delete: tMoney("act_itinerary_delete"),
                   act_member_claim_device: tMoney("act_member_claim_device"),
                   act_member_reset_devices: tMoney("act_member_reset_devices"),
+                  act_trip_update_dates: tMoney("act_trip_update_dates"),
                 }}
               />
             </div>

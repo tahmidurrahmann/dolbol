@@ -68,6 +68,7 @@
     "claimPinCancel": "Cancel"
   },
   "tripPage": {
+    "destinationPrefix": "Destination:",
     "tabExpenses": "Expenses",
     "tabBalances": "Who owes whom",
     "tabPlan": "Plan",
@@ -238,7 +239,8 @@
     "act_itinerary_create": "added to itinerary:",
     "act_itinerary_delete": "removed from itinerary:",
     "act_member_claim_device": "claimed on a new device:",
-    "act_member_reset_devices": "reset devices for:"
+    "act_member_reset_devices": "reset devices for:",
+    "act_trip_update_dates": "updated trip dates:"
   },
   "aiParser": {
     "cardTitle": "Add expense",
@@ -281,7 +283,15 @@
     "addItineraryButton": "Add to schedule",
     "moveUp": "↑",
     "moveDown": "↓",
-    "deleteItem": "Delete"
+    "deleteItem": "Delete",
+    "datesTitle": "Trip dates",
+    "datesSubtitle": "Set or update when your trip begins and ends",
+    "datesNotSet": "Dates not set yet",
+    "editDatesButton": "Change dates",
+    "setDatesButton": "Set dates",
+    "saveDatesButton": "Save dates",
+    "startDateLabel": "Start date",
+    "endDateLabel": "End date"
   },
   "shareExport": {
     "cardTitle": "Share Card & Cost Sheet",
@@ -325,6 +335,7 @@
     "duplicate_option": "This destination option was already proposed!",
     "member_has_transactions": "This member has recorded expenses or settlements and cannot be removed.",
     "cannot_delete_creator": "The trip creator cannot be removed.",
-    "pin_locked": "Too many failed attempts. Please try again after 15 minutes."
+    "pin_locked": "Too many failed attempts. Please try again after 15 minutes.",
+    "invalid_dates": "End date cannot be earlier than start date."
   }
 }

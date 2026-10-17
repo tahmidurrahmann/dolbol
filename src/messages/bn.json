@@ -68,6 +68,7 @@
     "claimPinCancel": "বাতিল"
   },
   "tripPage": {
+    "destinationPrefix": "গন্তব্য:",
     "tabExpenses": "খরচ",
     "tabBalances": "হিসাব",
     "tabPlan": "প্ল্যান",
@@ -238,7 +239,8 @@
     "act_itinerary_create": "ভ্রমণ সূচিতে যোগ করেছেন:",
     "act_itinerary_delete": "ভ্রমণ সূচি থেকে মুছে ফেলেছেন:",
     "act_member_claim_device": "নতুন ডিভাইসে যুক্ত হয়েছেন:",
-    "act_member_reset_devices": "এর ডিভাইস সেশন রিসেট করেছেন:"
+    "act_member_reset_devices": "এর ডিভাইস সেশন রিসেট করেছেন:",
+    "act_trip_update_dates": "ট্রিপের তারিখ পরিবর্তন করেছেন:"
   },
   "aiParser": {
     "cardTitle": "খরচ যোগ করুন",
@@ -281,7 +283,15 @@
     "addItineraryButton": "সূচিতে যোগ করুন",
     "moveUp": "↑",
     "moveDown": "↓",
-    "deleteItem": "মুছুন"
+    "deleteItem": "মুছুন",
+    "datesTitle": "ট্রিপের তারিখ",
+    "datesSubtitle": "কবে শুরু ও শেষ হবে তা নির্ধারণ বা পরিবর্তন করুন",
+    "datesNotSet": "এখনো তারিখ নির্ধারণ করা হয়নি",
+    "editDatesButton": "তারিখ পরিবর্তন",
+    "setDatesButton": "তারিখ নির্ধারণ করুন",
+    "saveDatesButton": "সেভ করুন",
+    "startDateLabel": "শুরুর তারিখ",
+    "endDateLabel": "শেষের তারিখ"
   },
   "shareExport": {
     "cardTitle": "শেয়ার কার্ড ও ডেইলি কস্ট শিট",
@@ -325,6 +335,7 @@
     "duplicate_option": "এই গন্তব্যটি ইতিমধ্যে তালিকায় আছে!",
     "member_has_transactions": "এই সদস্যের নামে ইতিমধ্যে খরচের হিসাব আছে, তাই তাঁকে মুছে ফেলা যাবে না।",
     "cannot_delete_creator": "ট্রিপের মূল ক্রিয়েটরকে মুছে ফেলা যাবে না।",
-    "pin_locked": "খুব বেশি ভুল চেষ্টা হয়েছে। অনুগ্রহ করে ১৫ মিনিট পর আবার চেষ্টা করুন।"
+    "pin_locked": "খুব বেশি ভুল চেষ্টা হয়েছে। অনুগ্রহ করে ১৫ মিনিট পর আবার চেষ্টা করুন।",
+    "invalid_dates": "শেষের তারিখ শুরুর তারিখের আগের হতে পারবে না।"
   }
 }

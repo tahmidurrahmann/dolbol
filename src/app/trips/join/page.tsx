@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { BackToTripBar } from "@/components/BackToTripBar";
+import { ErrorMessageBanner } from "@/components/ErrorMessageBanner";
 import { JoinTripForm } from "@/components/JoinTripForm";
 import type { SupportedLocale } from "@/lib/format";
 
@@ -66,13 +67,7 @@ export default async function JoinTripByLinkPage({
       </div>
 
       {error ? (
-        <div
-          role="alert"
-          className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-900 shadow-xs flex items-center gap-2"
-        >
-          <span>⚠️</span>
-          <span>{tErr("trip_not_found")}</span>
-        </div>
+        <ErrorMessageBanner message={tErr("trip_not_found")} />
       ) : null}
 
       <JoinTripForm

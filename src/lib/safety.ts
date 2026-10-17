@@ -227,6 +227,8 @@ export interface ActivityLogSnapshot {
   emoji?: string | null;
   name?: string;
   destination?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   lockedAt?: string | null;
   deletedAt?: string | null;
   shares?: ShareOutput[];
