@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { type SupportedLocale, toBanglaDigits } from "@/lib/format";
@@ -21,7 +21,7 @@ export async function generateMetadata({
   });
 
   if (!trip) {
-    return { title: "Trip Not Found" };
+    return { title: "Trip Hub" };
   }
 
   const title = trip.destination
@@ -75,7 +75,7 @@ export default async function PublicTripSummaryPage({
   });
 
   if (!trip) {
-    notFound();
+    redirect("/trips/join");
   }
 
   const summary = buildPublicTripSummary({

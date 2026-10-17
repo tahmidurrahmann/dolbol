@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
+import { BackToTripBar } from "@/components/BackToTripBar";
 import { JoinTripForm } from "@/components/JoinTripForm";
 import type { SupportedLocale } from "@/lib/format";
 
@@ -44,6 +45,8 @@ export default async function JoinTripByLinkPage({
 
   return (
     <section className="mx-auto max-w-xl lg:max-w-2xl space-y-5 py-4 w-full">
+      <BackToTripBar locale={locale} />
+
       <div>
         <Link
           href="/"

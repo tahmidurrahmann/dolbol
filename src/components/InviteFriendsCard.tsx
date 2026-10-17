@@ -30,7 +30,7 @@ export function InviteFriendsCard({
 
   const fullUrl = isClient
     ? `${window.location.origin}/trips/${slug}`
-    : `https://triphub.app/trips/${slug}`;
+    : `https://trip-hub-one.vercel.app/trips/${slug}`;
 
   const hasWebShare =
     isClient &&

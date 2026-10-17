@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
   addGuestMemberAction,
@@ -14,6 +14,8 @@ import { ActivityLogCard } from "@/components/ActivityLogCard";
 import { AiExpenseParserCard } from "@/components/AiExpenseParserCard";
 import { BalancesCard } from "@/components/BalancesCard";
 import { Button } from "@/components/Button";
+import { ClaimMemberSection } from "@/components/ClaimMemberSection";
+import { CreatorPinPromptModal } from "@/components/CreatorPinPromptModal";
 import { DestinationVotingCard } from "@/components/DestinationVotingCard";
 import {
   type EditableExpenseData,
@@ -23,10 +25,13 @@ import {
 import { InviteFriendsCard } from "@/components/InviteFriendsCard";
 import { ItineraryCard } from "@/components/ItineraryCard";
 import { MembersListCard } from "@/components/MembersListCard";
+import { NewDeviceNoticeBanner } from "@/components/NewDeviceNoticeBanner";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
+import { RecentTripTracker } from "@/components/RecentTripTracker";
 import { SelectField } from "@/components/SelectField";
 import { SettlementsCard } from "@/components/SettlementsCard";
 import { ShareAndExportCard } from "@/components/ShareAndExportCard";
+import { SoftPinPromptCard } from "@/components/SoftPinPromptCard";
 import { TripTabsContainer } from "@/components/TripTabsContainer";
 import { db } from "@/lib/db";
 import {
@@ -47,19 +52,24 @@ import {
 } from "@/lib/money";
 import { groupItineraryByDay, summarizeDestinationVotes } from "@/lib/planning";
 import type { ActivityLogRecordInput, ActivityLogSnapshot } from "@/lib/safety";
-import { getCurrentMemberForTrip } from "@/lib/session";
+import { getCurrentMemberAndSessionForTrip } from "@/lib/session";
 import { dayKey } from "@/lib/time";
 import { MEMBER_EMOJIS } from "@/lib/trips";
 
 interface TripPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ error?: string; editExpense?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    editExpense?: string;
+    newTrip?: string;
+  }>;
 }
 
 type ErrorKey =
   | "invalid_input"
   | "invalid_pin"
   | "wrong_pin"
+  | "pin_locked"
   | "duplicate_name"
   | "trip_not_found"
   | "trip_locked"
@@ -78,6 +88,7 @@ const ERROR_KEYS = new Set<ErrorKey>([
   "invalid_input",
   "invalid_pin",
   "wrong_pin",
+  "pin_locked",
   "duplicate_name",
   "trip_not_found",
   "trip_locked",
@@ -100,6 +111,34 @@ function asSnapshot(val: unknown): ActivityLogSnapshot | null {
   return null;
 }
 
+function findRecentOtherDeviceClaim(
+  activityLogs: Array<{
+    id: string;
+    entityType: string;
+    entityId: string;
+    action: string;
+    createdAt: Date;
+  }>,
+  memberId: string,
+  sessionCreatedAt: Date,
+) {
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  return activityLogs.find((l) => {
+    return (
+      l.entityType === "member" &&
+      l.entityId === memberId &&
+      l.action === "claim_device" &&
+      l.createdAt >= oneDayAgo &&
+      l.createdAt.getTime() > sessionCreatedAt.getTime() + 1000
+    );
+  });
+}
+
+function isSessionCreatedUnder24Hours(sessionCreatedAt?: Date | null): boolean {
+  if (!sessionCreatedAt) return false;
+  return Date.now() - sessionCreatedAt.getTime() < 24 * 60 * 60 * 1000;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -115,7 +154,7 @@ export async function generateMetadata({
 
   if (!trip) {
     return {
-      title: locale === "bn" ? "ট্রিপ পাওয়া যায়নি" : "Trip Not Found",
+      title: locale === "bn" ? "ট্রিপে যোগ দিন" : "Join Trip",
     };
   }
 
@@ -156,7 +195,7 @@ export default async function TripPage({
   searchParams,
 }: TripPageProps) {
   const { slug } = await params;
-  const { error, editExpense } = await searchParams;
+  const { error, editExpense, newTrip } = await searchParams;
   const locale = (await getLocale()) as SupportedLocale;
 
   const trip = await db.trip.findUnique({
@@ -164,7 +203,9 @@ export default async function TripPage({
     include: {
       members: {
         include: {
-          sessions: true,
+          sessions: {
+            orderBy: { createdAt: "desc" },
+          },
         },
         orderBy: { createdAt: "asc" },
       },
@@ -196,10 +237,12 @@ export default async function TripPage({
   });
 
   if (!trip) {
-    notFound();
+    redirect("/trips/join");
   }
 
-  const currentMember = await getCurrentMemberForTrip(trip.id);
+  const sessionInfo = await getCurrentMemberAndSessionForTrip(trip.id);
+  const currentMember = sessionInfo?.member ?? null;
+  const currentSession = sessionInfo?.session ?? null;
   const tWho = await getTranslations("whoAreYou");
   const tTrip = await getTranslations("tripPage");
   const tMoney = await getTranslations("money");
@@ -342,28 +385,31 @@ export default async function TripPage({
           </div>
         ) : null}
 
-        {/* Already Joined Members (Disabled) */}
-        {claimedMembers.length > 0 ? (
-          <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-4">
-            <span className="text-xs font-bold text-[var(--color-fg-muted)] block">
-              {locale === "bn" ? "ইতিমধ্যে যুক্ত হয়েছেন:" : "Already joined:"}
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {claimedMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--color-fg-muted)] opacity-80"
-                >
-                  <span>{member.emoji ?? "🎒"}</span>
-                  <span>{member.displayName}</span>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md font-bold">
-                    ✓ {locale === "bn" ? "যুক্ত" : "Joined"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
+        {/* Already Joined Members with Claim / Multi-Device Flow */}
+        <ClaimMemberSection
+          slug={trip.slug}
+          locale={locale}
+          claimedMembers={claimedMembers.map((m) => ({
+            id: m.id,
+            displayName: m.displayName,
+            emoji: m.emoji,
+            hasPin: Boolean(m.pinHash),
+            isGuest: m.isGuest,
+          }))}
+          labels={{
+            heading: locale === "bn" ? "আগে যোগ দিয়েছেন এমন সদস্যরা:" : "Already joined:",
+            claimedBadge: tWho("claimedBadge"),
+            thisIsMeButton: tWho("claimThisIsMe"),
+            pinModalTitle: tWho("claimPinTitle"),
+            pinModalPrompt: tWho("claimPinPrompt"),
+            pinPlaceholder: tWho("claimPinPlaceholder"),
+            pinSubmitButton: tWho("claimPinSubmit"),
+            cancelButton: tTrip("cancelButton"),
+            confirmModalTitle: tWho("claimConfirmTitle"),
+            confirmModalBody: tWho("claimConfirmBody"),
+            confirmContinueButton: tWho("claimConfirmContinue"),
+          }}
+        />
 
         {/* "My name isn't here" Expandable Form */}
         {!isLocked ? (
@@ -403,50 +449,18 @@ export default async function TripPage({
             </form>
           </details>
         ) : null}
-
-        {/* Phone reset / Reclaim PIN option (collapsed) */}
-        {claimedMembers.some((m) => Boolean(m.pinHash)) ? (
-          <details className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-xs text-[var(--color-fg-muted)]">
-            <summary className="cursor-pointer hover:underline font-semibold select-none flex items-center justify-between">
-              <span>🔑 {locale === "bn" ? "ফোন পরিবর্তন করেছেন? পিন দিয়ে লগইন করুন" : "Changed phone? Rejoin with PIN"}</span>
-              <span className="text-[10px]">▼</span>
-            </summary>
-            <div className="pt-3 space-y-2.5 border-t border-[var(--color-border)] mt-2">
-              {claimedMembers
-                .filter((m) => Boolean(m.pinHash))
-                .map((m) => (
-                  <form key={m.id} action={reclaimMemberAction} className="flex gap-2">
-                    <input type="hidden" name="slug" value={trip.slug} />
-                    <input type="hidden" name="memberId" value={m.id} />
-                    <span className="flex items-center text-xs font-bold text-[var(--color-fg)] w-24 truncate">
-                      {m.emoji ?? "🎒"} {m.displayName}
-                    </span>
-                    <input
-                      name="pin"
-                      type="password"
-                      inputMode="numeric"
-                      required
-                      maxLength={6}
-                      placeholder={locale === "bn" ? "পিন দিন" : "Enter PIN"}
-                      className="min-h-[38px] flex-1 rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs outline-none"
-                    />
-                    <button
-                      type="submit"
-                      className="rounded-lg bg-[var(--color-primary)] px-3 py-1 text-xs font-bold text-white"
-                    >
-                      {locale === "bn" ? "প্রবেশ" : "Go"}
-                    </button>
-                  </form>
-                ))}
-            </div>
-          </details>
-        ) : null}
       </section>
     );
   }
 
   // 2. Signed-in Trip Hub View
   const isCreator = currentMember.id === trip.creatorMemberId;
+  const isSessionUnder24Hours = isSessionCreatedUnder24Hours(
+    currentSession?.createdAt,
+  );
+  const creatorNeedsPin = Boolean(
+    isCreator && currentMember.pinHash && isSessionUnder24Hours,
+  );
   const memberInputs: MemberInput[] = trip.members.map((m) => ({
     id: m.id,
     displayName: m.displayName,
@@ -542,6 +556,7 @@ export default async function TripPage({
     emoji: m.emoji,
     isGuest: m.isGuest,
     sessionsCount: m.sessions.length,
+    lastClaimedAt: m.sessions[0]?.createdAt ?? null,
   }));
 
   const dayGroups = groupExpensesByDhakaDay({
@@ -701,8 +716,54 @@ export default async function TripPage({
     </div>
   );
 
+  let otherDeviceClaimNotice = null;
+  if (currentMember && currentSession) {
+    const claimLog = findRecentOtherDeviceClaim(
+      trip.activityLogs,
+      currentMember.id,
+      currentSession.createdAt,
+    );
+
+    if (claimLog) {
+      const formattedClaimTime = claimLog.createdAt.toLocaleTimeString(
+        locale === "bn" ? "bn-BD" : "en-US",
+        { hour: "numeric", minute: "2-digit" },
+      );
+      const noticeText = tTrip("newDeviceNotice", { time: formattedClaimTime });
+      otherDeviceClaimNotice = (
+        <NewDeviceNoticeBanner
+          logId={claimLog.id}
+          message={noticeText}
+          dismissLabel={tTrip("dismiss")}
+        />
+      );
+    }
+  }
+
   return (
     <section className="space-y-5 py-2 pb-24 min-[1000px]:pb-4">
+      <RecentTripTracker
+        slug={trip.slug}
+        tripName={trip.name}
+        myMemberName={currentMember.displayName}
+      />
+
+      {otherDeviceClaimNotice}
+
+      {isCreator && !currentMember.pinHash && newTrip === "1" ? (
+        <CreatorPinPromptModal
+          slug={trip.slug}
+          labels={{
+            title: tTrip("creatorPromptTitle"),
+            description: tTrip("creatorPromptDesc"),
+            pinLabel: tTrip("creatorPinPrompt"),
+            pinPlaceholder: tTrip("creatorPinPlaceholder"),
+            saveButton: tTrip("creatorPromptSave"),
+            skipButton: tTrip("creatorPromptSkip"),
+          }}
+        />
+      ) : null}
+
       {errorMessage ? (
         <div
           role="alert"
@@ -1055,11 +1116,23 @@ export default async function TripPage({
                 locale={locale}
               />
 
+              {/* Soft prompt to set PIN if current member has none */}
+              {!currentMember.pinHash ? (
+                <SoftPinPromptCard
+                  memberId={currentMember.id}
+                  title={tTrip("softPinPromptTitle")}
+                  body={tTrip("softPinPromptBody")}
+                  actionLabel={tTrip("softPinPromptAction")}
+                  dismissLabel={tTrip("dismiss")}
+                />
+              ) : null}
+
               {/* Members List */}
               <MembersListCard
                 slug={trip.slug}
                 locale={locale}
                 isCreator={isCreator}
+                creatorNeedsPin={creatorNeedsPin}
                 creatorMemberId={trip.creatorMemberId}
                 members={memberListItems}
                 membersWithTransactions={membersWithTransactions}
@@ -1075,11 +1148,20 @@ export default async function TripPage({
                   cancelButton: tTrip("cancelButton"),
                   confirmDeleteButton: tTrip("confirmDeleteButton"),
                   deletingButton: tTrip("deletingButton"),
+                  resetDevicesButton: tTrip("resetDevicesButton"),
+                  confirmResetDevicesTitle: tTrip("confirmResetDevicesTitle"),
+                  confirmResetDevicesDesc: tTrip("confirmResetDevicesDesc"),
+                  confirmResetDevicesButton: tTrip("confirmResetDevicesButton"),
+                  resettingDevicesButton: tTrip("resettingDevicesButton"),
+                  creatorPinPrompt: tTrip("creatorPinPrompt"),
+                  creatorPinPlaceholder: tTrip("creatorPinPlaceholder"),
+                  devicesCountLabel: tTrip("devicesCountLabel"),
+                  lastClaimedPrefix: tTrip("lastClaimedPrefix"),
                 }}
               />
 
               {/* My Profile Settings (Change my name, emoji, or PIN) */}
-              <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+              <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:p-5 shadow-xs">
                 <h2 className="text-base font-bold text-[var(--color-fg)] flex items-center gap-2">
                   <span>⚙️</span>
                   <span>{locale === "bn" ? "আমার প্রোফাইল ও সেটিংস" : "My Profile & Settings"}</span>
@@ -1140,7 +1222,7 @@ export default async function TripPage({
             <div className="space-y-5">
               {/* Creator Controls */}
               {isCreator ? (
-                <div className="space-y-5 rounded-2xl border-2 border-[var(--color-primary)]/30 bg-[var(--color-surface)] p-4 sm:p-5 shadow-xs">
+                <div className="space-y-5 rounded-2xl border-2 border-[var(--color-primary)]/30 bg-[var(--color-surface)] p-3.5 sm:p-5 shadow-xs">
                   <h2 className="text-lg font-bold text-[var(--color-primary)] flex items-center gap-2">
                     <span>👑</span>
                     <span>{tTrip("creatorControlsTitle")}</span>
@@ -1242,6 +1324,26 @@ export default async function TripPage({
                     className="space-y-2.5 border-t border-[var(--color-border)] pt-4"
                   >
                     <input type="hidden" name="slug" value={trip.slug} />
+                    {creatorNeedsPin ? (
+                      <div className="space-y-1">
+                        <label
+                          htmlFor="creator-pin-lock"
+                          className="block text-xs font-bold text-[var(--color-fg)]"
+                        >
+                          {tTrip("creatorPinPrompt")}
+                        </label>
+                        <input
+                          id="creator-pin-lock"
+                          name="creatorPin"
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={6}
+                          required
+                          placeholder={tTrip("creatorPinPlaceholder")}
+                          className="min-h-[44px] w-full rounded-2xl border border-[var(--color-border)] bg-white px-3.5 py-1.5 text-sm text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
+                        />
+                      </div>
+                    ) : null}
                     <p className="text-xs text-[var(--color-fg-muted)]">
                       {tTrip("lockTripHint")}
                     </p>
@@ -1279,6 +1381,8 @@ export default async function TripPage({
                   act_trip_set_destination: tMoney("act_trip_set_destination"),
                   act_itinerary_create: tMoney("act_itinerary_create"),
                   act_itinerary_delete: tMoney("act_itinerary_delete"),
+                  act_member_claim_device: tMoney("act_member_claim_device"),
+                  act_member_reset_devices: tMoney("act_member_reset_devices"),
                 }}
               />
             </div>

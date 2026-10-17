@@ -54,7 +54,18 @@
     "claimButton": "Join",
     "enterPinPlaceholder": "Enter 4–6 digit PIN",
     "reclaimButton": "Restore",
-    "lockedNotice": "This trip is locked. New members cannot join."
+    "lockedNotice": "This trip is locked. New members cannot join.",
+    "claimedBadge": "Already joined",
+    "claimThisIsMe": "This is me (new phone)",
+    "claimConfirmTitle": "Confirm Your Name",
+    "claimConfirmBody": "Someone already joined with this name. If this is you, continue. If someone else, go back and choose another name.",
+    "claimConfirmContinue": "Continue",
+    "claimConfirmCancel": "Go back",
+    "claimPinTitle": "Enter PIN to Rejoin",
+    "claimPinPrompt": "Enter your PIN:",
+    "claimPinPlaceholder": "4-6 digit PIN",
+    "claimPinSubmit": "Verify & Enter",
+    "claimPinCancel": "Cancel"
   },
   "tripPage": {
     "tabExpenses": "Expenses",
@@ -110,7 +121,25 @@
     "confirmDeleteMemberDesc": "Are you sure you want to remove this member? No expenses or repayments are linked to them.",
     "cancelButton": "Cancel",
     "confirmDeleteButton": "Yes, remove",
-    "deletingButton": "Removing..."
+    "deletingButton": "Removing...",
+    "resetDevicesButton": "Reset devices",
+    "confirmResetDevicesTitle": "Reset member's devices?",
+    "confirmResetDevicesDesc": "All devices for this member will be signed out. They will have to claim their name again.",
+    "confirmResetDevicesButton": "Yes, reset devices",
+    "resettingDevicesButton": "Resetting...",
+    "newDeviceNotice": "Your name was claimed from a new device ({time}). If this was not you, set a PIN or notify the creator.",
+    "softPinPromptTitle": "Protect your name",
+    "softPinPromptBody": "You don't have a PIN set. Set a PIN below so nobody else can use your name.",
+    "softPinPromptAction": "Set PIN",
+    "dismiss": "Dismiss",
+    "creatorPromptTitle": "Protect your creator role & trip",
+    "creatorPromptDesc": "Set a 4-6 digit PIN now to protect creator actions like locking the trip and resetting member devices.",
+    "creatorPromptSave": "Set PIN",
+    "creatorPromptSkip": "Skip for now",
+    "creatorPinPrompt": "Creator PIN:",
+    "creatorPinPlaceholder": "4-6 digit PIN",
+    "devicesCountLabel": "device(s)",
+    "lastClaimedPrefix": "Last:"
   },
   "money": {
     "aiCardTitle": "Add expense",
@@ -207,7 +236,9 @@
     "act_destination_create": "proposed destination:",
     "act_trip_set_destination": "finalized destination:",
     "act_itinerary_create": "added to itinerary:",
-    "act_itinerary_delete": "removed from itinerary:"
+    "act_itinerary_delete": "removed from itinerary:",
+    "act_member_claim_device": "claimed on a new device:",
+    "act_member_reset_devices": "reset devices for:"
   },
   "aiParser": {
     "cardTitle": "Add expense",
@@ -270,6 +301,13 @@
     "openFullTripHub": "Open full trip page",
     "privacyNotice": "For privacy, money details are hidden on this public summary."
   },
+  "recentTrips": {
+    "yourTripsTitle": "Your trips",
+    "backToTrip": "← Back to {name}",
+    "openButton": "Open →",
+    "asMember": "As",
+    "removeFromList": "Remove from this list"
+  },
   "errors": {
     "invalid_input": "Please check your inputs.",
     "invalid_pin": "PIN must be 4 to 6 numeric digits.",
@@ -286,6 +324,7 @@
     "cross_trip_option": "This option belongs to another trip.",
     "duplicate_option": "This destination option was already proposed!",
     "member_has_transactions": "This member has recorded expenses or settlements and cannot be removed.",
-    "cannot_delete_creator": "The trip creator cannot be removed."
+    "cannot_delete_creator": "The trip creator cannot be removed.",
+    "pin_locked": "Too many failed attempts. Please try again after 15 minutes."
   }
 }

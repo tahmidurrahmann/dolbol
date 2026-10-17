@@ -39,6 +39,7 @@ export async function GET(): Promise<Response> {
     >
       <div
         style={{
+          display: "flex",
           fontWeight: 700,
           marginBottom: "12px",
           color: "#0f6b4a",
@@ -46,11 +47,12 @@ export async function GET(): Promise<Response> {
       >
         সুন্দরবন ভ্রমণ — মোট খরচ ৳১২,৫০০
       </div>
-      <div style={{ marginBottom: "8px" }}>
+      <div style={{ display: "flex", marginBottom: "8px" }}>
         কক্সবাজার • শ্রীমঙ্গল • দ্বিতীয় দিন
       </div>
       <div
         style={{
+          display: "flex",
           fontSize: 20,
           color: "#4a5d52",
           marginTop: "12px",

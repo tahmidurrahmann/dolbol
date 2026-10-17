@@ -1,7 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  checkPinRateLimit,
+  recordFailedPinAttempt,
+  resetPinRateLimit,
+} from "@/lib/rate-limit";
 import {
   banglaToAsciiDigits,
   extractSlugFromInput,
@@ -29,6 +35,7 @@ import {
 import {
   clearMemberDeviceSession,
   createMemberDeviceSession,
+  getCurrentMemberAndSessionForTrip,
   getCurrentMemberForTrip,
 } from "@/lib/session";
 import {
@@ -181,7 +188,10 @@ export async function createTripAction(formData: FormData): Promise<void> {
   });
 
   await createMemberDeviceSession(result.creator.id, result.trip.id);
-  redirect(`/trips/${result.trip.slug}`);
+  const redirectUrl = result.creator.pinHash
+    ? `/trips/${result.trip.slug}`
+    : `/trips/${result.trip.slug}?newTrip=1`;
+  redirect(redirectUrl);
 }
 
 export async function lookupTripByLinkAction(
@@ -324,6 +334,20 @@ export async function joinTripAction(formData: FormData): Promise<void> {
   redirect(`/trips/${trip.slug}`);
 }
 
+async function getClientIp(): Promise<string> {
+  try {
+    const headerStore = await headers();
+    const forwarded = headerStore.get("x-forwarded-for");
+    if (forwarded) {
+      const first = forwarded.split(",")[0]?.trim();
+      if (first) return first;
+    }
+    return headerStore.get("x-real-ip") || "127.0.0.1";
+  } catch {
+    return "127.0.0.1";
+  }
+}
+
 export async function reclaimMemberAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
   const parsed = reclaimMemberFormSchema.safeParse({
@@ -352,16 +376,210 @@ export async function reclaimMemberAction(formData: FormData): Promise<void> {
     redirect(`/trips/${trip.slug}?error=invalid_input`);
   }
 
+  const clientIp = await getClientIp();
+
+  // Brute-force rate limit protection (generic response, no hint)
+  const rateLimitStatus = checkPinRateLimit(member.id, clientIp);
+  if (!rateLimitStatus.allowed) {
+    redirect(`/trips/${trip.slug}?error=pin_locked`);
+  }
+
   if (member.pinHash) {
     if (!parsed.data.pin || !verifyPin(parsed.data.pin, member.pinHash)) {
+      const attempt = recordFailedPinAttempt(member.id, clientIp);
+      if (attempt.isLocked) {
+        redirect(`/trips/${trip.slug}?error=pin_locked`);
+      }
       redirect(`/trips/${trip.slug}?error=wrong_pin`);
     }
   }
 
+  // Clear rate limit on successful PIN authentication
+  resetPinRateLimit(member.id, clientIp);
+
   await createMemberDeviceSession(member.id, trip.id);
+
+  // Write ActivityLog entry for claim from a new device (do NOT store IP addresses)
+  await db.activityLog.create({
+    data: {
+      tripId: trip.id,
+      memberId: member.id,
+      entityType: "member",
+      entityId: member.id,
+      action: "claim_device",
+      after: {
+        displayName: member.displayName,
+      },
+    },
+  });
+
   revalidatePath(`/trips/${trip.slug}`);
   redirect(`/trips/${trip.slug}`);
 }
+
+/**
+ * Claim an existing member from a new device when no PIN is set, after user confirmation.
+ */
+export async function claimExistingMemberAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const memberId = String(formData.get("memberId") ?? "").trim();
+
+  if (!slug || !memberId) {
+    redirect("/trips/join?error=invalid_input");
+  }
+
+  const trip = await db.trip.findUnique({
+    where: { slug },
+  });
+
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const member = await db.member.findUnique({
+    where: { id: memberId },
+  });
+
+  if (!member || member.tripId !== trip.id || member.isGuest) {
+    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  }
+
+  if (member.pinHash) {
+    redirect(`/trips/${trip.slug}?error=wrong_pin`);
+  }
+
+  await createMemberDeviceSession(member.id, trip.id);
+
+  // Write ActivityLog entry for claim from a new device (do NOT store IP addresses)
+  await db.activityLog.create({
+    data: {
+      tripId: trip.id,
+      memberId: member.id,
+      entityType: "member",
+      entityId: member.id,
+      action: "claim_device",
+      after: {
+        displayName: member.displayName,
+      },
+    },
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
+/**
+ * Helper: Ensures the request is made by the trip creator.
+ * If the creator has a PIN set AND the current session is less than 24 hours old,
+ * verifies the creatorPin submitted in formData.
+ */
+async function assertCreatorAuthorizedWithPinIfRecent(
+  trip: { id: string; slug: string; creatorMemberId?: string | null },
+  formData: FormData,
+) {
+  const sessionInfo = await getCurrentMemberAndSessionForTrip(trip.id);
+  if (!sessionInfo || sessionInfo.member.id !== trip.creatorMemberId) {
+    redirect(`/trips/${trip.slug}?error=not_creator`);
+  }
+
+  const { member: creator, session } = sessionInfo;
+
+  // Session less than 24 hours old AND creator has a PIN set
+  const sessionAgeMs = Date.now() - session.createdAt.getTime();
+  const isSessionUnder24Hours = sessionAgeMs < 24 * 60 * 60 * 1000;
+
+  if (creator.pinHash && isSessionUnder24Hours) {
+    const creatorPin = String(formData.get("creatorPin") ?? "").trim();
+    const clientIp = await getClientIp();
+
+    const rateStatus = checkPinRateLimit(creator.id, clientIp);
+    if (!rateStatus.allowed) {
+      redirect(`/trips/${trip.slug}?error=pin_locked`);
+    }
+
+    if (!creatorPin || !verifyPin(creatorPin, creator.pinHash)) {
+      const attempt = recordFailedPinAttempt(creator.id, clientIp);
+      if (attempt.isLocked) {
+        redirect(`/trips/${trip.slug}?error=pin_locked`);
+      }
+      redirect(`/trips/${trip.slug}?error=wrong_pin`);
+    }
+
+    resetPinRateLimit(creator.id, clientIp);
+  }
+
+  return { creator, session };
+}
+
+/**
+ * Creator-only control: Reset all device sessions for a member (forces re-claim).
+ * A creator can never view or modify another member's PIN.
+ */
+export async function resetMemberDevicesAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const memberId = String(formData.get("memberId") ?? "").trim();
+
+  if (!slug || !memberId) {
+    redirect("/trips/join?error=invalid_input");
+  }
+
+  const trip = await db.trip.findUnique({
+    where: { slug },
+    include: { members: true },
+  });
+
+  if (!trip) {
+    redirect("/trips/join?error=trip_not_found");
+  }
+
+  try {
+    assertTripWritable(trip);
+  } catch {
+    redirect(`/trips/${trip.slug}?error=trip_locked`);
+  }
+
+  const { creator: currentMember } =
+    await assertCreatorAuthorizedWithPinIfRecent(trip, formData);
+
+  const targetMember = trip.members.find((m) => m.id === memberId);
+  if (!targetMember) {
+    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  }
+
+  // Cannot reset creator's own devices via this action
+  if (targetMember.id === trip.creatorMemberId) {
+    redirect(`/trips/${trip.slug}?error=invalid_input`);
+  }
+
+  // Remove all sessions for this member
+  await db.memberSession.deleteMany({
+    where: { memberId: targetMember.id },
+  });
+
+  // Log action to ActivityLog
+  await db.activityLog.create({
+    data: {
+      tripId: trip.id,
+      memberId: currentMember.id,
+      entityType: "member",
+      entityId: targetMember.id,
+      action: "reset_devices",
+      after: {
+        displayName: targetMember.displayName,
+      },
+    },
+  });
+
+  revalidatePath(`/trips/${trip.slug}`);
+  redirect(`/trips/${trip.slug}`);
+}
+
 
 /**
  * One-tap claiming for pre-added members who don't have a PIN set yet.
@@ -434,15 +652,19 @@ export async function claimMemberAction(formData: FormData): Promise<void> {
  */
 export async function updateMyProfileAction(formData: FormData): Promise<void> {
   const slug = String(formData.get("slug") ?? "").trim();
-  const displayName = String(formData.get("displayName") ?? "").trim();
-  const emoji = String(formData.get("emoji") ?? "").trim() || "🎒";
-  const pin = String(formData.get("pin") ?? "").trim();
-
   const trip = await db.trip.findUnique({ where: { slug } });
   if (!trip) redirect("/trips/join?error=trip_not_found");
 
   const currentMember = await getCurrentMemberForTrip(trip.id);
   if (!currentMember) redirect(`/trips/${trip.slug}`);
+
+  const rawDisplayName = String(formData.get("displayName") ?? "").trim();
+  const displayName = rawDisplayName || currentMember.displayName;
+  const emoji =
+    String(formData.get("emoji") ?? "").trim() ||
+    currentMember.emoji ||
+    "🎒";
+  const pin = String(formData.get("pin") ?? "").trim();
 
   if (displayName.length < 1 || displayName.length > 40) {
     redirect(`/trips/${trip.slug}?error=invalid_input`);
@@ -687,10 +909,8 @@ export async function deleteMemberAction(formData: FormData): Promise<void> {
     redirect(`/trips/${trip.slug}?error=trip_locked`);
   }
 
-  const currentMember = await getCurrentMemberForTrip(trip.id);
-  if (!currentMember || currentMember.id !== trip.creatorMemberId) {
-    redirect(`/trips/${trip.slug}?error=not_creator`);
-  }
+  const { creator: currentMember } =
+    await assertCreatorAuthorizedWithPinIfRecent(trip, formData);
 
   const targetMember = await db.member.findUnique({
     where: { id: memberId },
@@ -773,10 +993,8 @@ export async function toggleTripLockAction(formData: FormData): Promise<void> {
     redirect("/trips/join?error=trip_not_found");
   }
 
-  const currentMember = await getCurrentMemberForTrip(trip.id);
-  if (!currentMember || currentMember.id !== trip.creatorMemberId) {
-    redirect(`/trips/${trip.slug}?error=not_creator`);
-  }
+  const { creator: currentMember } =
+    await assertCreatorAuthorizedWithPinIfRecent(trip, formData);
 
   const nextLockedAt = trip.lockedAt ? null : new Date();
 

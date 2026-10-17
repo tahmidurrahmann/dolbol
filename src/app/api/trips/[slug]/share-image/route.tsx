@@ -74,7 +74,7 @@ export async function GET(
   }
 
   const destinationText =
-    summary.destination ?? summary.topVotedDestination ?? "বাংলাদেশ";
+    summary.destination ?? summary.topVotedDestination ?? "Bangladesh";
   const memberNamesPreview = summary.members
     .slice(0, 8)
     .map((m) => m.displayName)
@@ -82,7 +82,7 @@ export async function GET(
 
   const firstItineraryItems = summary.itineraryDays
     .flatMap((d) =>
-      d.items.map((item) => `দিন ${d.dayNumber}: ${item.title}`),
+      d.items.map((item) => `Day ${d.dayNumber}: ${item.title}`),
     )
     .slice(0, 3);
 
@@ -97,7 +97,7 @@ export async function GET(
           height: "100%",
           backgroundColor: "#0f6b4a",
           padding: "36px",
-          fontFamily: '"Noto Sans Bengali", sans-serif',
+          fontFamily: "Noto Sans Bengali, sans-serif",
         }}
       >
         <div
@@ -123,17 +123,36 @@ export async function GET(
                 marginBottom: "12px",
               }}
             >
-              <span
-                style={{
-                  fontSize: 22,
-                  color: "#0f6b4a",
-                  fontWeight: 700,
-                }}
-              >
-                ট্রিপ হাব • Trip Hub
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: 26,
+                    color: "#0f6b4a",
+                    fontWeight: 700,
+                    letterSpacing: "-0.5px",
+                  }}
+                >
+                  🌴 Trip Hub
+                </span>
+                <span
+                  style={{
+                    display: "flex",
+                    fontSize: 14,
+                    color: "#0f6b4a",
+                    fontWeight: 600,
+                    backgroundColor: "#e8f5ee",
+                    padding: "3px 10px",
+                    borderRadius: "8px",
+                    border: "1px solid #c2e5d3",
+                  }}
+                >
+                  trip-hub-one.vercel.app
+                </span>
+              </div>
               {summary.dateRangeLabel ? (
-                <span style={{ fontSize: 20, color: "#4a5d52" }}>
+                <span style={{ display: "flex", fontSize: 20, color: "#4a5d52" }}>
                   {summary.dateRangeLabel}
                 </span>
               ) : null}
@@ -141,6 +160,7 @@ export async function GET(
 
             <div
               style={{
+                display: "flex",
                 fontSize: 48,
                 fontWeight: 700,
                 color: "#111c16",
@@ -150,15 +170,21 @@ export async function GET(
               {summary.name}
             </div>
 
-            <div
-              style={{
-                fontSize: 28,
-                color: "#0f6b4a",
-                fontWeight: 700,
-              }}
-            >
-              গন্তব্য: {destinationText}
-            </div>
+            {destinationText ? (
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 26,
+                  color: "#0f6b4a",
+                  fontWeight: 700,
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span>📍</span>
+                <span>{destinationText}</span>
+              </div>
+            ) : null}
           </div>
 
           {/* Middle Itinerary Preview (if any) */}
@@ -177,11 +203,12 @@ export async function GET(
                 <div
                   key={line}
                   style={{
+                    display: "flex",
                     fontSize: 22,
                     color: "#111c16",
                   }}
                 >
-                  • {line}
+                  {`• ${line}`}
                 </div>
               ))}
             </div>
@@ -196,11 +223,20 @@ export async function GET(
               paddingTop: "20px",
             }}
           >
-            <div style={{ fontSize: 20, color: "#4a5d52", marginBottom: "6px" }}>
-              ভ্রমণসঙ্গী ({summary.memberCount}):
+            <div
+              style={{
+                display: "flex",
+                fontSize: 18,
+                color: "#4a5d52",
+                fontWeight: 600,
+                marginBottom: "6px",
+              }}
+            >
+              {`👥 Members (${summary.memberCount}):`}
             </div>
             <div
               style={{
+                display: "flex",
                 fontSize: 24,
                 fontWeight: 700,
                 color: "#111c16",
@@ -222,6 +258,18 @@ export async function GET(
               data: notoSansBengaliData,
               style: "normal",
               weight: 400,
+            },
+            {
+              name: "Noto Sans Bengali",
+              data: notoSansBengaliData,
+              style: "normal",
+              weight: 600,
+            },
+            {
+              name: "Noto Sans Bengali",
+              data: notoSansBengaliData,
+              style: "normal",
+              weight: 700,
             },
           ]
         : [],

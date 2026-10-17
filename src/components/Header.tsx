@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale } from "next-intl/server";
 import { HeaderNav } from "@/components/HeaderNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import type { SupportedLocale } from "@/lib/format";
@@ -10,7 +10,7 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-30 w-full">
-      <div className="mx-auto w-full max-w-[1208px] px-2.5 sm:px-6 lg:px-8 py-1.5">
+      <div className="mx-auto w-full max-w-[1208px] px-2.5 py-1.5">
         <HeaderNav>
           {/* Logo & Brand */}
           <Link

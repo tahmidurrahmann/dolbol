@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
+import { BackToTripBar } from "@/components/BackToTripBar";
+import { RecentTripsList } from "@/components/RecentTripsList";
+import type { SupportedLocale } from "@/lib/format";
 
 export default async function HomePage() {
   const t = await getTranslations("app");
+  const tRecent = await getTranslations("recentTrips");
   const locale = await getLocale();
   const bn = locale === "bn";
 
@@ -84,7 +88,21 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-[1208px] flex-col gap-12 py-4 sm:gap-16 sm:py-8">
+    <div className="mx-auto flex w-full max-w-[1208px] flex-col gap-8 py-4 sm:gap-12 sm:py-8">
+      {/* 1. Persistent Back to Trip Bar (if most recent trip exists) */}
+      <BackToTripBar locale={locale as SupportedLocale} />
+
+      {/* 2. Your trips section (if recent trips exist) */}
+      <RecentTripsList
+        locale={locale as SupportedLocale}
+        labels={{
+          sectionTitle: tRecent("yourTripsTitle"),
+          myMemberPrefix: tRecent("asMember"),
+          removeButtonAria: tRecent("removeFromList"),
+          removeButtonTitle: tRecent("removeFromList"),
+        }}
+      />
+
       {/* HERO SECTION */}
       <section className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
         {/* Left Column: Heading, Value Prop & Actions */}

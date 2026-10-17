@@ -24,6 +24,8 @@ export interface ActivityLogCardLabels {
   act_trip_set_destination: string;
   act_itinerary_create: string;
   act_itinerary_delete: string;
+  act_member_claim_device: string;
+  act_member_reset_devices: string;
 }
 
 interface ActivityLogCardProps {
@@ -105,6 +107,10 @@ export function ActivityLogCard({
         return `${labels.act_member_update} ${log.before?.displayName ?? ""} → ${log.after?.displayName ?? ""}`;
       case "member_claim":
         return `${labels.act_member_claim} ${log.after?.displayName ?? ""}`;
+      case "member_claim_device":
+        return `${labels.act_member_claim_device} ${log.after?.displayName ?? ""}`;
+      case "member_reset_devices":
+        return `${labels.act_member_reset_devices} ${log.after?.displayName ?? ""}`;
       case "member_delete":
         return `${labels.act_member_delete} ${log.before?.displayName ?? ""}`;
       case "trip_create":

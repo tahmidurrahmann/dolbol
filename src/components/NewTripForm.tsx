@@ -66,7 +66,7 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
     <form
       action={createTripAction}
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-7 max-w-xl mx-auto w-full"
+      className="space-y-5 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-7 mx-auto w-full"
     >
       {/* 1. Trip Name (Always Visible) */}
       <div className="space-y-1.5">
@@ -168,9 +168,7 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
           className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2.5 text-sm text-[var(--color-fg)] shadow-2xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 resize-none"
         />
 
-        <p className="text-xs text-neutral-400">
-          💡 {labels.friendsNamesHint}
-        </p>
+        <p className="text-xs text-neutral-400">💡 {labels.friendsNamesHint}</p>
       </div>
 
       {/* 4. Collapsible "More details (optional)" for Destination and Dates */}
@@ -194,7 +192,9 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
                   ? "দেখান"
                   : "Show"}
             </span>
-            <span className={`transition-transform duration-200 ${showMoreDetails ? "rotate-180" : ""}`}>
+            <span
+              className={`transition-transform duration-200 ${showMoreDetails ? "rotate-180" : ""}`}
+            >
               ▼
             </span>
           </span>

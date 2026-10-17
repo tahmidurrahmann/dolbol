@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-import type { Member } from "@/generated/prisma/client";
+import type { Member, MemberSession } from "@/generated/prisma/client";
 
 import { generateSessionToken, hashSessionToken } from "@/lib/crypto";
 
@@ -106,6 +106,48 @@ export async function getCurrentMemberForTrip(
     .catch(() => undefined);
 
   return session.member;
+}
+
+/**
+ * Resolves both the signed-in Member and their active MemberSession for a trip.
+ */
+export async function getCurrentMemberAndSessionForTrip(
+  tripId: string,
+): Promise<{ member: Member; session: MemberSession } | null> {
+  const cookieStore = await cookies();
+
+  const rawToken = cookieStore.get(getTripSessionCookieName(tripId))?.value;
+
+  if (!rawToken) {
+    return null;
+  }
+
+  let tokenHash: string;
+
+  try {
+    tokenHash = hashSessionToken(rawToken);
+  } catch {
+    return null;
+  }
+
+  const session = await db.memberSession.findUnique({
+    where: { tokenHash },
+    include: { member: true },
+  });
+
+  if (!session || session.member.tripId !== tripId || session.member.isGuest) {
+    return null;
+  }
+
+  // Update lastSeenAt non-fatally
+  await db.memberSession
+    .update({
+      where: { id: session.id },
+      data: { lastSeenAt: new Date() },
+    })
+    .catch(() => undefined);
+
+  return { member: session.member, session };
 }
 
 /**

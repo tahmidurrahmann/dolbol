@@ -222,7 +222,7 @@ export function ShareAndExportCard({
                 ? "🇧🇩 বন্ধুদের ট্যুর ও খরচের সহজ হিসাব"
                 : "🇧🇩 Group trip & expense splitting"}
             </span>
-            <span className="font-bold text-white">triphub.app</span>
+            <span className="font-bold text-white">trip-hub-one.vercel.app</span>
           </div>
         </div>
 

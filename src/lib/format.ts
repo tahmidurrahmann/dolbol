@@ -70,3 +70,38 @@ export function formatDate(date: Date, locale: SupportedLocale): string {
   const formatted = formatter.format(date);
   return locale === "bn" ? toBanglaDigits(formatted) : formatted;
 }
+
+/**
+ * Formats a Date as human-friendly relative time (e.g. "৫ মিনিট আগে", "just now").
+ */
+export function formatRelativeTime(
+  date: Date,
+  locale: SupportedLocale,
+  now: number = Date.now(),
+): string {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const diffMs = Math.max(0, now - date.getTime());
+  const diffMinutes = Math.floor(diffMs / (60 * 1000));
+  const diffHours = Math.floor(diffMs / (60 * 60 * 1000));
+  const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+
+  if (diffMinutes < 1) {
+    return locale === "bn" ? "এইমাত্র" : "just now";
+  }
+  if (diffMinutes < 60) {
+    const mins =
+      locale === "bn" ? toBanglaDigits(diffMinutes) : String(diffMinutes);
+    return locale === "bn" ? `${mins} মিনিট আগে` : `${mins}m ago`;
+  }
+  if (diffHours < 24) {
+    const hrs =
+      locale === "bn" ? toBanglaDigits(diffHours) : String(diffHours);
+    return locale === "bn" ? `${hrs} ঘণ্টা আগে` : `${hrs}h ago`;
+  }
+  const days =
+    locale === "bn" ? toBanglaDigits(diffDays) : String(diffDays);
+  return locale === "bn" ? `${days} দিন আগে` : `${days}d ago`;
+}
