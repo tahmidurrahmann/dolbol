@@ -110,26 +110,24 @@ export function ExpenseExplainerDemo({
     examplePrompt:
       customLabels?.examplePrompt ??
       (locale === "bn"
-        ? "সকালের নাস্তা ২৫০, দুপুরের খাবার ৮০০, রাতের ডিনার ১২০০"
-        : "Shokaler nasta 250, dupurer khabar 800, rater dinner 1200"),
+        ? "রাতের ডিনার ১২০০ (Tahmidur দিল)"
+        : "Rater dinner 1200 paid by Tahmidur"),
     aiChip: customLabels?.aiChip ?? (locale === "bn" ? "এআই" : "AI"),
     aiReading:
       customLabels?.aiReading ??
       (locale === "bn" ? "এআই পড়ছে…" : "AI is reading…"),
     line1:
       customLabels?.line1 ??
-      (locale === "bn" ? "সকালের নাস্তা ২৫০" : "shokaler nasta 250"),
-    line2:
-      customLabels?.line2 ??
-      (locale === "bn" ? "দুপুরের খাবার ৮০০" : "dupurer khabar 800"),
-    line3:
-      customLabels?.line3 ??
-      (locale === "bn" ? "রাতের ডিনার ১২০০" : "rater dinner 1200"),
+      (locale === "bn"
+        ? "রাতের ডিনার ১২০০ (Tahmidur দিল)"
+        : "Rater dinner 1200 paid by Tahmidur"),
+    line2: customLabels?.line2 ?? "",
+    line3: customLabels?.line3 ?? "",
     draftBanner:
       customLabels?.draftBanner ??
       (locale === "bn"
-        ? "নিচের ৩টি খরচ তৈরি হয়েছে, দেখে নিন"
-        : "Review the 3 drafted expenses below"),
+        ? "নিচের খরচটি তৈরি হয়েছে, দেখে নিন"
+        : "Review the drafted expense below"),
     draftBadge:
       customLabels?.draftBadge ?? (locale === "bn" ? "নতুন তৈরি" : "New Draft"),
     reviewDraftBadge:
@@ -143,7 +141,7 @@ export function ExpenseExplainerDemo({
       customLabels?.categoryBreakfast ??
       (locale === "bn" ? "☕ নাস্তা" : "☕ Breakfast"),
     item1Title:
-      customLabels?.item1Title ?? "রাতের ডিনার 1200",
+      customLabels?.item1Title ?? (locale === "bn" ? "রাতের ডিনার" : "Dinner"),
     item2Title:
       customLabels?.item2Title ??
       (locale === "bn" ? "সকালের নাস্তা" : "Breakfast"),
@@ -158,7 +156,7 @@ export function ExpenseExplainerDemo({
     member4: customLabels?.member4 ?? (locale === "bn" ? "নাবিলা" : "Nabila"),
     footerSummary:
       customLabels?.footerSummary ??
-      (locale === "bn" ? "৩টি খরচ, মোট ৳২,২৫০" : "3 expenses, total ৳2,250"),
+      (locale === "bn" ? "১টি খরচ, মোট ৳১,২০০" : "1 expense, total ৳1,200"),
     addAllButton:
       customLabels?.addAllButton ??
       (locale === "bn" ? "সবগুলো যোগ করুন" : "Add all"),
@@ -170,8 +168,8 @@ export function ExpenseExplainerDemo({
     addedSuccess:
       customLabels?.addedSuccess ??
       (locale === "bn"
-        ? "৩টি খরচ সফলভাবে যোগ করা হয়েছে।"
-        : "3 expenses saved successfully."),
+        ? "১টি খরচ সফলভাবে যোগ করা হয়েছে।"
+        : "1 expense saved successfully."),
     dailyExpensesTitle:
       customLabels?.dailyExpensesTitle ??
       (locale === "bn" ? "দৈনিক খরচ" : "Daily expenses"),
@@ -276,8 +274,8 @@ export function ExpenseExplainerDemo({
     if (input) {
       const demoText =
         locale === "bn"
-          ? "সকালের নাস্তা ২৫০\nদুপুরের খাবার ৮০০\nরাতের ডিনার ১২০০"
-          : "shokaler nasta 250\ndupurer khabar 800\nrater dinner 1200";
+          ? "রাতের ডিনার ১২০০ (তাহমিদুর দিল)"
+          : "rater dinner 1200 paid by Tahmidur";
 
       // Dispatch native input event to ensure React state updates
       const nativeSetter = Object.getOwnPropertyDescriptor(
@@ -295,9 +293,9 @@ export function ExpenseExplainerDemo({
     }
   };
 
-  const dayTotalFormatted = formatTaka(14750, locale);
-  const costTahmidurFormatted = formatTaka(7375, locale);
-  const costRahmanFormatted = formatTaka(7375, locale);
+  const dayTotalFormatted = formatTaka(1200, locale);
+  const costTahmidurFormatted = formatTaka(600, locale);
+  const costRahmanFormatted = formatTaka(600, locale);
   const item1AmountFormatted = formatTaka(1200, locale);
   const item1ShareFormatted = formatTaka(600, locale);
 
@@ -412,27 +410,15 @@ export function ExpenseExplainerDemo({
               </div>
             </div>
 
-            {/* Real Textarea Card Container with typed lines and bottom helper bar */}
+            {/* Real Textarea Card Container with typed line and bottom helper bar */}
             <div className="rounded-xl border border-[var(--color-border)] bg-white p-2 sm:p-2.5 shadow-2xs space-y-1.5">
-              {/* 3 typed lines (revealed line-by-line via clip-path) */}
-              <div className="space-y-0.5 font-mono text-[11px] sm:text-xs font-semibold text-emerald-950 min-h-[58px] py-0.5">
+              {/* Single typed line (starts at top left like real textarea) */}
+              <div className="text-xs sm:text-sm font-semibold text-[var(--color-fg)] min-h-[58px] pt-1 text-left">
                 <div
-                  className="demo-anim whitespace-nowrap overflow-hidden"
+                  className="demo-anim inline-block whitespace-nowrap overflow-hidden text-left"
                   style={animStyle("demo-type-line-1")}
                 >
                   {labels.line1}
-                </div>
-                <div
-                  className="demo-anim whitespace-nowrap overflow-hidden"
-                  style={animStyle("demo-type-line-2")}
-                >
-                  {labels.line2}
-                </div>
-                <div
-                  className="demo-anim whitespace-nowrap overflow-hidden font-bold"
-                  style={animStyle("demo-type-line-3")}
-                >
-                  {labels.line3}
                 </div>
               </div>
 

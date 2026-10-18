@@ -149,7 +149,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 @keyframes demo-type-line-1 {
   0%, 3.9% { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-4px); }
   4% { opacity: 1; clip-path: inset(0 100% 0 0); transform: translateX(-4px); }
-  9% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
+  19% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
   100% { opacity: 1; clip-path: inset(0 0% 0 0); transform: translateX(0); }
 }
 

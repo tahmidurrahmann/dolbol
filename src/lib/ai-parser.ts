@@ -918,8 +918,10 @@ export async function parseExpenseTextWithAI(args: {
       ...lines.map((l, i) => `${i + 1}. ${l}`),
     ].join("\n");
 
+    const model = process.env.GEMINI_MODEL?.trim() || "gemini-3.5-flash-lite";
+
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(geminiKey)}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(geminiKey)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
