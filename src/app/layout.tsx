@@ -5,6 +5,7 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { Container } from "@/components/Container";
 import { Header } from "@/components/Header";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const anekBangla = Anek_Bangla({
@@ -66,7 +67,10 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Header />
           <main id="main" className="flex flex-1 flex-col py-4 sm:py-6">
-            <Container className="flex flex-1 flex-col">{children}</Container>
+            <Container className="flex flex-1 flex-col">
+              {children}
+              <Analytics />
+            </Container>
           </main>
           <footer className="border-t border-[var(--color-border)] py-5">
             <Container>
