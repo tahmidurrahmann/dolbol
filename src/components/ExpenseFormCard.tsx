@@ -373,10 +373,10 @@ export function ExpenseFormCard({
       <button
         type="button"
         onClick={() => setIsManualOpen(true)}
-        className="w-full flex min-h-[50px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-3 px-4 text-sm font-bold text-[var(--color-primary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-muted)] transition-all shadow-xs active:scale-[0.99]"
+        className="w-full flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 px-3 min-[360px]:px-4 text-xs min-[360px]:text-sm font-bold text-[var(--color-primary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-muted)] transition-all shadow-xs active:scale-[0.99] text-center"
       >
-        <span>✍️</span>
-        <span>
+        <span className="shrink-0 text-base">✍️</span>
+        <span className="leading-snug break-words">
           {labels.manualFormToggle ??
             (locale === "bn"
               ? "ফর্ম ব্যবহার করে খরচ লিখুন"
@@ -387,14 +387,14 @@ export function ExpenseFormCard({
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs sm:p-6 animate-in fade-in">
+    <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 min-[360px]:p-5 shadow-xs sm:p-6 animate-in fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-[var(--color-border)] pb-3">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-lg">
+      <div className="flex items-center justify-between gap-2 border-b border-[var(--color-border)] pb-3 min-w-0">
+        <div className="flex min-w-0 items-center gap-1.5 min-[360px]:gap-2">
+          <span className="flex size-7 min-[360px]:size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)]/10 text-base min-[360px]:text-lg">
             {editingExpense ? "✏️" : "✍️"}
           </span>
-          <h2 className="text-lg font-bold text-[var(--color-fg)]">
+          <h2 className="text-xs min-[340px]:text-sm min-[380px]:text-base sm:text-lg font-bold text-[var(--color-fg)] leading-tight">
             {editingExpense ? labels.editExpenseTitle : labels.addExpenseTitle}
           </h2>
         </div>
@@ -402,18 +402,33 @@ export function ExpenseFormCard({
         {editingExpense ? (
           <Link
             href={`/trips/${slug}`}
-            className="rounded-lg bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs font-semibold text-[var(--color-primary)] hover:bg-[var(--color-border)] transition-colors"
+            aria-label={labels.cancelEdit}
+            className="shrink-0 inline-flex items-center justify-center rounded-lg border border-[var(--color-border)]/60 bg-[var(--color-surface-muted)] px-2 min-[360px]:px-2.5 py-1 min-[360px]:py-1.5 text-xs font-semibold text-[var(--color-primary)] hover:bg-[var(--color-border)] active:scale-95 transition-all whitespace-nowrap"
           >
-            {labels.cancelEdit}
+            <span className="hidden min-[380px]:inline">
+              {labels.cancelEdit}
+            </span>
+            <span className="min-[380px]:hidden">
+              {locale === "bn" ? "✕ বাতিল" : "✕ Cancel"}
+            </span>
           </Link>
         ) : (
           <button
             type="button"
             onClick={() => setIsManualOpen(false)}
-            className="rounded-lg bg-[var(--color-surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--color-fg-muted)] hover:bg-[var(--color-border)] transition-colors"
+            aria-label={
+              labels.manualFormClose ??
+              (locale === "bn" ? "ফর্ম বন্ধ করুন" : "Close form")
+            }
+            className="shrink-0 inline-flex items-center justify-center rounded-lg border border-[var(--color-border)]/60 bg-[var(--color-surface-muted)] px-2 min-[360px]:px-2.5 py-1 min-[360px]:py-1.5 text-xs font-semibold text-[var(--color-fg-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-fg)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
           >
-            {labels.manualFormClose ??
-              (locale === "bn" ? "✕ বন্ধ করুন" : "✕ Close")}
+            <span className="hidden min-[380px]:inline">
+              {labels.manualFormClose ??
+                (locale === "bn" ? "✕ ফর্ম বন্ধ করুন" : "✕ Close form")}
+            </span>
+            <span className="min-[380px]:hidden">
+              {locale === "bn" ? "✕ বন্ধ" : "✕ Close"}
+            </span>
           </button>
         )}
       </div>
@@ -607,16 +622,16 @@ export function ExpenseFormCard({
 
         {/* 6. Shared by (default: everyone) when EQUAL split */}
         {splitType === "EQUAL" ? (
-          <div className="space-y-2 rounded-xl border border-[var(--color-border)] bg-gray-50/70 p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[var(--color-fg)]">
+          <div className="space-y-2 rounded-xl border border-[var(--color-border)] bg-gray-50/70 p-2.5 min-[360px]:p-3">
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <span className="text-xs font-bold text-[var(--color-fg)] min-w-0 truncate">
                 {labels.whoSharedLabel ?? labels.participantsLabel}
                 <span className="ml-1 font-bold text-red-500">*</span>
               </span>
               <button
                 type="button"
                 onClick={handleToggleAll}
-                className="rounded-lg px-2 py-0.5 text-xs font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/40 transition-colors cursor-pointer"
+                className="shrink-0 rounded-lg px-2 py-0.5 text-xs font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/40 transition-colors cursor-pointer whitespace-nowrap active:scale-95"
               >
                 {isAllSelected
                   ? locale === "bn"
@@ -634,7 +649,7 @@ export function ExpenseFormCard({
                 return (
                   <label
                     key={m.id}
-                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer select-none active:scale-95 ${
+                    className={`inline-flex max-w-full items-center gap-1 rounded-lg px-2 min-[360px]:px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer select-none active:scale-95 ${
                       checked
                         ? "bg-[var(--color-primary)] text-white font-bold shadow-2xs"
                         : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400"
@@ -648,8 +663,8 @@ export function ExpenseFormCard({
                       onChange={() => toggleParticipant(m.id)}
                       className="sr-only"
                     />
-                    <span>{m.emoji ?? "🎒"}</span>
-                    <span>{m.displayName}</span>
+                    <span className="shrink-0">{m.emoji ?? "🎒"}</span>
+                    <span className="truncate max-w-[130px] min-[360px]:max-w-[180px]">{m.displayName}</span>
                   </label>
                 );
               })}
@@ -662,7 +677,7 @@ export function ExpenseFormCard({
               </p>
             ) : null}
 
-            <p className="text-xs text-neutral-400">💡 {labels.leftoverNote}</p>
+            <p className="text-xs text-neutral-400 leading-relaxed">💡 {labels.leftoverNote}</p>
           </div>
         ) : null}
 
@@ -671,7 +686,7 @@ export function ExpenseFormCard({
           <button
             type="button"
             onClick={() => setShowMoreOptions((prev) => !prev)}
-            className="inline-flex min-h-[40px] items-center gap-1.5 text-xs font-bold text-[var(--color-primary)] hover:underline py-1"
+            className="inline-flex min-h-[40px] items-center gap-1.5 text-xs font-bold text-[var(--color-primary)] hover:underline py-1 leading-snug"
           >
             <span>{showMoreOptions ? "▲" : "▼"}</span>
             <span>
@@ -683,13 +698,13 @@ export function ExpenseFormCard({
           </button>
 
           {showMoreOptions ? (
-            <div className="mt-3 space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-4 animate-in fade-in">
+            <div className="mt-3 space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/40 p-2.5 min-[360px]:p-3.5 sm:p-4 animate-in fade-in">
               {/* Split Type Selector */}
               <div className="space-y-2 pt-1">
-                <span className="block text-xs font-bold text-[var(--color-fg)]">
+                <span className="block text-xs sm:text-sm font-bold text-[var(--color-fg)]">
                   {labels.splitTypeLabel}
                 </span>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1 min-[340px]:gap-1.5 min-[420px]:gap-2">
                   {(
                     [
                       ["EQUAL", labels.splitEqual, "🤝"],
@@ -701,14 +716,14 @@ export function ExpenseFormCard({
                       key={type}
                       type="button"
                       onClick={() => setSplitType(type)}
-                      className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
+                      className={`flex flex-col min-[480px]:flex-row min-h-[46px] items-center justify-center gap-0.5 min-[480px]:gap-1.5 rounded-xl border px-1 min-[340px]:px-1.5 min-[380px]:px-2.5 sm:px-3 py-1.5 sm:py-2 text-[10px] min-[340px]:text-[11px] min-[380px]:text-xs font-bold leading-tight text-center transition-all cursor-pointer active:scale-[0.98] ${
                         splitType === type
                           ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-xs scale-[1.02]"
                           : "border-[var(--color-border)] bg-white text-[var(--color-fg)] hover:bg-[var(--color-border)]"
                       }`}
                     >
-                      <span>{icon}</span>
-                      <span>{text}</span>
+                      <span className="shrink-0 text-xs min-[340px]:text-sm">{icon}</span>
+                      <span className="break-words hyphens-auto">{text}</span>
                     </button>
                   ))}
                 </div>
@@ -716,16 +731,16 @@ export function ExpenseFormCard({
 
               {/* EXACT Split Inputs */}
               {splitType === "EXACT" ? (
-                <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white p-3.5 shadow-xs">
-                  <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[var(--color-fg)]">
+                <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white p-2.5 min-[360px]:p-3.5 shadow-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs font-semibold">
+                    <span className="text-[var(--color-fg)] font-bold">
                       {labels.exactSumStatus}
                     </span>
                     <span
-                      className={`rounded-md px-2 py-0.5 font-bold ${
+                      className={`rounded-md px-2 py-0.5 text-xs font-bold shrink-0 whitespace-nowrap shadow-2xs ${
                         exactDiff === 0
-                          ? "bg-emerald-100 text-emerald-900"
-                          : "bg-red-100 text-red-900"
+                          ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                          : "bg-red-100 text-red-900 border border-red-300"
                       }`}
                     >
                       {exactDiff === 0
@@ -742,12 +757,12 @@ export function ExpenseFormCard({
                     {members.map((m) => (
                       <div
                         key={m.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 shadow-xs"
+                        className="flex items-center justify-between gap-2 min-[360px]:gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 shadow-xs"
                       >
-                        <span className="text-xs font-semibold text-[var(--color-fg)]">
+                        <span className="text-xs font-semibold text-[var(--color-fg)] min-w-0 truncate">
                           {m.emoji ?? "🎒"} {m.displayName}
                         </span>
-                        <div className="relative">
+                        <div className="relative shrink-0">
                           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-primary)]">
                             ৳
                           </span>
@@ -763,7 +778,7 @@ export function ExpenseFormCard({
                                 [m.id]: e.target.value,
                               }))
                             }
-                            className="min-h-[38px] w-28 rounded-lg border border-[var(--color-border)] bg-white pl-7 pr-2.5 text-right text-sm font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
+                            className="min-h-[36px] w-20 min-[340px]:w-24 min-[360px]:w-28 rounded-lg border border-[var(--color-border)] bg-white pl-5 min-[340px]:pl-6 min-[360px]:pl-7 pr-2 text-right text-xs min-[360px]:text-sm font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                       </div>
@@ -774,16 +789,16 @@ export function ExpenseFormCard({
 
               {/* PERCENT Split Inputs */}
               {splitType === "PERCENT" ? (
-                <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white p-3.5 shadow-xs">
-                  <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="text-[var(--color-fg)]">
+                <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white p-2.5 min-[360px]:p-3.5 shadow-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs font-semibold">
+                    <span className="text-[var(--color-fg)] font-bold">
                       {labels.percentSumStatus}
                     </span>
                     <span
-                      className={`rounded-md px-2 py-0.5 font-bold ${
+                      className={`rounded-md px-2 py-0.5 text-xs font-bold shrink-0 whitespace-nowrap shadow-2xs ${
                         percentSum === 100
-                          ? "bg-emerald-100 text-emerald-900"
-                          : "bg-red-100 text-red-900"
+                          ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                          : "bg-red-100 text-red-900 border border-red-300"
                       }`}
                     >
                       {percentSum}% / 100%
@@ -794,12 +809,12 @@ export function ExpenseFormCard({
                     {members.map((m) => (
                       <div
                         key={m.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 shadow-xs"
+                        className="flex items-center justify-between gap-2 min-[360px]:gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 shadow-xs"
                       >
-                        <span className="text-xs font-semibold text-[var(--color-fg)]">
+                        <span className="text-xs font-semibold text-[var(--color-fg)] min-w-0 truncate">
                           {m.emoji ?? "🎒"} {m.displayName}
                         </span>
-                        <div className="relative">
+                        <div className="relative shrink-0">
                           <input
                             name={`percent_${m.id}`}
                             type="text"
@@ -812,9 +827,9 @@ export function ExpenseFormCard({
                                 [m.id]: e.target.value,
                               }))
                             }
-                            className="min-h-[38px] w-24 rounded-lg border border-[var(--color-border)] bg-white pr-7 pl-2.5 text-right text-sm font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
+                            className="min-h-[36px] w-20 min-[360px]:w-24 rounded-lg border border-[var(--color-border)] bg-white pr-6 pl-2 text-right text-xs min-[360px]:text-sm font-semibold text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
                           />
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-fg-muted)]">
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-fg-muted)]">
                             %
                           </span>
                         </div>

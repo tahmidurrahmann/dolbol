@@ -30,14 +30,14 @@ export function ExpenseDemoToggle({ locale, labels }: ExpenseDemoToggleProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between px-1">
-        <span className="text-xs font-bold text-neutral-500">
+      <div className="flex items-center justify-between gap-2 px-1 min-w-0">
+        <span className="text-xs font-bold text-neutral-500 truncate">
           {locale === "bn" ? "কীভাবে কাজ করে?" : "How it works?"}
         </span>
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className="text-xs font-semibold text-neutral-400 hover:text-neutral-700 cursor-pointer"
+          className="shrink-0 text-xs font-semibold text-neutral-400 hover:text-neutral-700 cursor-pointer whitespace-nowrap active:scale-95 transition-all"
         >
           ✕ {locale === "bn" ? "বন্ধ করুন" : "Close"}
         </button>

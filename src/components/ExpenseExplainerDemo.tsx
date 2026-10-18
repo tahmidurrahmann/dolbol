@@ -89,21 +89,18 @@ export function ExpenseExplainerDemo({
       (locale === "bn" ? "অ্যানিমেশন চালান" : "Play animation"),
     cardTitle:
       customLabels?.cardTitle ??
-      (locale === "bn"
-        ? "এআই দিয়ে এক ক্লিকে খরচ যোগ"
-        : "Add Expenses with AI"),
+      (locale === "bn" ? "এআই দিয়ে এক ক্লিকে খরচ যোগ" : "Add Expenses with AI"),
     cardSubtitle:
       customLabels?.cardSubtitle ??
       (locale === "bn"
-        ? "মেসেজের মতো বাংলায় বা বাংলিশে লিখুন—এআই নিজে থেকেই হিসাব সাজিয়ে দেবে"
-        : "Type naturally in Bangla or Banglish—AI will draft the expenses for you"),
+        ? "মেসেজের মতো বাংলায় বা বাংলিশে লিখুন, এআই নিজে থেকেই হিসাব সাজিয়ে দেবে"
+        : "Type naturally in Bangla or Banglish, AI will draft the expenses for you"),
     inputHelper:
       customLabels?.inputHelper ??
       (locale === "bn"
-        ? "💡 মেসেজের মতো স্বাভাবিক বাংলায় বা বাংলিশে লিখুন—নিচে যাচাই ও এডিট করতে পারবেন"
-        : "💡 Type naturally in Bangla or Banglish—you can review and edit details below"),
-    clearBtn:
-      customLabels?.clearBtn ?? (locale === "bn" ? "মুছুন" : "Clear"),
+        ? "💡 মেসেজের মতো স্বাভাবিক বাংলায় বা বাংলিশে লিখুন, নিচে যাচাই ও এডিট করতে পারবেন"
+        : "💡 Type naturally in Bangla or Banglish, you can review and edit details below"),
+    clearBtn: customLabels?.clearBtn ?? (locale === "bn" ? "মুছুন" : "Clear"),
     exampleLabel:
       customLabels?.exampleLabel ??
       (locale === "bn" ? "বাস্তব উদাহরণ:" : "Realistic example:"),
@@ -181,9 +178,7 @@ export function ExpenseExplainerDemo({
       (locale === "bn" ? "দিনের মোট:" : "Day total:"),
     perPersonCostLabel:
       customLabels?.perPersonCostLabel ??
-      (locale === "bn"
-        ? "জনপ্রতি এই দিনের খরচ:"
-        : "Cost per person today:"),
+      (locale === "bn" ? "জনপ্রতি এই দিনের খরচ:" : "Cost per person today:"),
     paidByPrefix:
       customLabels?.paidByPrefix ??
       (locale === "bn" ? "কে দিলেন:" : "Paid by:"),
@@ -192,9 +187,7 @@ export function ExpenseExplainerDemo({
       customLabels?.deleteBtn ?? (locale === "bn" ? "মুছুন" : "Delete"),
     settlementHeader:
       customLabels?.settlementHeader ??
-      (locale === "bn"
-        ? "হিসাব নিষ্পত্তি (Settlement)"
-        : "Settlement Share"),
+      (locale === "bn" ? "হিসাব নিষ্পত্তি (Settlement)" : "Settlement Share"),
     perPersonShare:
       customLabels?.perPersonShare ??
       (locale === "bn" ? "৪ জনের জনপ্রতি ৫০০৳" : "৳500 each (4 members)"),
@@ -235,7 +228,8 @@ export function ExpenseExplainerDemo({
   }, []);
 
   const isFrozen = typeof timeFreeze === "number";
-  const isPlaying = !isFrozen && !isManualPaused && !isOffScreen && !isTabHidden;
+  const isPlaying =
+    !isFrozen && !isManualPaused && !isOffScreen && !isTabHidden;
 
   // Single shared duration variable (15s timeline)
   const sharedDuration = "var(--demo-duration, 15s)";
@@ -302,7 +296,7 @@ export function ExpenseExplainerDemo({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full max-w-[480px] mx-auto select-none overflow-hidden rounded-3xl border border-[var(--color-border)] bg-gradient-to-b from-[#e8f5ef] via-[#f4faf6] to-white p-3 sm:p-4 shadow-xs transition-shadow hover:shadow-md ${className}`}
+      className={`relative w-full max-w-[480px] ${className.includes("mx-") ? "" : "mx-auto"} select-none overflow-hidden rounded-2xl min-[360px]:rounded-3xl border border-[var(--color-border)] bg-gradient-to-b from-[#e8f5ef] via-[#f4faf6] to-white p-2.5 min-[360px]:p-3 sm:p-4 shadow-xs transition-shadow hover:shadow-md ${className}`}
       role="img"
       aria-label={labels.ariaLabel}
     >
@@ -323,10 +317,10 @@ export function ExpenseExplainerDemo({
       </span>
 
       {/* Top Header: Badge, Subtitle & Accessible Pause/Play Button */}
-      <div className="flex items-center justify-between pb-2 border-b border-[var(--color-border)]/60">
+      <div className="flex items-center justify-between pb-1.5 min-[360px]:pb-2 border-b border-[var(--color-border)]/60">
         <div className="flex items-center gap-1.5">
           <span className="text-sm">🎬</span>
-          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-black text-emerald-900 border border-emerald-300 shadow-2xs">
+          <span className="rounded-full bg-emerald-100 px-2 min-[360px]:px-2.5 py-0.5 text-[11px] min-[360px]:text-xs font-black text-emerald-900 border border-emerald-300 shadow-2xs">
             {labels.badge}
           </span>
           <span className="text-xs font-bold text-gray-700 hidden sm:inline">
@@ -334,19 +328,19 @@ export function ExpenseExplainerDemo({
           </span>
         </div>
 
-        {/* 44x44px accessible pause/play toggle */}
+        {/* 36-44px accessible pause/play toggle */}
         <button
           type="button"
           onClick={() => setIsManualPaused((prev) => !prev)}
           aria-label={isPlaying ? labels.pause : labels.play}
-          className="demo-pause-btn flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-neutral-500 hover:text-emerald-800 hover:bg-emerald-100/60 active:scale-95 transition-all cursor-pointer"
+          className="demo-pause-btn flex min-h-[36px] min-w-[36px] min-[360px]:min-h-[44px] min-[360px]:min-w-[44px] items-center justify-center rounded-xl text-neutral-500 hover:text-emerald-800 hover:bg-emerald-100/60 active:scale-95 transition-all cursor-pointer"
         >
           <span className="text-sm font-bold">{isPlaying ? "⏸" : "▶"}</span>
         </button>
       </div>
 
       {/* Main Scene: Responsive Height & Aspect Ratio for mobile & desktop */}
-      <div className="relative mt-2 min-h-[320px] sm:min-h-[340px] aspect-[4/3.3] sm:aspect-[4/3] w-full overflow-hidden rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] shadow-inner">
+      <div className="relative mt-2 h-[325px] sm:h-auto sm:aspect-[4/3] sm:min-h-[340px] w-full max-w-full overflow-hidden rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] shadow-inner">
         {/* =========================================================
             ANIMATED VERSION (active when reduced-motion is FALSE)
             ========================================================= */}
@@ -360,11 +354,11 @@ export function ExpenseExplainerDemo({
               Input Card matching real AiExpenseParserCard UI identically
               ------------------------------------------------------------- */}
           <div
-            className="demo-anim absolute inset-0 flex flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-white p-2.5 sm:p-3 shadow-xs"
+            className="demo-anim absolute inset-0 flex flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-white p-2 min-[360px]:p-2.5 sm:p-3 shadow-xs"
             style={animStyle("demo-input-phase")}
           >
             {/* Real Card Header with Title, Subtitle, and AI Chip */}
-            <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-1.5">
+            <div className="flex items-start justify-between gap-1.5 min-[360px]:gap-2 border-b border-gray-100 pb-1.5">
               <div className="min-w-0">
                 <h3 className="text-xs sm:text-sm font-bold text-[var(--color-fg)] flex items-center gap-1.5 truncate">
                   <span className="text-emerald-600">✨</span>
@@ -487,7 +481,7 @@ export function ExpenseExplainerDemo({
               from AiExpenseParserCard, scrolling down smoothly
               ------------------------------------------------------------- */}
           <div
-            className="demo-anim absolute inset-0 overflow-hidden rounded-2xl border border-[var(--color-primary)]/40 bg-[var(--color-surface-muted)] p-2 sm:p-2.5 shadow-xs"
+            className="demo-anim absolute inset-0 overflow-hidden rounded-2xl border border-[var(--color-primary)]/40 bg-[var(--color-surface-muted)] p-1.5 min-[360px]:p-2 sm:p-2.5 shadow-xs"
             style={animStyle("demo-confirm-phase")}
           >
             {/* Scrollable Form Viewport gliding down smoothly to reveal bottom fields */}
@@ -496,7 +490,7 @@ export function ExpenseExplainerDemo({
               style={animStyle("demo-form-scroll")}
             >
               {/* Top Draft Indicator Banner */}
-              <div className="flex items-center justify-between gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-bold text-emerald-950 shadow-2xs">
+              <div className="flex items-center justify-between gap-1 rounded-xl bg-emerald-50 border border-emerald-200 px-2 min-[360px]:px-2.5 py-1 text-[11px] min-[360px]:text-xs font-bold text-emerald-950 shadow-2xs">
                 <span className="flex items-center gap-1.5 truncate">
                   <span>👇</span>
                   <span className="truncate">{labels.draftBanner}</span>
@@ -507,7 +501,7 @@ export function ExpenseExplainerDemo({
               </div>
 
               {/* The Real Add Expense Form Card with the Exact Fields */}
-              <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2.5 sm:p-3 shadow-xs">
+              <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2 min-[360px]:p-2.5 sm:p-3 shadow-xs">
                 {/* 1. Header: Number badge | Category badge | Remove button */}
                 <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-1.5">
                   <div className="flex items-center gap-2">
@@ -524,12 +518,12 @@ export function ExpenseExplainerDemo({
                 </div>
 
                 {/* 2. What was it for? & Amount Grid */}
-                <div className="grid grid-cols-12 gap-2">
+                <div className="grid grid-cols-12 gap-1.5 min-[360px]:gap-2">
                   <div className="col-span-7 sm:col-span-8 space-y-0.5">
                     <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
                       {locale === "bn" ? "কিসের খরচ?" : "What was it for?"}
                     </label>
-                    <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-fg)] flex items-center shadow-2xs truncate">
+                    <div className="min-h-[30px] min-[360px]:min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2 min-[360px]:px-2.5 py-1 text-[11px] min-[360px]:text-xs font-semibold text-[var(--color-fg)] flex items-center shadow-2xs truncate">
                       {labels.item1Title}
                     </div>
                   </div>
@@ -538,10 +532,10 @@ export function ExpenseExplainerDemo({
                       {locale === "bn" ? "টাকা (৳)" : "Amount (৳)"}
                     </label>
                     <div className="relative flex items-center">
-                      <span className="absolute left-2.5 text-xs font-bold text-[var(--color-primary)]">
+                      <span className="absolute left-2 min-[360px]:left-2.5 text-xs font-bold text-[var(--color-primary)]">
                         ৳
                       </span>
-                      <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white pl-6 pr-2 py-1 text-xs font-bold text-[var(--color-primary)] flex items-center shadow-2xs">
+                      <div className="min-h-[30px] min-[360px]:min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white pl-5 min-[360px]:pl-6 pr-1.5 py-1 text-[11px] min-[360px]:text-xs font-bold text-[var(--color-primary)] flex items-center shadow-2xs">
                         1,200
                       </div>
                     </div>
@@ -549,26 +543,30 @@ export function ExpenseExplainerDemo({
                 </div>
 
                 {/* 3. Category & Who paid Grid */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5 min-[360px]:gap-2">
                   <div className="space-y-0.5">
                     <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
                       {locale === "bn" ? "ক্যাটাগরি" : "Category"}
                     </label>
-                    <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                    <div className="min-h-[30px] min-[360px]:min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2 min-[360px]:px-2.5 py-1 text-[11px] min-[360px]:text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
                       <span className="truncate">{labels.categoryFood}</span>
-                      <span className="text-[10px] text-neutral-400 shrink-0">▾</span>
+                      <span className="text-[10px] text-neutral-400 shrink-0">
+                        ▾
+                      </span>
                     </div>
                   </div>
                   <div className="space-y-0.5">
                     <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
                       {locale === "bn" ? "কে দিলেন?*" : "Who paid?*"}
                     </label>
-                    <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                    <div className="min-h-[30px] min-[360px]:min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2 min-[360px]:px-2.5 py-1 text-[11px] min-[360px]:text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
                       <span className="flex items-center gap-1 truncate">
                         <span>🏔️</span>
                         <span className="truncate">{labels.member1}</span>
                       </span>
-                      <span className="text-[10px] text-neutral-400 shrink-0">▾</span>
+                      <span className="text-[10px] text-neutral-400 shrink-0">
+                        ▾
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -578,7 +576,7 @@ export function ExpenseExplainerDemo({
                   <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
                     {locale === "bn" ? "তারিখ*" : "Date*"}
                   </label>
-                  <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                  <div className="min-h-[30px] min-[360px]:min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2 min-[360px]:px-2.5 py-1 text-[11px] min-[360px]:text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
                     <span>
                       {locale === "bn" ? "৬ অক্টো, ২০২৬" : "Oct 6, 2026"}
                     </span>
@@ -587,7 +585,7 @@ export function ExpenseExplainerDemo({
                 </div>
 
                 {/* 5. Who shared this? */}
-                <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-gray-50/80 p-2 sm:p-2.5 text-xs">
+                <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-gray-50/80 p-1.5 min-[360px]:p-2 sm:p-2.5 text-[11px] min-[360px]:text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-[var(--color-fg)]">
                       {locale === "bn" ? "কারা ভাগ করবে?" : "Who shared this?"}
@@ -619,13 +617,13 @@ export function ExpenseExplainerDemo({
                 </div>
               </div>
 
-              {/* 7. Footer: 3 expenses, total ৳2,250 + Add all */}
-              <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2 sm:pt-2.5">
-                <div className="text-xs sm:text-sm font-bold text-[var(--color-fg)]">
+              {/* 7. Footer: 1 expense, total ৳1,200 + Add all */}
+              <div className="flex items-center justify-between gap-1.5 min-[360px]:gap-2 border-t border-[var(--color-border)] pt-1.5 min-[360px]:pt-2 sm:pt-2.5">
+                <div className="text-[11px] min-[360px]:text-xs sm:text-sm font-bold text-[var(--color-fg)] shrink-0 whitespace-nowrap">
                   {labels.footerSummary}
                 </div>
                 <div
-                  className="demo-anim rounded-full bg-[#0f6b4a] text-white font-bold px-3.5 py-1.5 text-xs sm:text-sm shadow-xs cursor-pointer select-none"
+                  className="demo-anim rounded-full bg-[#0f6b4a] text-white font-bold px-2.5 min-[360px]:px-3.5 py-1 min-[360px]:py-1.5 text-[11px] min-[360px]:text-xs sm:text-sm shadow-xs cursor-pointer select-none shrink-0 whitespace-nowrap"
                   style={animStyle("demo-add-all-tap")}
                 >
                   ✓ {labels.addAllButton}
@@ -639,11 +637,11 @@ export function ExpenseExplainerDemo({
               Real Daily Expenses (দৈনিক খরচ) section copying PerDayExpensesView.tsx
               ------------------------------------------------------------- */}
           <div
-            className="demo-anim absolute inset-0 flex flex-col justify-between rounded-2xl border-2 border-emerald-400 bg-emerald-50/95 p-2.5 sm:p-3 shadow-md"
+            className="demo-anim absolute inset-0 flex flex-col justify-between rounded-2xl border-2 border-emerald-400 bg-emerald-50/95 p-2 min-[360px]:p-2.5 sm:p-3 shadow-md"
             style={animStyle("demo-success-phase")}
           >
             {/* Top Success Banner */}
-            <div className="flex items-center justify-between gap-1.5 rounded-xl border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-900 shadow-2xs">
+            <div className="flex items-center justify-between gap-1.5 rounded-xl border border-emerald-300 bg-white px-2 min-[360px]:px-2.5 py-1 text-[10.5px] min-[360px]:text-[11px] font-bold text-emerald-900 shadow-2xs">
               <div className="flex items-center gap-1.5 truncate">
                 <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-extrabold text-white shrink-0">
                   ✓
@@ -654,14 +652,14 @@ export function ExpenseExplainerDemo({
             </div>
 
             {/* Real Daily Expenses Card matching PerDayExpensesView */}
-            <div className="my-auto space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2.5 sm:p-3 shadow-xs">
+            <div className="my-auto space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2 min-[360px]:p-2.5 sm:p-3 shadow-xs">
               {/* Section Header: 🧾 দৈনিক খরচ (Daily expenses) */}
               <div className="flex items-center justify-between border-b border-gray-100 pb-1">
                 <div className="flex items-center gap-1.5 text-xs font-black text-[var(--color-fg)]">
                   <span>🧾</span>
                   <span>{labels.dailyExpensesTitle}</span>
                 </div>
-                <div className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-900 border border-emerald-200">
+                <div className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-1.5 min-[360px]:px-2 py-0.5 text-[9.5px] min-[360px]:text-[10px] font-black text-emerald-900 border border-emerald-200">
                   <span>{labels.dayTotalLabel}</span>
                   <span>{dayTotalFormatted}</span>
                 </div>
@@ -678,14 +676,14 @@ export function ExpenseExplainerDemo({
                 <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-wider">
                   {labels.perPersonCostLabel}
                 </p>
-                <div className="flex flex-wrap gap-1">
-                  <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                <div className="flex flex-wrap gap-1 text-[9px] min-[360px]:text-[10px]">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 font-semibold text-gray-700">
                     <span>🏔️ {labels.member1}:</span>
                     <strong className="font-extrabold text-[var(--color-primary)]">
                       {costTahmidurFormatted}
                     </strong>
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 font-semibold text-gray-700">
                     <span>🎒 {labels.member2}:</span>
                     <strong className="font-extrabold text-[var(--color-primary)]">
                       {costRahmanFormatted}
@@ -695,14 +693,14 @@ export function ExpenseExplainerDemo({
               </div>
 
               {/* Real Expense Row in Daily Expenses */}
-              <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-neutral-50/60 p-2 shadow-2xs">
-                <div className="flex items-start justify-between gap-2">
+              <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-neutral-50/60 p-1.5 min-[360px]:p-2 shadow-2xs">
+                <div className="flex items-start justify-between gap-1.5 min-[360px]:gap-2">
                   <div className="space-y-0.5 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="rounded bg-white px-1.5 py-0.2 text-[9px] font-bold text-gray-700 border border-gray-200">
                         {labels.categoryFood}
                       </span>
-                      <span className="text-xs font-bold text-[var(--color-fg)] truncate">
+                      <span className="text-[11px] min-[360px]:text-xs font-bold text-[var(--color-fg)] truncate">
                         {labels.item1Title}
                       </span>
                     </div>
@@ -714,16 +712,26 @@ export function ExpenseExplainerDemo({
                     </p>
                   </div>
 
-                  <div className="text-sm font-black text-[var(--color-fg)]">
+                  <div className="text-xs min-[360px]:text-sm font-black text-[var(--color-fg)] shrink-0">
                     {item1AmountFormatted}
                   </div>
                 </div>
 
                 {/* Individual share pills + Edit / Delete buttons */}
-                <div className="flex items-center justify-between gap-1 pt-1 border-t border-gray-200/60 text-[9px]">
-                  <div className="flex items-center gap-1.5 text-neutral-600 font-medium">
-                    <span>🏔️ {labels.member1}: <strong className="font-bold text-[var(--color-primary)]">{item1ShareFormatted}</strong></span>
-                    <span>🎒 {labels.member2}: <strong className="font-bold text-[var(--color-primary)]">{item1ShareFormatted}</strong></span>
+                <div className="flex flex-wrap items-center justify-between gap-x-1.5 gap-y-0.5 pt-1 border-t border-gray-200/60 text-[8.5px] min-[360px]:text-[9px]">
+                  <div className="flex flex-wrap items-center gap-1 min-[360px]:gap-1.5 text-neutral-600 font-medium">
+                    <span>
+                      🏔️ {labels.member1}:{" "}
+                      <strong className="font-bold text-[var(--color-primary)]">
+                        {item1ShareFormatted}
+                      </strong>
+                    </span>
+                    <span>
+                      🎒 {labels.member2}:{" "}
+                      <strong className="font-bold text-[var(--color-primary)]">
+                        {item1ShareFormatted}
+                      </strong>
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-neutral-400 shrink-0 font-medium">
                     <span>✏️ {labels.editBtn}</span>
@@ -759,10 +767,10 @@ export function ExpenseExplainerDemo({
             ========================================================= */}
         <div
           aria-hidden="true"
-          className="demo-reduced-show hidden flex-col justify-between h-full w-full rounded-2xl border-2 border-emerald-400 bg-emerald-50/95 p-2.5 sm:p-3 shadow-md"
+          className="demo-reduced-show hidden flex-col justify-between h-full w-full rounded-2xl border-2 border-emerald-400 bg-emerald-50/95 p-2 min-[360px]:p-2.5 sm:p-3 shadow-md"
         >
           {/* Top Success Banner */}
-          <div className="flex items-center justify-between gap-1.5 rounded-xl border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-bold text-emerald-900 shadow-2xs">
+          <div className="flex items-center justify-between gap-1.5 rounded-xl border border-emerald-300 bg-white px-2 min-[360px]:px-2.5 py-1 text-[10.5px] min-[360px]:text-[11px] font-bold text-emerald-900 shadow-2xs">
             <div className="flex items-center gap-1.5">
               <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
                 ✓
@@ -773,13 +781,13 @@ export function ExpenseExplainerDemo({
           </div>
 
           {/* Daily Expenses View in Static Frame */}
-          <div className="my-auto space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2.5 sm:p-3 shadow-xs">
+          <div className="my-auto space-y-2 rounded-2xl border border-[var(--color-border)] bg-white p-2 min-[360px]:p-2.5 sm:p-3 shadow-xs">
             <div className="flex items-center justify-between border-b border-gray-100 pb-1">
               <div className="flex items-center gap-1.5 text-xs font-black text-[var(--color-fg)]">
                 <span>🧾</span>
                 <span>{labels.dailyExpensesTitle}</span>
               </div>
-              <div className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-900 border border-emerald-200">
+              <div className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-1.5 min-[360px]:px-2 py-0.5 text-[9.5px] min-[360px]:text-[10px] font-black text-emerald-900 border border-emerald-200">
                 <span>{labels.dayTotalLabel}</span>
                 <span>{dayTotalFormatted}</span>
               </div>
@@ -794,14 +802,14 @@ export function ExpenseExplainerDemo({
               <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-wider">
                 {labels.perPersonCostLabel}
               </p>
-              <div className="flex flex-wrap gap-1">
-                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+              <div className="flex flex-wrap gap-1 text-[9px] min-[360px]:text-[10px]">
+                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 font-semibold text-gray-700">
                   <span>🏔️ {labels.member1}:</span>
                   <strong className="font-extrabold text-[var(--color-primary)]">
                     {costTahmidurFormatted}
                   </strong>
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-700">
+                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-neutral-50 px-1.5 py-0.5 font-semibold text-gray-700">
                   <span>🎒 {labels.member2}:</span>
                   <strong className="font-extrabold text-[var(--color-primary)]">
                     {costRahmanFormatted}
@@ -810,14 +818,14 @@ export function ExpenseExplainerDemo({
               </div>
             </div>
 
-            <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-neutral-50/60 p-2 shadow-2xs">
-              <div className="flex items-start justify-between gap-2">
+            <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-neutral-50/60 p-1.5 min-[360px]:p-2 shadow-2xs">
+              <div className="flex items-start justify-between gap-1.5 min-[360px]:gap-2">
                 <div className="space-y-0.5 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="rounded bg-white px-1.5 py-0.2 text-[9px] font-bold text-gray-700 border border-gray-200">
                       {labels.categoryFood}
                     </span>
-                    <span className="text-xs font-bold text-[var(--color-fg)] truncate">
+                    <span className="text-[11px] min-[360px]:text-xs font-bold text-[var(--color-fg)] truncate">
                       {labels.item1Title}
                     </span>
                   </div>
@@ -828,15 +836,25 @@ export function ExpenseExplainerDemo({
                     </strong>
                   </p>
                 </div>
-                <div className="text-sm font-black text-[var(--color-fg)]">
+                <div className="text-xs min-[360px]:text-sm font-black text-[var(--color-fg)] shrink-0">
                   {item1AmountFormatted}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-1 pt-1 border-t border-gray-200/60 text-[9px]">
-                <div className="flex items-center gap-1.5 text-neutral-600 font-medium">
-                  <span>🏔️ {labels.member1}: <strong className="font-bold text-[var(--color-primary)]">{item1ShareFormatted}</strong></span>
-                  <span>🎒 {labels.member2}: <strong className="font-bold text-[var(--color-primary)]">{item1ShareFormatted}</strong></span>
+              <div className="flex flex-wrap items-center justify-between gap-x-1.5 gap-y-0.5 pt-1 border-t border-gray-200/60 text-[8.5px] min-[360px]:text-[9px]">
+                <div className="flex flex-wrap items-center gap-1 min-[360px]:gap-1.5 text-neutral-600 font-medium">
+                  <span>
+                    🏔️ {labels.member1}:{" "}
+                    <strong className="font-bold text-[var(--color-primary)]">
+                      {item1ShareFormatted}
+                    </strong>
+                  </span>
+                  <span>
+                    🎒 {labels.member2}:{" "}
+                    <strong className="font-bold text-[var(--color-primary)]">
+                      {item1ShareFormatted}
+                    </strong>
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-neutral-400 shrink-0 font-medium">
                   <span>✏️ {labels.editBtn}</span>

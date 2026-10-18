@@ -39,7 +39,7 @@ export function RecentTripsList({ locale, labels }: RecentTripsListProps) {
   }
 
   return (
-    <section className="space-y-3.5">
+    <section className="space-y-2.5 sm:space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-base">
@@ -58,7 +58,7 @@ export function RecentTripsList({ locale, labels }: RecentTripsListProps) {
           return (
             <div
               key={trip.slug}
-              className="group relative flex min-h-[58px] items-center justify-between gap-3 rounded-2xl border border-[var(--color-border)] bg-white p-3.5 shadow-2xs hover:border-[var(--color-primary)]/40 hover:bg-neutral-50/60 active:scale-[0.99] transition-all"
+              className="group relative flex min-h-[58px] items-center justify-between gap-2.5 min-[360px]:gap-3 rounded-2xl border border-[var(--color-border)] bg-white p-3 min-[360px]:p-3.5 shadow-2xs hover:border-[var(--color-primary)]/40 hover:bg-neutral-50/60 active:scale-[0.99] transition-all"
             >
               <Link
                 href={`/trips/${trip.slug}`}
@@ -69,14 +69,14 @@ export function RecentTripsList({ locale, labels }: RecentTripsListProps) {
                     {trip.tripName}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-neutral-500">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] min-[360px]:text-xs text-neutral-500">
                   <span className="flex items-center gap-1">
                     <span>👤</span>
                     <span className="font-semibold text-neutral-700">
                       {labels.myMemberPrefix} {trip.myMemberName}
                     </span>
                   </span>
-                  <span className="text-neutral-300">•</span>
+                  <span className="text-neutral-300 hidden min-[360px]:inline" aria-hidden="true">•</span>
                   <span className="flex items-center gap-1 text-neutral-400">
                     <span>🕒</span>
                     <span>{lastOpenedPlain}</span>

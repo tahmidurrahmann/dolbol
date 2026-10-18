@@ -20,7 +20,7 @@ export function Container({
 
   return (
     <div
-      className={`mx-auto w-full ${maxWidthClass} px-4 sm:px-6 lg:px-8 ${className}`.trim()}
+      className={`mx-auto w-full ${maxWidthClass} px-3.5 min-[360px]:px-4 sm:px-6 lg:px-8 ${className}`.trim()}
     >
       {children}
     </div>

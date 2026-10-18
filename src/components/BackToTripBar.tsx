@@ -6,13 +6,14 @@ import { useRecentTrips } from "@/lib/recent-trips";
 
 interface BackToTripBarProps {
   locale: SupportedLocale;
+  className?: string;
 }
 
 /**
- * Persistent top bar shown at the top of the Home and Join pages
- * when a most-recent trip exists on this device.
+ * Floating sticky button pinned to the side of the screen (like a chat button),
+ * allowing users to jump back into their active trip without taking any vertical layout space.
  */
-export function BackToTripBar({ locale }: BackToTripBarProps) {
+export function BackToTripBar({ locale, className = "" }: BackToTripBarProps) {
   const trips = useRecentTrips();
   const mostRecent = trips[0] ?? null;
 
@@ -21,21 +22,35 @@ export function BackToTripBar({ locale }: BackToTripBarProps) {
   }
 
   const isBn = locale === "bn";
-  const backText = isBn
-    ? `← "${mostRecent.tripName}" ট্রিপে ফিরে যান`
-    : `← Back to ${mostRecent.tripName}`;
+  const tooltipText = isBn
+    ? `"${mostRecent.tripName}" ট্রিপে ফিরে যান`
+    : `Back to "${mostRecent.tripName}"`;
 
   return (
-    <div className="w-full">
+    <div
+      className={`pointer-events-none fixed right-2.5 min-[360px]:right-3.5 lg:right-5 top-1/2 -translate-y-1/2 z-40 select-none ${className}`}
+    >
       <Link
         href={`/trips/${mostRecent.slug}`}
-        className="group flex min-h-[44px] items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50/95 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold text-[#0b724f] shadow-xs hover:bg-emerald-100 hover:border-emerald-400 active:scale-[0.99] transition-all"
+        title={tooltipText}
+        aria-label={tooltipText}
+        className="pointer-events-auto group flex items-center gap-1.5 min-[360px]:gap-2 rounded-full border-2 border-white/95 bg-gradient-to-br from-[#0b724f] via-emerald-600 to-teal-700 text-white px-2.5 min-[360px]:px-3.5 py-2 min-[360px]:py-2.5 shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md ring-4 ring-emerald-500/20"
       >
-        <div className="flex items-center gap-2 truncate">
-          <span className="truncate group-hover:underline">{backText}</span>
+        <span className="flex size-7 min-[360px]:size-8 items-center justify-center rounded-full bg-white/20 text-base min-[360px]:text-lg shadow-2xs group-hover:scale-110 transition-transform shrink-0">
+          🌴
+        </span>
+
+        <div className="flex flex-col text-left leading-tight max-w-[90px] min-[360px]:max-w-[125px] sm:max-w-[160px] truncate">
+          <span className="text-[9px] font-bold text-emerald-100 uppercase tracking-wider truncate">
+            {isBn ? "সক্রিয় ট্রিপ" : "Active Trip"}
+          </span>
+          <span className="text-xs min-[360px]:text-sm font-black truncate">
+            {mostRecent.tripName}
+          </span>
         </div>
-        <span className="shrink-0 rounded-lg bg-white border border-emerald-300 px-2.5 py-1 text-[11px] sm:text-xs font-black text-[#0b724f] shadow-2xs">
-          {isBn ? "খুলুন →" : "Open →"}
+
+        <span className="flex size-5 min-[360px]:size-6 items-center justify-center rounded-full bg-white text-[#0b724f] text-[10px] min-[360px]:text-xs font-black group-hover:translate-x-0.5 transition-transform shadow-2xs shrink-0">
+          →
         </span>
       </Link>
     </div>
