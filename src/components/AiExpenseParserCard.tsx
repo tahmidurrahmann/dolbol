@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { DatePickerField } from "@/components/DatePickerField";
 import { SelectField } from "@/components/SelectField";
 import type { ExistingExpenseSummary } from "@/components/ExpenseFormCard";
 import type { ParsedExpenseDraft } from "@/lib/ai-parser";
-import { formatTaka } from "@/lib/format";
+import { formatTaka, toBanglaDigits } from "@/lib/format";
 import type { ExpenseCategoryValue, MemberInput } from "@/lib/money";
 
 export interface AiExpenseParserLabels {
@@ -148,6 +148,73 @@ export function AiExpenseParserCard({
     }, 4500);
     return () => clearTimeout(timer);
   }, [submitSuccessMsg]);
+
+  // LocalStorage draft persistence scoped by trip slug
+  const AI_DRAFT_KEY = `triphub_ai_draft_${slug}`;
+  const [draftRestoredNotice, setDraftRestoredNotice] = useState(false);
+  const isRestoredRef = useRef(false);
+
+  const clearAiDraft = useCallback(() => {
+    try {
+      localStorage.removeItem(AI_DRAFT_KEY);
+    } catch {
+      // ignore
+    }
+    setDraftRestoredNotice(false);
+  }, [AI_DRAFT_KEY]);
+
+  // Restore saved AI draft on initial client mount (SSR-safe)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const saved = localStorage.getItem(AI_DRAFT_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === "object") {
+            let restored = false;
+            if (typeof parsed.rawText === "string" && parsed.rawText.trim().length > 0) {
+              setRawText(parsed.rawText);
+              restored = true;
+            }
+            if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+              setItems(parsed.items);
+              if (parsed.parseSource) setParseSource(parsed.parseSource);
+              restored = true;
+            }
+            if (restored) {
+              setDraftRestoredNotice(true);
+            }
+          }
+        }
+      } catch {
+        // ignore
+      } finally {
+        isRestoredRef.current = true;
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [AI_DRAFT_KEY]);
+
+  // Save AI draft to localStorage whenever rawText or items change
+  useEffect(() => {
+    if (!isRestoredRef.current) return;
+    try {
+      const hasContent = rawText.trim().length > 0 || items.length > 0;
+      if (hasContent) {
+        localStorage.setItem(
+          AI_DRAFT_KEY,
+          JSON.stringify({
+            rawText,
+            items,
+            parseSource,
+            savedAt: Date.now(),
+          }),
+        );
+      }
+    } catch {
+      // ignore
+    }
+  }, [rawText, items, parseSource, AI_DRAFT_KEY]);
 
   const myMemberId =
     currentMemberId ||
@@ -384,7 +451,13 @@ export function AiExpenseParserCard({
   }
 
   function removeItem(id: string): void {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => {
+      const next = prev.filter((item) => item.id !== id);
+      if (next.length === 0 && !rawText.trim()) {
+        clearAiDraft();
+      }
+      return next;
+    });
   }
 
   function addNewRow(): void {
@@ -414,6 +487,7 @@ export function AiExpenseParserCard({
     setParseSource(null);
     setLastParsedText(null);
     setJustParsed(false);
+    clearAiDraft();
   }
 
   const totalTaka = items.reduce((sum, item) => sum + (item.amount ?? 0), 0);
@@ -491,6 +565,7 @@ export function AiExpenseParserCard({
       setRawText("");
       setLastParsedText(null);
       setJustParsed(false);
+      clearAiDraft();
       router.refresh();
     } catch {
       setErrorMsg(labels.errGeneric);
@@ -516,6 +591,31 @@ export function AiExpenseParserCard({
         <p className="text-sm text-neutral-400">{labels.cardSubtitle}</p>
       </div>
 
+      {draftRestoredNotice && (rawText.trim().length > 0 || items.length > 0) ? (
+        <div className="flex items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50/90 px-3.5 py-2 text-xs font-semibold text-amber-950 shadow-2xs animate-in fade-in">
+          <div className="flex items-center gap-1.5 truncate">
+            <span>💾</span>
+            <span className="truncate">
+              {locale === "bn"
+                ? "পূর্বের অসম্পূর্ণ ড্রাফট স্বয়ংক্রিয়ভাবে ফিরে এসেছে"
+                : "Your unsaved draft was restored"}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setRawText("");
+              setItems([]);
+              setParseSource(null);
+              clearAiDraft();
+            }}
+            className="shrink-0 text-xs font-bold text-amber-900 hover:text-red-700 underline cursor-pointer"
+          >
+            {locale === "bn" ? "মুছে ফেলুন" : "Discard"}
+          </button>
+        </div>
+      ) : null}
+
       {/* Input Form accepting multi-line Bangla/Banglish */}
       <form onSubmit={handleParse} className="space-y-3.5">
         <div className="relative rounded-2xl border border-[var(--color-border)] bg-white p-3 sm:p-3.5 shadow-2xs transition-all focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/15">
@@ -529,7 +629,11 @@ export function AiExpenseParserCard({
             maxLength={1500}
             value={rawText}
             onChange={(e) => {
-              setRawText(e.target.value);
+              const val = e.target.value;
+              setRawText(val);
+              if (!val.trim() && items.length === 0) {
+                clearAiDraft();
+              }
               if (justParsed) setJustParsed(false);
               if (submitSuccessMsg) setSubmitSuccessMsg(null);
             }}
@@ -559,6 +663,7 @@ export function AiExpenseParserCard({
                   if (justParsed) setJustParsed(false);
                   setErrorMsg(null);
                   if (submitSuccessMsg) setSubmitSuccessMsg(null);
+                  if (items.length === 0) clearAiDraft();
                   textareaRef.current?.focus();
                 }}
                 className="self-end sm:self-auto inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer shrink-0"
@@ -968,25 +1073,26 @@ export function AiExpenseParserCard({
           </div>
 
           {/* Footer: Count & Total, Submit Button */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
-            <div className="text-sm font-bold text-[var(--color-fg)]">
+          <div className="flex flex-col min-[425px]:flex-row min-[425px]:items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
+            <div className="text-sm sm:text-base font-bold text-[var(--color-fg)] whitespace-nowrap shrink-0">
               {locale === "bn"
-                ? `${items.length} টি খরচ, মোট ${formatTaka(totalTaka, locale)}`
-                : `${items.length} expenses, total ${formatTaka(totalTaka, locale)}`}
+                ? `${toBanglaDigits(items.length)}টি খরচ, মোট ${formatTaka(totalTaka, locale)}`
+                : `${items.length} ${items.length === 1 ? "expense" : "expenses"}, total ${formatTaka(totalTaka, locale)}`}
             </div>
 
             <Button
               type="submit"
               variant="primary"
+              fullWidth={false}
               disabled={isSubmitDisabled}
-              className="min-h-[44px] font-bold"
+              className="min-h-[44px] font-bold whitespace-nowrap shrink-0 w-full min-[425px]:w-auto px-5 sm:px-6"
             >
               {submitting
                 ? locale === "bn"
                   ? "সেভ হচ্ছে..."
                   : "Saving..."
                 : locale === "bn"
-                  ? `✓ সবগুলো যোগ করুন (${items.length})`
+                  ? `✓ সবগুলো যোগ করুন (${toBanglaDigits(items.length)})`
                   : `✓ Add all (${items.length})`}
             </Button>
           </div>

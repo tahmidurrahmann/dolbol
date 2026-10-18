@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { saveExpenseAction } from "@/app/trips/actions";
 import { Button } from "@/components/Button";
 import { DatePickerField } from "@/components/DatePickerField";
@@ -166,6 +166,116 @@ export function ExpenseFormCard({
   }
   const [percentValues, setPercentValues] =
     useState<Record<string, string>>(initialPercentMap);
+  const [noteStr, setNoteStr] = useState<string>(editingExpense?.note ?? "");
+
+  // LocalStorage draft persistence scoped by trip slug (only when !editingExpense)
+  const MANUAL_DRAFT_KEY = `triphub_manual_draft_${slug}`;
+  const [manualDraftRestored, setManualDraftRestored] = useState(false);
+  const isRestoredManualRef = useRef(false);
+
+  const clearManualDraft = useCallback(() => {
+    try {
+      localStorage.removeItem(MANUAL_DRAFT_KEY);
+    } catch {
+      // ignore
+    }
+    setManualDraftRestored(false);
+  }, [MANUAL_DRAFT_KEY]);
+
+  // Restore saved manual draft on initial client mount (SSR-safe)
+  useEffect(() => {
+    if (editingExpense) return;
+    const timer = setTimeout(() => {
+      try {
+        const saved = localStorage.getItem(MANUAL_DRAFT_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === "object") {
+            let restored = false;
+            if (typeof parsed.titleStr === "string" && parsed.titleStr.trim().length > 0) {
+              setTitleStr(parsed.titleStr);
+              restored = true;
+            }
+            if (typeof parsed.amountStr === "string" && parsed.amountStr.trim().length > 0) {
+              setAmountStr(parsed.amountStr);
+              restored = true;
+            }
+            if (parsed.categoryVal) setCategoryVal(parsed.categoryVal);
+            if (parsed.dateStr) setDateStr(parsed.dateStr);
+            if (parsed.paidByVal && members.some((m) => m.id === parsed.paidByVal)) {
+              setPaidByVal(parsed.paidByVal);
+            }
+            if (parsed.splitType) setSplitType(parsed.splitType);
+            if (Array.isArray(parsed.selectedIds) && parsed.selectedIds.length > 0) {
+              setSelectedIds(parsed.selectedIds);
+            }
+            if (parsed.exactValues) setExactValues(parsed.exactValues);
+            if (parsed.percentValues) setPercentValues(parsed.percentValues);
+            if (typeof parsed.noteStr === "string") setNoteStr(parsed.noteStr);
+            if (parsed.showMoreOptions) setShowMoreOptions(true);
+
+            if (restored) {
+              setIsManualOpen(true);
+              setManualDraftRestored(true);
+            }
+          }
+        }
+      } catch {
+        // ignore
+      } finally {
+        isRestoredManualRef.current = true;
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [editingExpense, MANUAL_DRAFT_KEY, members]);
+
+  // Save manual draft to localStorage whenever fields change (only when !editingExpense)
+  useEffect(() => {
+    if (editingExpense || !isRestoredManualRef.current) return;
+    try {
+      const hasContent =
+        titleStr.trim().length > 0 ||
+        amountStr.trim().length > 0 ||
+        noteStr.trim().length > 0;
+      if (hasContent) {
+        localStorage.setItem(
+          MANUAL_DRAFT_KEY,
+          JSON.stringify({
+            titleStr,
+            amountStr,
+            categoryVal,
+            dateStr,
+            paidByVal,
+            splitType,
+            selectedIds,
+            exactValues,
+            percentValues,
+            noteStr,
+            isManualOpen,
+            showMoreOptions,
+            savedAt: Date.now(),
+          }),
+        );
+      }
+    } catch {
+      // ignore
+    }
+  }, [
+    editingExpense,
+    titleStr,
+    amountStr,
+    categoryVal,
+    dateStr,
+    paidByVal,
+    splitType,
+    selectedIds,
+    exactValues,
+    percentValues,
+    noteStr,
+    isManualOpen,
+    showMoreOptions,
+    MANUAL_DRAFT_KEY,
+  ]);
 
   function toggleParticipant(memberId: string): void {
     setSelectedIds((prev) =>
@@ -254,6 +364,7 @@ export function ExpenseFormCard({
       e.preventDefault();
       return;
     }
+    clearManualDraft();
   }
 
   // Collapsed state: single clean button
@@ -307,6 +418,35 @@ export function ExpenseFormCard({
         )}
       </div>
 
+      {manualDraftRestored && !editingExpense && (titleStr.trim() || amountStr.trim()) ? (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50/90 px-3.5 py-2 text-xs font-semibold text-amber-950 shadow-2xs animate-in fade-in">
+          <div className="flex items-center gap-1.5 truncate">
+            <span>💾</span>
+            <span className="truncate">
+              {locale === "bn"
+                ? "পূর্বের অসম্পূর্ণ ড্রাফট স্বয়ংক্রিয়ভাবে ফিরে এসেছে"
+                : "Your unsaved draft was restored"}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setTitleStr("");
+              setAmountStr("");
+              setNoteStr("");
+              setCategoryVal("FOOD");
+              setSelectedIds(members.map((m) => m.id));
+              setExactValues({});
+              setPercentValues({});
+              clearManualDraft();
+            }}
+            className="shrink-0 text-xs font-bold text-amber-900 hover:text-red-700 underline cursor-pointer"
+          >
+            {locale === "bn" ? "মুছে ফেলুন" : "Discard"}
+          </button>
+        </div>
+      ) : null}
+
       <form
         action={saveExpenseAction}
         onSubmit={handleSubmit}
@@ -340,7 +480,13 @@ export function ExpenseFormCard({
             required
             maxLength={100}
             value={titleStr}
-            onChange={(e) => setTitleStr(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setTitleStr(val);
+              if (!val.trim() && !amountStr.trim() && !noteStr.trim()) {
+                clearManualDraft();
+              }
+            }}
             onBlur={() => setTouched((p) => ({ ...p, title: true }))}
             placeholder={labels.titlePlaceholder}
             className={`min-h-[46px] w-full rounded-xl border bg-white px-3.5 py-2 text-base text-[var(--color-fg)] shadow-xs transition-all outline-none ${
@@ -384,7 +530,13 @@ export function ExpenseFormCard({
               inputMode="numeric"
               required
               value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setAmountStr(val);
+                if (!val.trim() && !titleStr.trim() && !noteStr.trim()) {
+                  clearManualDraft();
+                }
+              }}
               onBlur={() => setTouched((p) => ({ ...p, amount: true }))}
               placeholder={labels.amountPlaceholder}
               className={`min-h-[46px] w-full rounded-xl border bg-white pl-10 pr-3.5 py-2 text-base font-bold text-[var(--color-primary)] shadow-xs transition-all outline-none ${
@@ -455,16 +607,16 @@ export function ExpenseFormCard({
 
         {/* 6. Shared by (default: everyone) when EQUAL split */}
         {splitType === "EQUAL" ? (
-          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-xs">
+          <div className="space-y-2 rounded-xl border border-[var(--color-border)] bg-gray-50/70 p-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-[var(--color-fg)]">
+              <span className="text-xs font-bold text-[var(--color-fg)]">
                 {labels.whoSharedLabel ?? labels.participantsLabel}
                 <span className="ml-1 font-bold text-red-500">*</span>
               </span>
               <button
                 type="button"
                 onClick={handleToggleAll}
-                className="rounded-lg px-2.5 py-1 text-xs font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/40 transition-colors cursor-pointer"
+                className="rounded-lg px-2 py-0.5 text-xs font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]/40 transition-colors cursor-pointer"
               >
                 {isAllSelected
                   ? locale === "bn"
@@ -476,53 +628,36 @@ export function ExpenseFormCard({
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-1">
-              {(() => {
-                const equalSharePerPerson =
-                  totalAmount > 0 && selectedIds.length > 0
-                    ? Math.floor(totalAmount / selectedIds.length)
-                    : 0;
-
-                return members.map((m) => {
-                  const checked = selectedIds.includes(m.id);
-                  return (
-                    <label
-                      key={m.id}
-                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none active:scale-95 ${
-                        checked
-                          ? "bg-[var(--color-surface-muted)] text-[var(--color-fg)] border border-[var(--color-border)] shadow-2xs font-bold"
-                          : "border border-[var(--color-border)] bg-white text-gray-800 shadow-2xs hover:border-[var(--color-primary)]/40 hover:bg-gray-50"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        name="participantIds"
-                        value={m.id}
-                        checked={checked}
-                        onChange={() => toggleParticipant(m.id)}
-                        className="sr-only"
-                      />
-                      <span className="text-sm leading-none shrink-0">
-                        {m.emoji ?? "🎒"}
-                      </span>
-                      <span className="whitespace-nowrap font-bold text-[var(--color-fg)]">
-                        {m.displayName}
-                        {checked && equalSharePerPerson > 0 ? ":" : ""}
-                      </span>
-                      {checked && equalSharePerPerson > 0 ? (
-                        <strong className="font-extrabold text-[var(--color-primary)] shrink-0">
-                          {formatTaka(equalSharePerPerson, locale)}
-                        </strong>
-                      ) : null}
-                    </label>
-                  );
-                });
-              })()}
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {members.map((m) => {
+                const checked = selectedIds.includes(m.id);
+                return (
+                  <label
+                    key={m.id}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer select-none active:scale-95 ${
+                      checked
+                        ? "bg-[var(--color-primary)] text-white font-bold shadow-2xs"
+                        : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      name="participantIds"
+                      value={m.id}
+                      checked={checked}
+                      onChange={() => toggleParticipant(m.id)}
+                      className="sr-only"
+                    />
+                    <span>{m.emoji ?? "🎒"}</span>
+                    <span>{m.displayName}</span>
+                  </label>
+                );
+              })}
             </div>
 
             {participantsError ? (
-              <p className="flex items-center gap-1 text-xs font-medium text-red-600">
-                <span>⚠️</span>
+              <p className="text-xs font-medium text-red-600">
+                <span>⚠️ </span>
                 <span>{participantsError}</span>
               </p>
             ) : null}
@@ -702,7 +837,14 @@ export function ExpenseFormCard({
                   name="note"
                   type="text"
                   maxLength={200}
-                  defaultValue={editingExpense?.note ?? ""}
+                  value={noteStr}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNoteStr(val);
+                    if (!val.trim() && !titleStr.trim() && !amountStr.trim()) {
+                      clearManualDraft();
+                    }
+                  }}
                   placeholder={labels.notePlaceholder}
                   className="min-h-[42px] w-full rounded-xl border border-[var(--color-border)] bg-white px-3.5 py-2 text-sm text-[var(--color-fg)] shadow-xs transition-all outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
                 />
@@ -715,7 +857,7 @@ export function ExpenseFormCard({
               <input
                 type="hidden"
                 name="note"
-                value={editingExpense?.note ?? ""}
+                value={noteStr}
               />
             </>
           )}

@@ -76,8 +76,8 @@ export function ExpenseExplainerDemo({
     ariaLabel:
       customLabels?.ariaLabel ??
       (locale === "bn"
-        ? "১০ সেকেন্ডের অ্যানিমেশন: মেসেজ লিখে এআই দিয়ে কীভাবে মুহূর্তেই খরচ যোগ ও ভাগ করা যায় তা দেখানো হচ্ছে"
-        : "10-second animation showing how to add and split expenses using AI"),
+        ? "১৫ সেকেন্ডের অ্যানিমেশন: মেসেজ লিখে এআই দিয়ে কীভাবে মুহূর্তেই খরচ যোগ ও ভাগ করা যায় তা দেখানো হচ্ছে"
+        : "15-second animation showing how to add and split expenses using AI"),
     tryYourself:
       customLabels?.tryYourself ??
       (locale === "bn" ? "নিজে চেষ্টা করুন" : "Try it yourself"),
@@ -239,8 +239,8 @@ export function ExpenseExplainerDemo({
   const isFrozen = typeof timeFreeze === "number";
   const isPlaying = !isFrozen && !isManualPaused && !isOffScreen && !isTabHidden;
 
-  // Single shared duration variable
-  const sharedDuration = "var(--demo-duration, 10s)";
+  // Single shared duration variable (15s timeline)
+  const sharedDuration = "var(--demo-duration, 15s)";
 
   // CSS style helper for synchronized keyframe animation
   const animStyle = (keyframeName: string): React.CSSProperties => {
@@ -347,8 +347,8 @@ export function ExpenseExplainerDemo({
         </button>
       </div>
 
-      {/* Main Scene: Aspect Ratio 4/3 */}
-      <div className="relative mt-2 aspect-[4/3] w-full overflow-hidden rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] shadow-inner">
+      {/* Main Scene: Responsive Height & Aspect Ratio for mobile & desktop */}
+      <div className="relative mt-2 min-h-[320px] sm:min-h-[340px] aspect-[4/3.3] sm:aspect-[4/3] w-full overflow-hidden rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] shadow-inner">
         {/* =========================================================
             ANIMATED VERSION (active when reduced-motion is FALSE)
             ========================================================= */}
@@ -537,64 +537,62 @@ export function ExpenseExplainerDemo({
                   </span>
                 </div>
 
-                {/* 2. What was it for? */}
-                <div className="space-y-0.5">
-                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
-                    {locale === "bn" ? "কিসের খরচ?" : "What was it for?"}
-                  </label>
-                  <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-fg)] flex items-center shadow-2xs">
-                    {labels.item1Title}
+                {/* 2. What was it for? & Amount Grid */}
+                <div className="grid grid-cols-12 gap-2">
+                  <div className="col-span-7 sm:col-span-8 space-y-0.5">
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
+                      {locale === "bn" ? "কিসের খরচ?" : "What was it for?"}
+                    </label>
+                    <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-fg)] flex items-center shadow-2xs truncate">
+                      {labels.item1Title}
+                    </div>
                   </div>
-                </div>
-
-                {/* 3. Amount (৳) */}
-                <div className="space-y-0.5">
-                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
-                    {locale === "bn" ? "টাকা (৳)" : "Amount (৳)"}
-                  </label>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-2.5 text-xs font-bold text-[var(--color-primary)]">
-                      ৳
-                    </span>
-                    <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white pl-7 pr-2.5 py-1 text-xs font-bold text-[var(--color-primary)] flex items-center shadow-2xs">
-                      1,200
+                  <div className="col-span-5 sm:col-span-4 space-y-0.5">
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
+                      {locale === "bn" ? "টাকা (৳)" : "Amount (৳)"}
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-2.5 text-xs font-bold text-[var(--color-primary)]">
+                        ৳
+                      </span>
+                      <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white pl-6 pr-2 py-1 text-xs font-bold text-[var(--color-primary)] flex items-center shadow-2xs">
+                        1,200
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* 4. Category */}
-                <div className="space-y-0.5">
-                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
-                    {locale === "bn" ? "ক্যাটাগরি" : "Category"}
-                  </label>
-                  <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
-                    <span className="flex items-center gap-1.5">
-                      <span>{labels.categoryFood}</span>
-                    </span>
-                    <span className="text-xs text-neutral-400">▾</span>
+                {/* 3. Category & Who paid Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-0.5">
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
+                      {locale === "bn" ? "ক্যাটাগরি" : "Category"}
+                    </label>
+                    <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                      <span className="truncate">{labels.categoryFood}</span>
+                      <span className="text-[10px] text-neutral-400 shrink-0">▾</span>
+                    </div>
+                  </div>
+                  <div className="space-y-0.5">
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
+                      {locale === "bn" ? "কে দিলেন?*" : "Who paid?*"}
+                    </label>
+                    <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                      <span className="flex items-center gap-1 truncate">
+                        <span>🏔️</span>
+                        <span className="truncate">{labels.member1}</span>
+                      </span>
+                      <span className="text-[10px] text-neutral-400 shrink-0">▾</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* 5. Who paid?* */}
+                {/* 4. Date* */}
                 <div className="space-y-0.5">
-                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
-                    {locale === "bn" ? "কে দিলেন?*" : "Who paid?*"}
-                  </label>
-                  <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
-                    <span className="flex items-center gap-1.5">
-                      <span>🏔️</span>
-                      <span>{labels.member1}</span>
-                    </span>
-                    <span className="text-xs text-neutral-400">▾</span>
-                  </div>
-                </div>
-
-                {/* 6. Date* */}
-                <div className="space-y-0.5">
-                  <label className="block text-[11px] font-bold text-[var(--color-fg)]">
+                  <label className="block text-[10px] sm:text-[11px] font-bold text-[var(--color-fg)]">
                     {locale === "bn" ? "তারিখ*" : "Date*"}
                   </label>
-                  <div className="min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
+                  <div className="min-h-[32px] sm:min-h-[34px] w-full rounded-xl border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-medium text-gray-800 flex items-center justify-between shadow-2xs">
                     <span>
                       {locale === "bn" ? "৬ অক্টো, ২০২৬" : "Oct 6, 2026"}
                     </span>
@@ -602,8 +600,8 @@ export function ExpenseExplainerDemo({
                   </div>
                 </div>
 
-                {/* 7. Who shared this? */}
-                <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-gray-50/70 p-2 text-xs">
+                {/* 5. Who shared this? */}
+                <div className="space-y-1 rounded-xl border border-[var(--color-border)] bg-gray-50/80 p-2 sm:p-2.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-[var(--color-fg)]">
                       {locale === "bn" ? "কারা ভাগ করবে?" : "Who shared this?"}
@@ -623,7 +621,7 @@ export function ExpenseExplainerDemo({
                 </div>
               </div>
 
-              {/* 8. + Add another expense */}
+              {/* 6. + Add another expense */}
               <div className="pt-0.5">
                 <div className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--color-primary)]/60 bg-white px-3 py-1.5 text-xs font-bold text-[var(--color-primary)] shadow-2xs">
                   <span>+</span>
@@ -635,13 +633,13 @@ export function ExpenseExplainerDemo({
                 </div>
               </div>
 
-              {/* 9. Footer: 3 expenses, total ৳2,250 + Add all */}
-              <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2">
+              {/* 7. Footer: 3 expenses, total ৳2,250 + Add all */}
+              <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border)] pt-2 sm:pt-2.5">
                 <div className="text-xs sm:text-sm font-bold text-[var(--color-fg)]">
                   {labels.footerSummary}
                 </div>
                 <div
-                  className="demo-anim rounded-full bg-[#0f6b4a] text-white font-bold px-3.5 py-1.5 text-xs sm:text-sm shadow-xs cursor-pointer"
+                  className="demo-anim rounded-full bg-[#0f6b4a] text-white font-bold px-3.5 py-1.5 text-xs sm:text-sm shadow-xs cursor-pointer select-none"
                   style={animStyle("demo-add-all-tap")}
                 >
                   ✓ {labels.addAllButton}
@@ -651,7 +649,7 @@ export function ExpenseExplainerDemo({
           </div>
 
           {/* -------------------------------------------------------------
-              PHASE 3 (7.4s - 8.8s):
+              PHASE 3 (9.6s - 14.5s):
               Real Daily Expenses (দৈনিক খরচ) section copying PerDayExpensesView.tsx
               ------------------------------------------------------------- */}
           <div

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createTripAction } from "@/app/trips/actions";
 import { Button } from "@/components/Button";
 import { DatePickerField } from "@/components/DatePickerField";
-import type { SupportedLocale } from "@/lib/format";
+import { toBanglaDigits, type SupportedLocale } from "@/lib/format";
+import { normalizeNameKey } from "@/lib/names";
+import { parseFriendsNames } from "@/lib/trips";
 
 interface NewTripFormProps {
   locale: SupportedLocale;
@@ -52,6 +54,17 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
         ? "আপনার নাম দেওয়া আবশ্যক।"
         : "Your name is required."
       : null;
+
+  const detectedFriends = useMemo(() => {
+    return parseFriendsNames(friendsNames, { creatorName });
+  }, [friendsNames, creatorName]);
+
+  const isCreatorInFriends = useMemo(() => {
+    if (!creatorName.trim() || !friendsNames.trim()) return false;
+    const allParsed = parseFriendsNames(friendsNames);
+    const cKey = normalizeNameKey(creatorName);
+    return allParsed.some((n) => normalizeNameKey(n) === cKey);
+  }, [friendsNames, creatorName]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     setTouched({ name: true, creatorName: true });
@@ -169,6 +182,45 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
         />
 
         <p className="text-xs text-neutral-400">💡 {labels.friendsNamesHint}</p>
+
+        {detectedFriends.length > 0 && (
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50/60 p-3 sm:p-3.5 space-y-2 dark:border-emerald-500/30 dark:bg-emerald-950/20 transition-all">
+            <div className="flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
+              <span className="flex items-center gap-1.5">
+                <span>✨</span>
+                <span>
+                  {locale === "bn"
+                    ? `${toBanglaDigits(detectedFriends.length)} জন বন্ধু যুক্ত হবেন:`
+                    : `${detectedFriends.length} ${detectedFriends.length === 1 ? "friend" : "friends"} recognized:`}
+                </span>
+              </span>
+              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                {locale === "bn" ? "গেস্ট মেম্বার" : "Guest members"}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {detectedFriends.map((friendName, idx) => (
+                <span
+                  key={`${friendName}-${idx}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-fg)] shadow-2xs dark:bg-neutral-900"
+                >
+                  <span>🎒</span>
+                  <span>{friendName}</span>
+                </span>
+              ))}
+            </div>
+
+            {isCreatorInFriends && (
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-300 pt-0.5">
+                ℹ️{" "}
+                {locale === "bn"
+                  ? `${creatorName} ইতিমধ্যে ট্রিপের ক্রিয়েটর হিসেবে আছেন, তাই আলাদা গেস্ট লাগবে না।`
+                  : `${creatorName} is already the trip creator, so they won't be duplicated.`}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 4. Collapsible "More details (optional)" for Destination and Dates */}

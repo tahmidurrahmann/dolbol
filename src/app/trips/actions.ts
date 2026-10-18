@@ -46,6 +46,7 @@ import {
   itineraryItemFormSchema,
   joinTripFormSchema,
   MEMBER_EMOJIS,
+  parseFriendsNames,
   reclaimMemberFormSchema,
   renameMemberFormSchema,
   settlementFormSchema,
@@ -104,24 +105,10 @@ export async function createTripAction(formData: FormData): Promise<void> {
       : (MEMBER_EMOJIS[Math.floor(Math.random() * MEMBER_EMOJIS.length)] ?? "🎒");
 
   // Parse and deduplicate friends' names (up to 30)
-  const rawFriends = friendsNames ?? "";
-  const friendLines = rawFriends
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-
-  const seenNameKeys = new Set<string>();
-  seenNameKeys.add(nameKey); // cannot duplicate creator's name
-
-  const validatedFriends: string[] = [];
-  for (const line of friendLines) {
-    if (line.length > 40) continue;
-    const fKey = normalizeNameKey(line);
-    if (!fKey || seenNameKeys.has(fKey)) continue;
-    seenNameKeys.add(fKey);
-    validatedFriends.push(line);
-    if (validatedFriends.length >= 30) break;
-  }
+  const validatedFriends = parseFriendsNames(friendsNames, {
+    creatorName,
+    maxCount: 30,
+  });
 
   const result = await db.$transaction(async (tx) => {
     const trip = await tx.trip.create({

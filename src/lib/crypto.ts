@@ -5,21 +5,14 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 
-const BANGLA_DIGIT_CHARS = "০১২৩৪৫৬৭৮৯";
+import {
+  BANGLA_DIGIT_CHARS,
+  banglaToAsciiDigits,
+  normalizeNameKey,
+} from "@/lib/names";
 
-/**
+export { BANGLA_DIGIT_CHARS, banglaToAsciiDigits, normalizeNameKey };
 
- * Converts Bangla digits (০-৯) in a string to ASCII digits (0-9).
-
- */
-
-export function banglaToAsciiDigits(input: string): string {
-  return input.replace(/[০-৯]/g, (ch) => {
-    const idx = BANGLA_DIGIT_CHARS.indexOf(ch);
-
-    return idx >= 0 ? String(idx) : ch;
-  });
-}
 
 /**
 
@@ -63,17 +56,6 @@ export function hashSessionToken(rawToken: string): string {
 
  */
 
-export function normalizeNameKey(displayName: string): string {
-  return displayName
-
-    .normalize("NFC")
-
-    .trim()
-
-    .replace(/\s+/g, " ")
-
-    .toLowerCase();
-}
 
 /**
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { banglaToAsciiDigits } from "@/lib/crypto";
+import { banglaToAsciiDigits, normalizeNameKey } from "@/lib/names";
 
 export const MEMBER_EMOJIS = [
   "🎒",
@@ -91,6 +91,129 @@ export const createTripFormSchema = z.object({
   creatorEmoji: optionalEmojiString,
   creatorPin: optionalPinString,
 });
+
+const HONORIFIC_PREFIXES = new Set([
+  "md",
+  "mohd",
+  "dr",
+  "prof",
+  "engr",
+  "adv",
+  "mr",
+  "mrs",
+  "ms",
+  "janab",
+  "sheikh",
+  "syed",
+  "kazi",
+  "al",
+  "capt",
+  "col",
+  "maj",
+  "lt",
+  "bar",
+  "haji",
+  "hazi",
+  "প্রো",
+  "ইঞ্জি",
+]);
+
+export interface ParseFriendsNamesOptions {
+  creatorName?: string;
+  maxCount?: number;
+}
+
+/**
+ * Parses user input for friends' names from flexible formats:
+ * - Newlines (\n, \r\n)
+ * - Commas (,, ，, ،)
+ * - Semicolons (;,)
+ * - Pipes (|), Slashes (/)
+ * - Bengali Dari (।)
+ * - Numbered lists ("1. Karim 2. Tanvir", "১. করিম ২. তানভীর", "1) Karim", "1- Karim", "1: Karim")
+ * - Bullet lists ("- Karim", "• Tanvir", "* Nusrat")
+ * - Hyphens with surrounding spaces ("Karim - Tanvir" while preserving "Al-Amin")
+ * - Ampersand / plus / "and" / "এবং" / "ও" with spaces
+ * - Periods used as sentence/item separators (while preserving initials like "Md. Sakib", "A. K. M. Tahmidur")
+ *
+ * Ensures:
+ * - Multi-word single names like "tahmidur rahman sakib" remain one name.
+ * - Leading/trailing punctuation is stripped.
+ * - Deduplication is case-insensitive.
+ * - Creator's name is not duplicated.
+ * - Maximum count (default 30) is enforced.
+ */
+export function parseFriendsNames(
+  rawInput: string | undefined | null,
+  options?: ParseFriendsNamesOptions,
+): string[] {
+  if (!rawInput) return [];
+
+  let text = rawInput.trim();
+  if (text.length === 0) return [];
+
+  // 1. Convert numbered list prefixes ("1.", "2)", "১.", "২)", "1-", "1:") to newlines
+  text = text.replace(/(?:^|\s)(?:[0-9]+|[০-৯]+)[\.\)\-:]\s*/gu, "\n");
+
+  // 2. Convert hyphens/dashes with surrounding spaces to newlines (preserves intra-word "Al-Amin")
+  text = text.replace(/\s+[-–—]\s+/gu, "\n");
+
+  // 3. Convert explicit list delimiters (commas, semicolons, Dari, pipes, newlines) to newlines
+  text = text.replace(/[,;，؛|।\r\n]+/gu, "\n");
+
+  // 4. Convert slashes with optional spaces to newlines
+  text = text.replace(/\s*[\/\\]\s*/gu, "\n");
+
+  // 5. Convert conjunctions (&, +, and, এবং, ও) with surrounding spaces to newlines
+  text = text.replace(/\s+(?:&|\+|and|এবং|ও)\s+/giu, "\n");
+
+  // 6. Handle periods: If preceded by a full word (>= 4 letters, not honorific) and followed by whitespace or letter
+  text = text.replace(
+    /([\p{L}\p{M}]{4,})\.\s*(?=[\p{L}\p{M}])/gu,
+    (match, word) => {
+      if (HONORIFIC_PREFIXES.has(word.toLowerCase())) {
+        return match;
+      }
+      return `${word}\n`;
+    },
+  );
+
+  const rawTokens = text.split("\n");
+  const result: string[] = [];
+  const seenKeys = new Set<string>();
+
+  if (options?.creatorName && options.creatorName.trim().length > 0) {
+    seenKeys.add(normalizeNameKey(options.creatorName));
+  }
+
+  const maxCount = options?.maxCount ?? 30;
+
+  for (let token of rawTokens) {
+    // Strip leading bullets, numbers, dashes, quotes, at-signs, brackets
+    token = token.replace(/^[•◦▪▫–—\-\*\+@#"'“”‘’`\(\)\[\]\{\}\s]+/, "");
+    // Strip trailing punctuation
+    token = token.replace(/[.,;।:–—\-\*"'“”‘’`\(\)\[\]\{\}\s]+$/, "");
+    // Collapse internal spaces
+    token = token.replace(/\s+/g, " ").trim();
+
+    if (!token || token.length === 0) continue;
+    if (token.length > 40) {
+      token = token.slice(0, 40).trim();
+    }
+    // Must contain at least one letter or alphanumeric character
+    if (!/[\p{L}\p{N}]/u.test(token)) continue;
+
+    const key = normalizeNameKey(token);
+    if (!key || seenKeys.has(key)) continue;
+
+    seenKeys.add(key);
+    result.push(token);
+
+    if (result.length >= maxCount) break;
+  }
+
+  return result;
+}
 
 export const joinTripFormSchema = z.object({
   slug: z.string().trim().min(8).max(64),

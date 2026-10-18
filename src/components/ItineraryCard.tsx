@@ -93,8 +93,8 @@ export function ItineraryCard({
                 htmlFor="it-day"
                 className="block text-xs font-bold text-[var(--color-fg)]"
               >
-                {labels.dayNumberLabel}{" "}
-                <span className="text-red-500 font-bold">*</span>
+                {labels.dayNumberLabel}
+                <span className="ml-1 font-bold text-red-500">*</span>
               </label>
               <input
                 id="it-day"
@@ -130,8 +130,8 @@ export function ItineraryCard({
               htmlFor="it-title"
               className="block text-xs font-bold text-[var(--color-fg)]"
             >
-              {labels.activityTitleLabel}{" "}
-              <span className="text-red-500 font-bold">*</span>
+              {labels.activityTitleLabel}
+              <span className="ml-1 font-bold text-red-500">*</span>
             </label>
             <input
               id="it-title"
