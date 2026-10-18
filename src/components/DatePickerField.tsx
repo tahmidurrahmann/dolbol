@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { formatDate, type SupportedLocale, toBanglaDigits } from "@/lib/format";
 import { dayKey } from "@/lib/time";
+
+export type DatePickerPlacement = "auto" | "up" | "down";
 
 interface DatePickerFieldProps {
   id?: string;
@@ -18,6 +20,7 @@ interface DatePickerFieldProps {
   max?: string; // YYYY-MM-DD
   className?: string;
   helperText?: string;
+  placement?: DatePickerPlacement;
 }
 
 const MONTH_NAMES_BN = [
@@ -93,6 +96,7 @@ export function DatePickerField({
   max,
   className = "",
   helperText,
+  placement = "auto",
 }: DatePickerFieldProps) {
   const generatedId = useId();
   const inputId = explicitId ?? generatedId;
@@ -100,6 +104,8 @@ export function DatePickerField({
 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const [viewMode, setViewMode] = useState<"days" | "monthYear">("days");
 
   // Month & Year currently viewed in the calendar popup
@@ -107,11 +113,64 @@ export function DatePickerField({
   const [viewYear, setViewYear] = useState<number>(initial.year);
   const [viewMonth, setViewMonth] = useState<number>(initial.month);
 
+  const selectedYearRef = useRef<HTMLButtonElement>(null);
+  const yearScrollRef = useRef<HTMLDivElement>(null);
+
+  const availableYears = useMemo(() => {
+    const curY = new Date().getFullYear();
+    const minY = min ? Number(min.slice(0, 4)) : curY - 20;
+    const maxY = max ? Number(max.slice(0, 4)) : curY + 25;
+    const fromY = Math.min(curY - 20, Number.isFinite(minY) ? minY : curY - 20);
+    const toY = Math.max(curY + 25, Number.isFinite(maxY) ? maxY : curY + 25);
+    const list: number[] = [];
+    for (let y = fromY; y <= toY; y++) {
+      list.push(y);
+    }
+    return list;
+  }, [min, max]);
+
+  useEffect(() => {
+    if (viewMode === "monthYear" && selectedYearRef.current) {
+      selectedYearRef.current.scrollIntoView({
+        inline: "center",
+        block: "nearest",
+        behavior: "auto",
+      });
+    }
+  }, [viewMode, viewYear]);
+
+  const handleYearWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0) {
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
+
+  const computeDirection = useCallback(() => {
+    if (typeof window === "undefined" || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setAlignRight(rect.left + 300 > window.innerWidth);
+
+    if (placement === "up") {
+      setOpenUpward(true);
+    } else if (placement === "down") {
+      setOpenUpward(false);
+    } else {
+      // placement === "auto" (default)
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // Popover height is ~370px. If space below is less than 400px and space above has more room,
+      // open upward so the entire calendar is visible without scrolling!
+      const shouldOpenUp = spaceBelow < 400 && spaceAbove > spaceBelow;
+      setOpenUpward(shouldOpenUp);
+    }
+  }, [placement]);
+
   function openDropdown() {
     const parsed = parseYyyyMmDd(value || dayKey(new Date()));
     setViewYear(parsed.year);
     setViewMonth(parsed.month);
     setViewMode("days");
+    computeDirection();
     setOpen(true);
   }
 
@@ -120,8 +179,29 @@ export function DatePickerField({
     setViewMode("days");
   }
 
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        close();
+      }
+    }
+    function handlePositionUpdate() {
+      computeDirection();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handlePositionUpdate);
+    window.addEventListener("scroll", handlePositionUpdate, { passive: true });
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handlePositionUpdate);
+      window.removeEventListener("scroll", handlePositionUpdate);
+    };
+  }, [open, computeDirection]);
+
   function handleSelectDate(year: number, month: number, day: number) {
     const dateStr = formatYyyyMmDd(year, month, day);
+    if ((min && dateStr < min) || (max && dateStr > max)) return;
     onChange?.(dateStr);
     close();
   }
@@ -151,6 +231,7 @@ export function DatePickerField({
     const targetDate =
       target === "today" ? now : new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const dateStr = dayKey(targetDate);
+    if ((min && dateStr < min) || (max && dateStr > max)) return;
     onChange?.(dateStr);
   }
 
@@ -183,6 +264,11 @@ export function DatePickerField({
   }, [value, locale, isBn]);
 
   const todayStr = dayKey(new Date());
+  const yesterdayStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return dayKey(d);
+  }, []);
 
   const monthLabel = isBn
     ? `${MONTH_NAMES_BN[viewMonth] ?? ""} ${toBanglaDigits(viewYear)}`
@@ -259,7 +345,13 @@ export function DatePickerField({
             <div
               role="dialog"
               aria-label={label ?? "Calendar"}
-              className="absolute left-0 top-full mt-1.5 w-full min-w-[280px] max-w-xs z-50 rounded-2xl border border-gray-200 bg-white p-3.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+              className={`absolute ${
+                alignRight ? "right-0" : "left-0"
+              } ${
+                openUpward
+                  ? "bottom-full mb-2 origin-bottom slide-in-from-bottom-2"
+                  : "top-full mt-2 origin-top slide-in-from-top-2"
+              } w-full min-w-[280px] max-w-xs z-50 rounded-2xl border border-gray-200 bg-white p-3.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150`}
             >
               {viewMode === "monthYear" ? (
                 /* Year & Month Selection Mode */
@@ -279,32 +371,66 @@ export function DatePickerField({
                     </span>
                   </div>
 
-                  {/* Year Jumper & Year Pills */}
+                  {/* Scroll-based Year Selector */}
                   <div className="space-y-1.5">
-                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                      {isBn ? "বছর নির্বাচন:" : "Select Year:"}
-                    </div>
-                    <div className="flex items-center justify-between gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setViewYear((y) => y - 1)}
-                        aria-label="Previous year"
-                        className="flex size-7 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 text-xs font-bold transition-colors cursor-pointer"
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                        {isBn ? "বছর নির্বাচন:" : "Select Year:"}
+                      </div>
+                      {/* Quick Dropdown Select */}
+                      <select
+                        value={viewYear}
+                        onChange={(e) => setViewYear(Number(e.target.value))}
+                        aria-label={isBn ? "বছর বাছুন" : "Select year"}
+                        className="rounded-lg border border-gray-200 bg-gray-50/80 px-2 py-0.5 text-xs font-bold text-gray-700 outline-none hover:bg-white focus:border-[#0f6b4a] focus:bg-white cursor-pointer"
                       >
-                        ◀
-                      </button>
-                      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-                        {[viewYear - 2, viewYear - 1, viewYear, viewYear + 1, viewYear + 2].map((y) => {
+                        {availableYears.map((y) => (
+                          <option
+                            key={y}
+                            value={y}
+                            disabled={Boolean(
+                              (min && y < Number(min.slice(0, 4))) ||
+                                (max && y > Number(max.slice(0, 4))),
+                            )}
+                          >
+                            {isBn ? toBanglaDigits(y) : y}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Scrollable Years Strip (Scroll with mouse wheel or touch swipe, click to select) */}
+                    <div className="relative">
+                      {/* Left fade indicator */}
+                      <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-4 bg-gradient-to-r from-white to-transparent" />
+
+                      <div
+                        ref={yearScrollRef}
+                        onWheel={handleYearWheel}
+                        className="flex items-center gap-1.5 overflow-x-auto py-1.5 px-3 no-scrollbar scroll-smooth"
+                        tabIndex={0}
+                        role="region"
+                        aria-label={isBn ? "বছর স্ক্রল করুন" : "Scroll years"}
+                      >
+                        {availableYears.map((y) => {
                           const isCurYear = y === viewYear;
+                          const isYearDisabled = Boolean(
+                            (min && y < Number(min.slice(0, 4))) ||
+                              (max && y > Number(max.slice(0, 4))),
+                          );
                           return (
                             <button
                               key={y}
+                              ref={isCurYear ? selectedYearRef : undefined}
                               type="button"
+                              disabled={isYearDisabled}
                               onClick={() => setViewYear(y)}
-                              className={`rounded-full px-2.5 py-1 text-xs font-black transition-all cursor-pointer ${
-                                isCurYear
-                                  ? "bg-[#0f6b4a] text-white shadow-2xs scale-105"
-                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold transition-all select-none cursor-pointer ${
+                                isYearDisabled
+                                  ? "opacity-25 cursor-not-allowed bg-gray-50 text-gray-400"
+                                  : isCurYear
+                                    ? "bg-[#0f6b4a] text-white font-black shadow-xs scale-105 ring-2 ring-emerald-600/30"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 active:scale-95"
                               }`}
                             >
                               {isBn ? toBanglaDigits(y) : y}
@@ -312,14 +438,9 @@ export function DatePickerField({
                           );
                         })}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setViewYear((y) => y + 1)}
-                        aria-label="Next year"
-                        className="flex size-7 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        ▶
-                      </button>
+
+                      {/* Right fade indicator */}
+                      <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-4 bg-gradient-to-l from-white to-transparent" />
                     </div>
                   </div>
 
@@ -459,22 +580,43 @@ export function DatePickerField({
                     })}
                   </div>
 
-                  {/* Quick Today Button inside Calendar Footer */}
+                  {/* Quick Today & Clear Buttons inside Calendar Footer */}
                   <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-xs">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const now = new Date();
-                        handleSelectDate(
-                          now.getFullYear(),
-                          now.getMonth(),
-                          now.getDate(),
-                        );
-                      }}
-                      className="font-bold text-blue-600 hover:underline cursor-pointer"
-                    >
-                      {isBn ? "আজকের দিন" : "Today"}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        disabled={Boolean((min && todayStr < min) || (max && todayStr > max))}
+                        onClick={() => {
+                          const now = new Date();
+                          handleSelectDate(
+                            now.getFullYear(),
+                            now.getMonth(),
+                            now.getDate(),
+                          );
+                        }}
+                        className={`font-bold text-blue-600 hover:underline cursor-pointer ${
+                          (min && todayStr < min) || (max && todayStr > max)
+                            ? "opacity-30 cursor-not-allowed pointer-events-none"
+                            : ""
+                        }`}
+                      >
+                        {isBn ? "আজকের দিন" : "Today"}
+                      </button>
+
+                      {value && !required ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onChange?.("");
+                            close();
+                          }}
+                          className="font-semibold text-red-500 hover:text-red-700 hover:underline cursor-pointer"
+                        >
+                          {isBn ? "মুছুন" : "Clear"}
+                        </button>
+                      ) : null}
+                    </div>
+
                     <button
                       type="button"
                       onClick={close}
@@ -497,15 +639,27 @@ export function DatePickerField({
           </span>
           <button
             type="button"
+            disabled={Boolean((min && todayStr < min) || (max && todayStr > max))}
             onClick={() => handleQuickSet("today")}
-            className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"
+            className={`rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer ${
+              (min && todayStr < min) || (max && todayStr > max)
+                ? "opacity-30 cursor-not-allowed pointer-events-none"
+                : ""
+            }`}
           >
             {isBn ? "+ আজ" : "+ Today"}
           </button>
           <button
             type="button"
+            disabled={Boolean(
+              (min && yesterdayStr < min) || (max && yesterdayStr > max),
+            )}
             onClick={() => handleQuickSet("yesterday")}
-            className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer"
+            className={`rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-100 transition-colors active:scale-95 cursor-pointer ${
+              (min && yesterdayStr < min) || (max && yesterdayStr > max)
+                ? "opacity-30 cursor-not-allowed pointer-events-none"
+                : ""
+            }`}
           >
             {isBn ? "+ গতকাল" : "+ Yesterday"}
           </button>

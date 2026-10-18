@@ -66,9 +66,17 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
     return allParsed.some((n) => normalizeNameKey(n) === cKey);
   }, [friendsNames, creatorName]);
 
+  const hasDateOrderError = Boolean(
+    startDate && endDate && startDate > endDate,
+  );
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     setTouched({ name: true, creatorName: true });
-    if (name.trim().length < 2 || creatorName.trim().length < 1) {
+    if (
+      hasDateOrderError ||
+      name.trim().length < 2 ||
+      creatorName.trim().length < 1
+    ) {
       e.preventDefault();
       return;
     }
@@ -275,26 +283,57 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
             </div>
 
             {/* Travel Dates */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <DatePickerField
-                id="start-date"
-                name="startDate"
-                value={startDate}
-                onChange={setStartDate}
-                label={labels.startDateLabel}
-                locale={locale}
-                showQuickPills={false}
-              />
-              <DatePickerField
-                id="end-date"
-                name="endDate"
-                value={endDate}
-                onChange={setEndDate}
-                label={labels.endDateLabel}
-                min={startDate || undefined}
-                locale={locale}
-                showQuickPills={false}
-              />
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <DatePickerField
+                  id="start-date"
+                  name="startDate"
+                  value={startDate}
+                  onChange={setStartDate}
+                  max={endDate || undefined}
+                  label={labels.startDateLabel}
+                  locale={locale}
+                  showQuickPills={false}
+                  error={
+                    hasDateOrderError
+                      ? locale === "bn"
+                        ? "শুরুর তারিখ শেষের তারিখের আগের হতে হবে"
+                        : "Start date must be before end date"
+                      : null
+                  }
+                />
+                <DatePickerField
+                  id="end-date"
+                  name="endDate"
+                  value={endDate}
+                  onChange={setEndDate}
+                  min={startDate || undefined}
+                  label={labels.endDateLabel}
+                  locale={locale}
+                  showQuickPills={false}
+                  error={
+                    hasDateOrderError
+                      ? locale === "bn"
+                        ? "শেষের তারিখ শুরুর তারিখের পরের হতে হবে"
+                        : "End date must be after start date"
+                      : null
+                  }
+                />
+              </div>
+
+              {hasDateOrderError ? (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs font-bold text-red-800 animate-in fade-in"
+                >
+                  <span className="shrink-0 text-sm">⚠️</span>
+                  <span className="leading-relaxed">
+                    {locale === "bn"
+                      ? "শেষের তারিখ শুরুর তারিখের আগের হতে পারবে না।"
+                      : "End date cannot be earlier than start date."}
+                  </span>
+                </div>
+              ) : null}
             </div>
           </div>
         )}
@@ -304,7 +343,7 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
       <Button
         type="submit"
         variant="primary"
-        disabled={submitting}
+        disabled={submitting || hasDateOrderError}
         className="w-full min-h-[50px] text-base font-extrabold transition-all"
       >
         {submitting

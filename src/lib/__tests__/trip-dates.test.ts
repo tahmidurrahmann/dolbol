@@ -85,4 +85,53 @@ describe("Trip dates management", () => {
     expect(activityLog.after.startDate).toBe(start.toISOString());
     expect(activityLog.after.endDate).toBe(end.toISOString());
   });
+
+  it("createTripFormSchema rejects startDate after endDate and accepts valid combinations", async () => {
+    const { createTripFormSchema } = await import("@/lib/trips");
+
+    // Invalid: start date is after end date (e.g. start Oct 12, end Oct 10)
+    const invalidResult = createTripFormSchema.safeParse({
+      name: "Sylhet Tour",
+      creatorName: "Somrat",
+      startDate: "2026-10-12",
+      endDate: "2026-10-10",
+    });
+    expect(invalidResult.success).toBe(false);
+    if (!invalidResult.success) {
+      expect(invalidResult.error.issues[0]?.message).toBe("invalid_date_order");
+    }
+
+    // Valid: start date before end date
+    const validResult = createTripFormSchema.safeParse({
+      name: "Sylhet Tour",
+      creatorName: "Somrat",
+      startDate: "2026-10-10",
+      endDate: "2026-10-12",
+    });
+    expect(validResult.success).toBe(true);
+
+    // Valid: same day
+    const sameDayResult = createTripFormSchema.safeParse({
+      name: "Sylhet Tour",
+      creatorName: "Somrat",
+      startDate: "2026-10-10",
+      endDate: "2026-10-10",
+    });
+    expect(sameDayResult.success).toBe(true);
+
+    // Valid: only one date provided
+    const onlyStart = createTripFormSchema.safeParse({
+      name: "Sylhet Tour",
+      creatorName: "Somrat",
+      startDate: "2026-10-10",
+    });
+    expect(onlyStart.success).toBe(true);
+
+    const onlyEnd = createTripFormSchema.safeParse({
+      name: "Sylhet Tour",
+      creatorName: "Somrat",
+      endDate: "2026-10-10",
+    });
+    expect(onlyEnd.success).toBe(true);
+  });
 });

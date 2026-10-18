@@ -158,8 +158,10 @@ export function TripDatesCard({
               name="startDate"
               value={startDate}
               onChange={setStartDate}
+              max={endDate || undefined}
               label={labels.startDateLabel}
               locale={locale}
+              error={hasDateOrderError ? (locale === "bn" ? "ভুল তারিখ" : "Invalid date") : null}
             />
 
             <DatePickerField
@@ -169,6 +171,7 @@ export function TripDatesCard({
               min={startDate || undefined}
               label={labels.endDateLabel}
               locale={locale}
+              error={hasDateOrderError ? (locale === "bn" ? "ভুল তারিখ" : "Invalid date") : null}
             />
           </div>
 

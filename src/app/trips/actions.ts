@@ -79,7 +79,14 @@ export async function createTripAction(formData: FormData): Promise<void> {
     const hasPinErr = parsed.error.issues.some(
       (i) => i.message === "invalid_pin",
     );
-    const code = hasPinErr ? "invalid_pin" : "invalid_input";
+    const hasDateErr = parsed.error.issues.some(
+      (i) => i.message === "invalid_date_order",
+    );
+    const code = hasPinErr
+      ? "invalid_pin"
+      : hasDateErr
+        ? "invalid_dates"
+        : "invalid_input";
     redirect(`/trips/new?error=${code}`);
   }
 

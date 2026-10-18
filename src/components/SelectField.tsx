@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 export interface SelectOption {
   value: string;
@@ -99,8 +99,20 @@ export function SelectField({
     close();
   }
 
+  const [openUpward, setOpenUpward] = useState(false);
+
+  const computeDirection = useCallback(() => {
+    if (triggerRef.current && typeof window !== "undefined") {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      setOpenUpward(spaceBelow < 260 && spaceAbove > spaceBelow);
+    }
+  }, []);
+
   function openDropdown() {
     if (disabled) return;
+    computeDirection();
     setSearchQuery("");
     const curIdx = filteredOptions.findIndex((o) => o.value === current);
     setHighlightedIndex(curIdx >= 0 ? curIdx : 0);
@@ -112,6 +124,19 @@ export function SelectField({
     setSearchQuery("");
     triggerRef.current?.focus();
   }
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePositionUpdate() {
+      computeDirection();
+    }
+    window.addEventListener("resize", handlePositionUpdate);
+    window.addEventListener("scroll", handlePositionUpdate, { passive: true });
+    return () => {
+      window.removeEventListener("resize", handlePositionUpdate);
+      window.removeEventListener("scroll", handlePositionUpdate);
+    };
+  }, [open, computeDirection]);
 
   useEffect(() => {
     if (open && searchable) {
@@ -310,7 +335,11 @@ export function SelectField({
               <div
                 role="dialog"
                 aria-label={label ?? "Emoji picker"}
-                className="absolute left-0 top-full mt-1.5 z-50 w-max min-w-[190px] max-w-[230px] rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+                className={`absolute left-0 ${
+                  openUpward
+                    ? "bottom-full mb-1.5 origin-bottom slide-in-from-bottom-2"
+                    : "top-full mt-1.5 origin-top slide-in-from-top-2"
+                } z-50 w-max min-w-[190px] max-w-[230px] rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-100`}
               >
                 <div className="grid grid-cols-4 gap-1.5 p-1">
                   {options.map((opt) => {
@@ -337,7 +366,11 @@ export function SelectField({
             <div
               role="dialog"
               aria-label={label ?? placeholder}
-              className="absolute left-0 top-full mt-1.5 w-full min-w-[200px] z-50 rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+              className={`absolute left-0 ${
+                openUpward
+                  ? "bottom-full mb-1.5 origin-bottom slide-in-from-bottom-2"
+                  : "top-full mt-1.5 origin-top slide-in-from-top-2"
+              } w-full min-w-[200px] z-50 rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100`}
             >
               {/* Optional Search Input */}
               {searchable && options.length > 5 ? (

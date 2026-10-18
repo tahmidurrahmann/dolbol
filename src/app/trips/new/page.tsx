@@ -26,9 +26,11 @@ export default async function NewTripPage({ searchParams }: NewTripPageProps) {
   const errorMessage =
     error === "invalid_pin"
       ? tErr("invalid_pin")
-      : error
-        ? tErr("invalid_input")
-        : null;
+      : error === "invalid_dates"
+        ? tErr("invalid_dates")
+        : error
+          ? tErr("invalid_input")
+          : null;
 
   return (
     <section className="mx-auto max-w-2xl lg:max-w-3xl space-y-5 py-4 w-full">

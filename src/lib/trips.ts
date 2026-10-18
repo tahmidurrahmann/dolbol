@@ -72,25 +72,38 @@ export const dayNumberString = z
     message: "invalid_day_number",
   });
 
-export const createTripFormSchema = z.object({
-  name: z.string().trim().min(2, "trip_name_short").max(80, "trip_name_long"),
-  destination: z
-    .string()
-    .trim()
-    .max(80, "destination_long")
-    .optional()
-    .transform((val) => (val && val.length > 0 ? val : undefined)),
-  startDate: optionalDateString,
-  endDate: optionalDateString,
-  creatorName: z
-    .string()
-    .trim()
-    .min(1, "member_name_required")
-    .max(40, "member_name_long"),
-  friendsNames: z.string().trim().optional(),
-  creatorEmoji: optionalEmojiString,
-  creatorPin: optionalPinString,
-});
+export const createTripFormSchema = z
+  .object({
+    name: z.string().trim().min(2, "trip_name_short").max(80, "trip_name_long"),
+    destination: z
+      .string()
+      .trim()
+      .max(80, "destination_long")
+      .optional()
+      .transform((val) => (val && val.length > 0 ? val : undefined)),
+    startDate: optionalDateString,
+    endDate: optionalDateString,
+    creatorName: z
+      .string()
+      .trim()
+      .min(1, "member_name_required")
+      .max(40, "member_name_long"),
+    friendsNames: z.string().trim().optional(),
+    creatorEmoji: optionalEmojiString,
+    creatorPin: optionalPinString,
+  })
+  .refine(
+    (data) => {
+      if (data.startDate && data.endDate) {
+        return data.startDate <= data.endDate;
+      }
+      return true;
+    },
+    {
+      message: "invalid_date_order",
+      path: ["endDate"],
+    },
+  );
 
 const HONORIFIC_PREFIXES = new Set([
   "md",
