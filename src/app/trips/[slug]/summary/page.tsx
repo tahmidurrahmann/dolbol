@@ -3,9 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
+import { BRAND } from "@/config/brand";
 import { db } from "@/lib/db";
 import { type SupportedLocale, toBanglaDigits } from "@/lib/format";
 import { buildPublicTripSummary } from "@/lib/share-and-export";
+import { getSiteUrl } from "@/lib/site-url";
 
 interface PublicSummaryPageProps {
   params: Promise<{ slug: string }>;
@@ -21,7 +23,13 @@ export async function generateMetadata({
   });
 
   if (!trip) {
-    return { title: "Trip Hub" };
+    return {
+      title: BRAND.name.en,
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
   }
 
   const title = trip.destination
@@ -30,11 +38,15 @@ export async function generateMetadata({
 
   return {
     title,
+    robots: {
+      index: false,
+      follow: false,
+    },
     openGraph: {
       title,
       images: [
         {
-          url: `/api/trips/${slug}/share-image`,
+          url: getSiteUrl(`/api/trips/${slug}/share-image`).toString(),
           width: 1200,
           height: 630,
           alt: trip.name,
@@ -132,12 +144,16 @@ export default async function PublicTripSummaryPage({
             {summary.destination ? (
               <p className="text-base font-bold text-[var(--color-primary)] flex items-center gap-1.5">
                 <span>📍</span>
-                <span>{tTrip("destinationPrefix")} {summary.destination}</span>
+                <span>
+                  {tTrip("destinationPrefix")} {summary.destination}
+                </span>
               </p>
             ) : summary.topVotedDestination ? (
               <p className="text-base font-bold text-[var(--color-primary)] flex items-center gap-1.5">
                 <span>🏆</span>
-                <span>{tPlan("topPickBadge")}: {summary.topVotedDestination}</span>
+                <span>
+                  {tPlan("topPickBadge")}: {summary.topVotedDestination}
+                </span>
               </p>
             ) : null}
 
@@ -172,7 +188,7 @@ export default async function PublicTripSummaryPage({
             </a>
           </div>
 
-          {/* CTA to join / open full trip hub */}
+          {/* CTA to join / open full trip */}
           <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-center shadow-xs">
             <p className="mb-3 text-xs sm:text-sm text-[var(--color-fg-muted)]">
               {tShare("privacyNotice")}
@@ -192,7 +208,9 @@ export default async function PublicTripSummaryPage({
           <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
             <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
               <span>👥</span>
-              <span>{tTrip("membersHeading")} ({memberCountLabel})</span>
+              <span>
+                {tTrip("membersHeading")} ({memberCountLabel})
+              </span>
             </h2>
             <div className="flex flex-wrap gap-2">
               {summary.members.map((m) => (

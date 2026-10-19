@@ -360,10 +360,10 @@ export function ExpenseExplainerDemo({
             {/* Real Card Header with Title, Subtitle, and AI Chip */}
             <div className="flex items-start justify-between gap-1.5 min-[360px]:gap-2 border-b border-gray-100 pb-1.5">
               <div className="min-w-0">
-                <h3 className="text-xs sm:text-sm font-bold text-[var(--color-fg)] flex items-center gap-1.5 truncate">
-                  <span className="text-emerald-600">✨</span>
+                <p className="text-xs sm:text-sm font-bold text-[var(--color-fg)] flex items-center gap-1.5 truncate">
+                  <span className="text-emerald-600" aria-hidden="true">✨</span>
                   <span>{labels.cardTitle}</span>
-                </h3>
+                </p>
                 <p className="text-[10px] sm:text-[11px] text-neutral-400 line-clamp-1">
                   {labels.cardSubtitle}
                 </p>

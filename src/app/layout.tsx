@@ -6,6 +6,10 @@ import type { ReactNode } from "react";
 import { Container } from "@/components/Container";
 import { Header } from "@/components/Header";
 import { Analytics } from "@vercel/analytics/next";
+import { BRAND } from "@/config/brand";
+import { ACTIVE_LANDING_META } from "@/config/seo";
+import type { SupportedLocale } from "@/lib/format";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const anekBangla = Anek_Bangla({
@@ -18,14 +22,50 @@ const anekBangla = Anek_Bangla({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0f6b4a",
+  themeColor: BRAND.themeColor,
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("app");
+  const locale = (await getLocale()) as SupportedLocale;
+  const isBn = locale === "bn";
+  const brandName = BRAND.name[isBn ? "bn" : "en"];
+  const meta = ACTIVE_LANDING_META[isBn ? "bn" : "en"];
+  const ogLocale = isBn ? "bn_BD" : "en_US";
+  const siteUrl = getSiteUrl();
+
   return {
-    title: { default: t("name"), template: `%s | ${t("name")}` },
-    description: t("tagline"),
+    metadataBase: siteUrl,
+    title: {
+      default: meta.title,
+      template: `%s | ${brandName}`,
+    },
+    description: meta.description,
+    applicationName: brandName,
+    alternates: {
+      canonical: "/",
+    },
+    openGraph: {
+      type: "website",
+      siteName: brandName,
+      title: meta.title,
+      description: meta.description,
+      url: siteUrl.toString(),
+      locale: ogLocale,
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: brandName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description,
+      images: ["/og-image.png"],
+    },
     other: {
       google: "notranslate",
     },

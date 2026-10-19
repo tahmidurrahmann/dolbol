@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { notFound } from "next/navigation";
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
   if (env.NODE_ENV === "production") {
-    return new NextResponse("Not Found", { status: 404 });
+    notFound();
   }
 
   const fontPath = join(

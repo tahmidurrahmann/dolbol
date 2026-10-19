@@ -42,12 +42,15 @@ export function RecentTripsList({ locale, labels }: RecentTripsListProps) {
     <section className="space-y-2.5 sm:space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-base">
+          <span
+            aria-hidden="true"
+            className="flex size-7 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-base"
+          >
             🌴
           </span>
-          <h2 className="text-base sm:text-lg font-black text-[var(--color-fg)]">
+          <p className="text-base sm:text-lg font-black text-[var(--color-fg)]">
             {labels.sectionTitle}
-          </h2>
+          </p>
         </div>
       </div>
 
@@ -71,14 +74,14 @@ export function RecentTripsList({ locale, labels }: RecentTripsListProps) {
                 </div>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] min-[360px]:text-xs text-neutral-500">
                   <span className="flex items-center gap-1">
-                    <span>👤</span>
+                    <span aria-hidden="true">👤</span>
                     <span className="font-semibold text-neutral-700">
                       {labels.myMemberPrefix} {trip.myMemberName}
                     </span>
                   </span>
                   <span className="text-neutral-300 hidden min-[360px]:inline" aria-hidden="true">•</span>
                   <span className="flex items-center gap-1 text-neutral-400">
-                    <span>🕒</span>
+                    <span aria-hidden="true">🕒</span>
                     <span>{lastOpenedPlain}</span>
                   </span>
                 </div>

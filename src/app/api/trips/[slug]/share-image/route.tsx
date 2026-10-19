@@ -2,8 +2,10 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { NextResponse } from "next/server";
+import { BRAND } from "@/config/brand";
 import { db } from "@/lib/db";
 import { buildPublicTripSummary } from "@/lib/share-and-export";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -134,7 +136,7 @@ export async function GET(
                     letterSpacing: "-0.5px",
                   }}
                 >
-                  🌴 Trip Hub
+                  🌴 {BRAND.name.bn}
                 </span>
                 <span
                   style={{
@@ -148,7 +150,7 @@ export async function GET(
                     border: "1px solid #c2e5d3",
                   }}
                 >
-                  trip-hub-one.vercel.app
+                  {getSiteUrl().host}
                 </span>
               </div>
               {summary.dateRangeLabel ? (

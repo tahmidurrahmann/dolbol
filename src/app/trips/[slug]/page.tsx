@@ -37,7 +37,9 @@ import { ShareAndExportCard } from "@/components/ShareAndExportCard";
 import { SoftPinPromptCard } from "@/components/SoftPinPromptCard";
 import { TripDatesCard } from "@/components/TripDatesCard";
 import { TripTabsContainer } from "@/components/TripTabsContainer";
+import { BRAND } from "@/config/brand";
 import { db } from "@/lib/db";
+import { getSiteUrl } from "@/lib/site-url";
 import {
   formatDate,
   formatTaka,
@@ -158,30 +160,40 @@ export async function generateMetadata({
   });
 
   const locale = (await getLocale()) as SupportedLocale;
+  const brandName = BRAND.name[locale === "bn" ? "bn" : "en"];
 
   if (!trip) {
     return {
       title: locale === "bn" ? "ট্রিপে যোগ দিন" : "Join Trip",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 
   const destinationPart = trip.destination ? ` - ${trip.destination}` : "";
   const pageTitle = `${trip.name}${destinationPart}`;
-  const fullTitle = `${pageTitle} | Trip Hub`;
+  const fullTitle = `${pageTitle} | ${brandName}`;
   const description =
     locale === "bn"
       ? `${trip.name} ট্রিপের খরচ ভাগাভাগি ও হিসাব করার জন্য ইনভাইট লিংক।`
       : `Invitation link to join ${trip.name} to track and split expenses.`;
+  const ogImageUrl = getSiteUrl("/og-image.png").toString();
 
   return {
     title: pageTitle,
     description,
+    robots: {
+      index: false,
+      follow: false,
+    },
     openGraph: {
       title: fullTitle,
       description,
       images: [
         {
-          url: "/og-image.png",
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: trip.name,
@@ -192,7 +204,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: fullTitle,
       description,
-      images: ["/og-image.png"],
+      images: [ogImageUrl],
     },
   };
 }
@@ -473,7 +485,7 @@ export default async function TripPage({
     );
   }
 
-  // 2. Signed-in Trip Hub View
+  // 2. Signed-in Trip View
   const isCreator = currentMember.id === trip.creatorMemberId;
   const isSessionUnder24Hours = isSessionCreatedUnder24Hours(
     currentSession?.createdAt,

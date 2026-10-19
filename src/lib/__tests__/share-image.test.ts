@@ -1,8 +1,23 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 // Mock env and db
 process.env.DATABASE_URL = "postgresql://localhost:5432/db";
 (process.env as Record<string, string | undefined>).NODE_ENV = "test";
+
+const originalFetch = globalThis.fetch;
+beforeAll(() => {
+  globalThis.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+    const urlStr = typeof url === "string" ? url : url.toString();
+    if (urlStr.includes("fonts.googleapis.com") || urlStr.includes("cdn.jsdelivr.net")) {
+      return new Response(null, { status: 404 });
+    }
+    return originalFetch(url, init);
+  });
+});
+
+afterAll(() => {
+  globalThis.fetch = originalFetch;
+});
 
 vi.mock("@/lib/db", () => ({
   db: {

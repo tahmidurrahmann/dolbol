@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
+import { BRAND } from "@/config/brand";
 import type { SupportedLocale } from "@/lib/format";
+import { getSiteUrl } from "@/lib/site-url";
 
 export interface ShareAndExportCardLabels {
   cardTitle: string;
@@ -154,8 +156,12 @@ export function ShareAndExportCard({
           {/* Header */}
           <div className="relative z-10 flex items-start justify-between gap-3 border-b border-white/20 pb-3">
             <div className="space-y-0.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-200">
-                Trip Hub
+              <span
+                className={`text-[11px] font-bold text-emerald-200 ${
+                  locale === "bn" ? "" : "uppercase tracking-wider"
+                }`}
+              >
+                {BRAND.name[locale === "bn" ? "bn" : "en"]}
               </span>
               <h4 className="text-lg sm:text-xl font-black leading-tight text-white tracking-tight">
                 {tripName}
@@ -222,7 +228,7 @@ export function ShareAndExportCard({
                 ? "🇧🇩 বন্ধুদের ট্যুর ও খরচের সহজ হিসাব"
                 : "🇧🇩 Group trip & expense splitting"}
             </span>
-            <span className="font-bold text-white">trip-hub-one.vercel.app</span>
+            <span className="font-bold text-white">{getSiteUrl().host}</span>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { Button } from "@/components/Button";
+import { BRAND } from "@/config/brand";
 
 export default function GlobalError({
   error,
@@ -15,7 +16,7 @@ export default function GlobalError({
   const bn = useLocale() === "bn";
 
   useEffect(() => {
-    console.error("Trip Hub Application Error:", error);
+    console.error(`${BRAND.name.en} Application Error:`, error);
   }, [error]);
 
   const isDev = process.env.NODE_ENV === "development";

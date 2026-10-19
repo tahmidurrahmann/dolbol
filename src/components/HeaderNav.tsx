@@ -15,7 +15,8 @@ export function HeaderNav({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div
+    <nav
+      aria-label="Main Navigation"
       className={`flex min-h-[48px] sm:min-h-[50px] items-center justify-between gap-2 sm:gap-3 rounded-2xl px-3 sm:px-5 py-1.5 transition-all duration-200 ${
         scrolled
           ? "border border-gray-200/90 bg-white/95 shadow-xs backdrop-blur-md"
@@ -23,6 +24,6 @@ export function HeaderNav({ children }: { children: ReactNode }) {
       }`}
     >
       {children}
-    </div>
+    </nav>
   );
 }

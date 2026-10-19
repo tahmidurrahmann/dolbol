@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
+import { BRAND } from "@/config/brand";
 import { HeaderNav } from "@/components/HeaderNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import type { SupportedLocale } from "@/lib/format";
@@ -15,17 +16,25 @@ export async function Header() {
           {/* Logo & Brand */}
           <Link
             href="/"
+            aria-label={`${BRAND.name[isBn ? "bn" : "en"]} - ${isBn ? "হোমপেজ" : "Homepage"}`}
             className="group flex items-center gap-2 sm:gap-2.5 font-black text-gray-900 transition-colors hover:text-[var(--color-primary)]"
           >
-            <span className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b724f] to-emerald-700 text-base sm:text-xl text-white shadow-2xs transition-transform group-hover:scale-105 shrink-0">
+            <span
+              aria-hidden="true"
+              className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b724f] to-emerald-700 text-base sm:text-xl text-white shadow-2xs transition-transform group-hover:scale-105 shrink-0"
+            >
               🌴
             </span>
             <div className="flex flex-col leading-tight">
               <span className="text-sm sm:text-lg font-black tracking-tight text-gray-900">
-                {isBn ? "ট্রিপ হাব" : "Trip Hub"}
+                {BRAND.name[isBn ? "bn" : "en"]}
               </span>
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                {isBn ? "ভ্রমণ ও খরচ" : "Trip & Costs"}
+              <span
+                className={`text-[9px] sm:text-[10px] font-bold text-gray-400 ${
+                  isBn ? "" : "uppercase tracking-wider"
+                }`}
+              >
+                {BRAND.descriptor[isBn ? "bn" : "en"]}
               </span>
             </div>
           </Link>

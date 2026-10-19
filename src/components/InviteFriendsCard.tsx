@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import type { SupportedLocale } from "@/lib/format";
+import { getSiteUrl } from "@/lib/site-url";
 
 interface InviteFriendsCardProps {
   slug: string;
@@ -30,7 +31,7 @@ export function InviteFriendsCard({
 
   const fullUrl = isClient
     ? `${window.location.origin}/trips/${slug}`
-    : `https://trip-hub-one.vercel.app/trips/${slug}`;
+    : getSiteUrl(`/trips/${slug}`).toString();
 
   const hasWebShare =
     isClient &&

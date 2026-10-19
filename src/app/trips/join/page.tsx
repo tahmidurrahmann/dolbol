@@ -4,30 +4,40 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { BackToTripBar } from "@/components/BackToTripBar";
 import { ErrorMessageBanner } from "@/components/ErrorMessageBanner";
 import { JoinTripForm } from "@/components/JoinTripForm";
+import { BRAND } from "@/config/brand";
 import type { SupportedLocale } from "@/lib/format";
+import { getSiteUrl } from "@/lib/site-url";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("joinByLink");
+  const locale = (await getLocale()) as SupportedLocale;
+  const brandName = BRAND.name[locale === "bn" ? "bn" : "en"];
+  const ogImageUrl = getSiteUrl("/og-image.png").toString();
+
   return {
     title: t("title"),
     description: t("subtitle"),
+    robots: {
+      index: false,
+      follow: false,
+    },
     openGraph: {
-      title: `${t("title")} | Trip Hub`,
+      title: `${t("title")} | ${brandName}`,
       description: t("subtitle"),
       images: [
         {
-          url: "/og-image.png",
+          url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: "Trip Hub",
+          alt: brandName,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: `${t("title")} | Trip Hub`,
+      title: `${t("title")} | ${brandName}`,
       description: t("subtitle"),
-      images: ["/og-image.png"],
+      images: [ogImageUrl],
     },
   };
 }

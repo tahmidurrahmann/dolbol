@@ -1,7 +1,8 @@
 {
   "app": {
-    "name": "Trip Hub",
-    "tagline": "Plan group trips and split expenses with friends effortlessly",
+    "name": "Dolbol",
+    "descriptor": "Trip & Costs",
+    "tagline": "Plan the trip. Split the costs.",
     "createTrip": "Create a trip",
     "joinTrip": "Join a trip",
     "comingSoon": "Coming soon",
