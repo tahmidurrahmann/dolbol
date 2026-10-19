@@ -46,7 +46,7 @@ export async function GET(): Promise<Response> {
           color: "#0f6b4a",
         }}
       >
-        সুন্দরবন ভ্রমণ — মোট খরচ ৳১২,৫০০
+        সুন্দরবন ভ্রমণ | মোট খরচ ৳১২,৫০০
       </div>
       <div style={{ display: "flex", marginBottom: "8px" }}>
         কক্সবাজার • শ্রীমঙ্গল • দ্বিতীয় দিন
@@ -59,7 +59,7 @@ export async function GET(): Promise<Response> {
           marginTop: "12px",
         }}
       >
-        Sundarbans Trip — Total Cost ৳12,500
+        Sundarbans Trip | Total Cost ৳12,500
       </div>
     </div>,
     {

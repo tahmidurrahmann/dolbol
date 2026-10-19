@@ -40,10 +40,11 @@ export default async function DevExpenseDemoPage({
           <div>
             <h1 className="text-xl font-black text-gray-900 flex items-center gap-2">
               <span>🎬</span>
-              <span>AI Expense Explainer Demo — Beat Inspector</span>
+              <span>AI Expense Explainer Demo | Beat Inspector</span>
             </h1>
             <p className="text-xs text-neutral-500">
-              Dev-only tool to inspect every second of the 10-second pure CSS animation loop.
+              Dev-only tool to inspect every second of the 10-second pure CSS
+              animation loop.
             </p>
           </div>
 
@@ -153,7 +154,9 @@ export default async function DevExpenseDemoPage({
               <span>💻</span>
               <span>Full Scene View (480px)</span>
             </h2>
-            <span className="text-xs font-mono text-neutral-400">max-w: 480px</span>
+            <span className="text-xs font-mono text-neutral-400">
+              max-w: 480px
+            </span>
           </div>
 
           <div className="mx-auto w-[480px] max-w-full rounded-2xl border-2 border-dashed border-neutral-300 p-2 bg-neutral-50 shadow-inner">

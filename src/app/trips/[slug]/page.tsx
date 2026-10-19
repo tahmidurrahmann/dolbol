@@ -8,7 +8,6 @@ import {
   reclaimMemberAction,
   renameMemberAction,
   toggleTripLockAction,
-  updateMyProfileAction,
 } from "@/app/trips/actions";
 import { ActivityLogCard } from "@/components/ActivityLogCard";
 import { AiExpenseParserCard } from "@/components/AiExpenseParserCard";
@@ -28,6 +27,7 @@ import { ErrorMessageBanner } from "@/components/ErrorMessageBanner";
 import { InviteFriendsCard } from "@/components/InviteFriendsCard";
 import { ItineraryCard } from "@/components/ItineraryCard";
 import { MembersListCard } from "@/components/MembersListCard";
+import { MyProfileSettingsCard } from "@/components/MyProfileSettingsCard";
 import { NewDeviceNoticeBanner } from "@/components/NewDeviceNoticeBanner";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
 import { RecentTripTracker } from "@/components/RecentTripTracker";
@@ -69,6 +69,7 @@ interface TripPageProps {
     error?: string;
     editExpense?: string;
     newTrip?: string;
+    pinSaved?: string;
   }>;
 }
 
@@ -214,7 +215,7 @@ export default async function TripPage({
   searchParams,
 }: TripPageProps) {
   const { slug } = await params;
-  const { error, editExpense, newTrip } = await searchParams;
+  const { error, editExpense, newTrip, pinSaved } = await searchParams;
   const locale = (await getLocale()) as SupportedLocale;
 
   const trip = await db.trip.findUnique({
@@ -344,6 +345,19 @@ export default async function TripPage({
         {errorMessage ? (
           <ErrorMessageBanner
             message={errorMessage}
+            dismissLabel={tTrip("dismiss")}
+          />
+        ) : null}
+
+        {pinSaved === "1" ? (
+          <ErrorMessageBanner
+            variant="success"
+            dismissParam="pinSaved"
+            message={
+              locale === "bn"
+                ? "🛡️ আপনার পিন সফলভাবে সংরক্ষিত হয়েছে! অন্য ডিভাইসে প্রবেশের জন্য এই পিনটি মনে রাখুন।"
+                : "🛡️ Your PIN has been successfully saved! Keep it safe for logging in on other devices."
+            }
             dismissLabel={tTrip("dismiss")}
           />
         ) : null}
@@ -782,6 +796,7 @@ export default async function TripPage({
       {isCreator && !currentMember.pinHash && newTrip === "1" ? (
         <CreatorPinPromptModal
           slug={trip.slug}
+          locale={locale}
           labels={{
             title: tTrip("creatorPromptTitle"),
             description: tTrip("creatorPromptDesc"),
@@ -789,6 +804,10 @@ export default async function TripPage({
             pinPlaceholder: tTrip("creatorPinPlaceholder"),
             saveButton: tTrip("creatorPromptSave"),
             skipButton: tTrip("creatorPromptSkip"),
+            explainerTitle: tTrip("creatorPinExplainerTitle"),
+            explainerIntro: tTrip("creatorPinExplainerIntro"),
+            explainerControl: tTrip("creatorPinExplainerControl"),
+            explainerRecovery: tTrip("creatorPinExplainerRecovery"),
           }}
         />
       ) : null}
@@ -796,6 +815,19 @@ export default async function TripPage({
       {errorMessage ? (
         <ErrorMessageBanner
           message={errorMessage}
+          dismissLabel={tTrip("dismiss")}
+        />
+      ) : null}
+
+      {pinSaved === "1" ? (
+        <ErrorMessageBanner
+          variant="success"
+          dismissParam="pinSaved"
+          message={
+            locale === "bn"
+              ? "🛡️ আপনার পিন সফলভাবে সংরক্ষিত হয়েছে! অন্য ডিভাইসে প্রবেশের জন্য এই পিনটি মনে রাখুন।"
+              : "🛡️ Your PIN has been successfully saved! Keep it safe for logging in on other devices."
+          }
           dismissLabel={tTrip("dismiss")}
         />
       ) : null}
@@ -1259,82 +1291,32 @@ export default async function TripPage({
               />
 
               {/* My Profile Settings (Change my name, emoji, or PIN) */}
-              <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5 sm:p-5 shadow-xs">
-                <h2 className="text-base font-bold text-[var(--color-fg)] flex items-center gap-2">
-                  <span>⚙️</span>
-                  <span>
-                    {locale === "bn"
-                      ? "আমার প্রোফাইল ও সেটিংস"
-                      : "My Profile & Settings"}
-                  </span>
-                </h2>
-
-                <form action={updateMyProfileAction} className="space-y-3">
-                  <input type="hidden" name="slug" value={trip.slug} />
-
-                  <div className="space-y-1">
-                    <label
-                      htmlFor="my-name"
-                      className="block text-xs font-bold text-[var(--color-fg)]"
-                    >
-                      {locale === "bn" ? "আমার নাম ও ইমোজি" : "My name & emoji"}
-                    </label>
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <SelectField
-                        id="my-emoji"
-                        name="emoji"
-                        emojiMode
-                        defaultValue={currentMember.emoji ?? "🎒"}
-                        options={MEMBER_EMOJIS.map((e) => ({
-                          value: e,
-                          label: e,
-                        }))}
-                      />
-                      <input
-                        id="my-name"
-                        name="displayName"
-                        type="text"
-                        required
-                        maxLength={40}
-                        defaultValue={currentMember.displayName}
-                        className="min-h-[40px] sm:min-h-[44px] flex-1 min-w-0 rounded-2xl border border-[var(--color-border)] bg-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label
-                      htmlFor="my-pin"
-                      className="block text-xs font-bold text-[var(--color-fg)]"
-                    >
-                      {locale === "bn" ? "পিন (ঐচ্ছিক)" : "PIN (optional)"}
-                    </label>
-                    <input
-                      id="my-pin"
-                      name="pin"
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={6}
-                      placeholder={
-                        currentMember.pinHash
-                          ? "••••"
-                          : locale === "bn"
-                            ? "৪-৬ ডিজিট"
-                            : "4-6 digits"
-                      }
-                      className="min-h-[44px] w-full rounded-2xl border border-[var(--color-border)] bg-white px-3.5 py-1.5 text-sm text-[var(--color-fg)] outline-none focus:border-[var(--color-primary)]"
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    className="w-full min-h-[42px] text-xs font-bold"
-                  >
-                    {locale === "bn" ? "সেভ করুন" : "Save changes"}
-                  </Button>
-                </form>
-              </div>
+              <MyProfileSettingsCard
+                slug={trip.slug}
+                locale={locale}
+                currentMember={{
+                  id: currentMember.id,
+                  displayName: currentMember.displayName,
+                  emoji: currentMember.emoji,
+                  pinHash: currentMember.pinHash,
+                }}
+                memberEmojis={MEMBER_EMOJIS}
+                labels={{
+                  cardTitle: tTrip("profileSettingsTitle"),
+                  nameLabel: tTrip("myNameAndEmojiLabel"),
+                  pinLabel: tTrip("pinFieldLabel"),
+                  saveButton: tTrip("saveProfileButton"),
+                  savingButton: tTrip("savingProfileButton"),
+                  pinActiveBadge: tTrip("pinActiveBadge"),
+                  pinInactiveBadge: tTrip("pinInactiveBadge"),
+                  pinKeepCurrentHint: tTrip("pinKeepCurrentHint"),
+                  pinEmptyOptionalHint: tTrip("pinEmptyOptionalHint"),
+                  explainerTitle: tTrip("pinExplainerTitle"),
+                  explainerIntro: tTrip("pinExplainerIntro"),
+                  explainerSecurity: tTrip("pinExplainerSecurity"),
+                  explainerRecovery: tTrip("pinExplainerRecovery"),
+                }}
+              />
             </div>
 
             <div className="space-y-5">

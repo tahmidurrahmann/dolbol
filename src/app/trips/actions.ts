@@ -674,13 +674,24 @@ export async function updateMyProfileAction(formData: FormData): Promise<void> {
     }
   }
 
+  const isCreatorPinSetup = formData.get("isCreatorPinSetup") === "1";
+
   let pinHash = currentMember.pinHash;
-  if (pin) {
+  let didUpdatePin = false;
+  if (isCreatorPinSetup) {
+    const ascii = banglaToAsciiDigits(pin);
+    if (!ascii || !/^\d{4,6}$/.test(ascii)) {
+      redirect(`/trips/${trip.slug}?error=invalid_pin`);
+    }
+    pinHash = hashPin(ascii);
+    didUpdatePin = true;
+  } else if (pin) {
     const ascii = banglaToAsciiDigits(pin);
     if (!/^\d{4,6}$/.test(ascii)) {
       redirect(`/trips/${trip.slug}?error=invalid_pin`);
     }
     pinHash = hashPin(ascii);
+    didUpdatePin = true;
   }
 
   await db.member.update({
@@ -694,6 +705,9 @@ export async function updateMyProfileAction(formData: FormData): Promise<void> {
   });
 
   revalidatePath(`/trips/${trip.slug}`);
+  if (didUpdatePin) {
+    redirect(`/trips/${trip.slug}?pinSaved=1`);
+  }
   redirect(`/trips/${trip.slug}`);
 }
 

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { BRAND } from "@/config/brand";
+import { PublicSummaryShareCard } from "@/components/PublicSummaryShareCard";
 import { db } from "@/lib/db";
 import { type SupportedLocale, toBanglaDigits } from "@/lib/format";
 import { buildPublicTripSummary } from "@/lib/share-and-export";
@@ -33,8 +33,8 @@ export async function generateMetadata({
   }
 
   const title = trip.destination
-    ? `${trip.name} (${trip.destination}) — Trip Summary`
-    : `${trip.name} — Trip Summary`;
+    ? `${trip.name} (${trip.destination}) | Trip Summary`
+    : `${trip.name} | Trip Summary`;
 
   return {
     title,
@@ -165,28 +165,22 @@ export default async function PublicTripSummaryPage({
             ) : null}
           </div>
 
-          {/* Shareable Summary Image Preview & Download */}
-          <div className="space-y-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
-            <h2 className="text-base font-bold text-[var(--color-fg)] flex items-center gap-2">
-              <span>🖼️</span>
-              <span>{tShare("shareImageHeading")}</span>
-            </h2>
-            <Image
-              src={`/api/trips/${summary.slug}/share-image`}
-              alt={summary.name}
-              width={1200}
-              height={630}
-              unoptimized
-              className="h-auto w-full rounded-xl border border-[var(--color-border)] shadow-2xs"
-            />
-            <a
-              href={`/api/trips/${summary.slug}/share-image?download=1`}
-              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-[var(--color-primary-hover)] active:scale-95 transition-all"
-            >
-              <span>📥</span>
-              <span>{tShare("downloadShareImageButton")}</span>
-            </a>
-          </div>
+          {/* Shareable Summary Image Card (Rendered via browser with full native Bangla font shaping + html-to-image PNG export) */}
+          <PublicSummaryShareCard
+            slug={summary.slug}
+            tripName={summary.name}
+            destination={summary.destination}
+            topVotedDestination={summary.topVotedDestination}
+            dateRangeLabel={summary.dateRangeLabel}
+            memberCount={summary.memberCount}
+            members={summary.members}
+            itineraryDays={summary.itineraryDays}
+            locale={locale}
+            labels={{
+              heading: tShare("shareImageHeading"),
+              downloadButton: tShare("downloadShareImageButton"),
+            }}
+          />
 
           {/* CTA to join / open full trip */}
           <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-center shadow-xs">

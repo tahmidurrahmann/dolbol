@@ -232,3 +232,13 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   0%, 100% { opacity: 0.2; transform: translateY(0) scale(0.85); }
   50% { opacity: 0.9; transform: translateY(-4px) scale(1.1); }
 }
+
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+

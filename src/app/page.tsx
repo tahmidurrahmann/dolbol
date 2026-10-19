@@ -8,11 +8,10 @@ import { RecentTripsList } from "@/components/RecentTripsList";
 import type { SupportedLocale } from "@/lib/format";
 import { buildLandingJsonLd, serializeJsonLd } from "@/lib/json-ld";
 
-const ExpenseExplainerDemo = dynamic(
-  () =>
-    import("@/components/ExpenseExplainerDemo").then(
-      (mod) => mod.ExpenseExplainerDemo
-    )
+const ExpenseExplainerDemo = dynamic(() =>
+  import("@/components/ExpenseExplainerDemo").then(
+    (mod) => mod.ExpenseExplainerDemo,
+  ),
 );
 
 export default async function HomePage() {
@@ -102,7 +101,7 @@ export default async function HomePage() {
         ? "খরচের বিবরণ কোন ভাষায় লেখা যাবে?"
         : "What languages can I use to record expenses?",
       a: bn
-        ? "বাংলা, ইংরেজি অথবা বাংলিশ—যেকোনো ভাষায় স্বাভাবিক মেসেজের মতো খরচ লিখতে পারেন। যেমন: 'হোটেল ভাড়া ৩০০০ তানভীর দিসে'।"
+        ? "বাংলা, ইংরেজি অথবা বাংলিশ, যেকোনো ভাষায় স্বাভাবিক মেসেজের মতো খরচ লিখতে পারেন। যেমন: 'হোটেল ভাড়া ৩০০০ তানভীর দিসে'।"
         : "You can type expenses naturally in Bangla, English, or Banglish (for example: 'Hotel rent 3000 paid by Tanvir').",
     },
     {
@@ -153,17 +152,19 @@ export default async function HomePage() {
           <div className="flex flex-col items-start gap-4 sm:gap-5 lg:col-span-7 min-w-0 w-full">
             {/* Badge */}
             <div className="inline-flex max-w-full items-center gap-1.5 min-[360px]:gap-2 rounded-2xl min-[360px]:rounded-full border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/10 px-3 py-1.5 min-[360px]:px-3.5 text-[11px] min-[360px]:text-xs font-bold leading-snug text-[var(--color-primary)] shadow-2xs">
-              <span className="shrink-0" aria-hidden="true">✨</span>
-              <span className="break-words">
-                {t("tagline")}
+              <span className="shrink-0" aria-hidden="true">
+                ✨
               </span>
+              <span className="break-words">{t("tagline")}</span>
             </div>
 
             <h1 className="text-2xl min-[360px]:text-3xl font-black tracking-tight text-[var(--color-fg)] sm:text-5xl lg:text-[46px] leading-[1.2] sm:leading-[1.18] break-words">
               {bn ? (
                 <>
                   ট্যুরের খরচ ভাগ করুন,{" "}
-                  <span className="text-[var(--color-primary)]">ঝগড়া ছাড়াই।</span>
+                  <span className="text-[var(--color-primary)]">
+                    ঝগড়া ছাড়াই।
+                  </span>
                 </>
               ) : (
                 <>
@@ -188,7 +189,10 @@ export default async function HomePage() {
                 className="group inline-flex min-h-[46px] min-[360px]:min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#e8f5ee] border border-emerald-300/80 px-5 min-[360px]:px-7 text-sm min-[360px]:text-base font-extrabold text-[#0f6b4a] shadow-2xs transition-all hover:bg-[#daf0e3] hover:border-emerald-400 active:scale-[0.98]"
               >
                 <span>{t("createTrip")}</span>
-                <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">
+                <span
+                  className="transition-transform group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
                   →
                 </span>
               </Link>
@@ -206,23 +210,27 @@ export default async function HomePage() {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] min-[360px]:text-xs font-medium text-neutral-400 pt-1">
               <span className="inline-flex items-center gap-1.5">
                 <span aria-hidden="true">⚡</span>
-                <span>
-                  {bn ? "লগইন ঝামেলাহীন" : "No login needed"}
-                </span>
+                <span>{bn ? "লগইন ঝামেলাহীন" : "No login needed"}</span>
               </span>
-              <span className="text-neutral-300 hidden min-[400px]:inline" aria-hidden="true">•</span>
+              <span
+                className="text-neutral-300 hidden min-[400px]:inline"
+                aria-hidden="true"
+              >
+                •
+              </span>
               <span className="inline-flex items-center gap-1.5">
                 <span aria-hidden="true">৳</span>
-                <span>
-                  {bn ? "পূর্ণ টাকার হিসাব" : "Whole BDT only"}
-                </span>
+                <span>{bn ? "পূর্ণ টাকার হিসাব" : "Whole BDT only"}</span>
               </span>
-              <span className="text-neutral-300 hidden min-[400px]:inline" aria-hidden="true">•</span>
+              <span
+                className="text-neutral-300 hidden min-[400px]:inline"
+                aria-hidden="true"
+              >
+                •
+              </span>
               <span className="inline-flex items-center gap-1.5">
                 <span aria-hidden="true">🤖</span>
-                <span>
-                  {bn ? "এআই মেসেজ পার্সার" : "Bangla/Banglish AI"}
-                </span>
+                <span>{bn ? "এআই মেসেজ পার্সার" : "Bangla/Banglish AI"}</span>
               </span>
             </div>
           </div>
@@ -269,7 +277,9 @@ export default async function HomePage() {
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-sm font-bold text-white shadow-xs">
                     {step.num}
                   </span>
-                  <span className="text-2xl" aria-hidden="true">{step.icon}</span>
+                  <span className="text-2xl" aria-hidden="true">
+                    {step.icon}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <h3 className="text-base font-bold text-[var(--color-fg)]">
@@ -288,7 +298,9 @@ export default async function HomePage() {
         <section className="flex flex-col gap-6 pt-4">
           <div className="text-center sm:text-left space-y-1">
             <h2 className="text-2xl font-black tracking-tight text-[var(--color-fg)] sm:text-3xl">
-              {bn ? "প্রতিটি ট্রিপে যা পাবেন" : "What is included in every trip"}
+              {bn
+                ? "প্রতিটি ট্রিপে যা পাবেন"
+                : "What is included in every trip"}
             </h2>
             <p className="text-sm text-neutral-400">
               {bn
@@ -303,7 +315,9 @@ export default async function HomePage() {
                 key={item.title}
                 className="flex flex-col items-start gap-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs transition-all hover:shadow-md hover:border-[var(--color-primary)]/30"
               >
-                <span className="text-3xl" aria-hidden="true">{item.icon}</span>
+                <span className="text-3xl" aria-hidden="true">
+                  {item.icon}
+                </span>
                 <h3 className="text-base font-bold text-[var(--color-fg)]">
                   {item.title}
                 </h3>

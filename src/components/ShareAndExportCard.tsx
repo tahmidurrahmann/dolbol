@@ -147,88 +147,122 @@ export function ShareAndExportCard({
         {/* Live HTML Preview Card */}
         <div
           ref={cardRef}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b6b47] via-[#085a3c] to-[#043322] p-5 sm:p-6 text-white shadow-md select-none"
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#064e3b] via-[#0b6b47] to-[#043322] p-5 sm:p-7 text-white shadow-xl select-none"
         >
-          {/* Subtle background decoration */}
-          <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-400/20 blur-xl" />
-          <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-emerald-300/15 blur-xl" />
+          {/* Subtle background glow decoration */}
+          <div className="absolute -top-12 -right-12 h-36 w-36 rounded-full bg-emerald-400/25 blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-emerald-300/20 blur-2xl pointer-events-none" />
 
           {/* Header */}
-          <div className="relative z-10 flex items-start justify-between gap-3 border-b border-white/20 pb-3">
-            <div className="space-y-0.5">
-              <span
-                className={`text-[11px] font-bold text-emerald-200 ${
-                  locale === "bn" ? "" : "uppercase tracking-wider"
-                }`}
-              >
-                {BRAND.name[locale === "bn" ? "bn" : "en"]}
+          <div className="relative z-10 flex items-start justify-between gap-3 border-b border-white/20 pb-3 sm:pb-3.5">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <span className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-1.5">
+                <span>🌴</span>
+                <span>{BRAND.name[locale === "bn" ? "bn" : "en"]}</span>
               </span>
-              <h4 className="text-lg sm:text-xl font-black leading-tight text-white tracking-tight">
-                {tripName}
-              </h4>
+              <span className="rounded-lg bg-white/15 px-2 py-0.5 text-[11px] font-bold text-emerald-200 border border-white/10">
+                {getSiteUrl().host}
+              </span>
             </div>
-            <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white backdrop-blur-xs shrink-0">
-              📍 {destination || (locale === "bn" ? "বাংলাদেশ" : "Bangladesh")}
-            </span>
+            {dateRangeLabel ? (
+              <span className="rounded-xl bg-white/20 px-3 py-1 text-xs font-bold text-white border border-white/20 backdrop-blur-xs flex items-center gap-1.5 shrink-0">
+                <span>🗓️</span>
+                <span>{dateRangeLabel}</span>
+              </span>
+            ) : null}
           </div>
 
-          {/* Body */}
-          <div className="relative z-10 my-3.5 space-y-2.5">
-            {dateRangeLabel ? (
-              <p className="text-xs font-semibold text-emerald-100 flex items-center gap-1.5">
-                <span>📅</span>
-                <span>{dateRangeLabel}</span>
-              </p>
-            ) : null}
-
-            {members.length > 0 ? (
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-emerald-200 block">
-                  👥 {locale === "bn" ? `ট্রিপের সদস্যরা (${members.length} জন):` : `Trip Members (${members.length}):`}
+          {/* Hero Trip Title & Destination */}
+          <div className="relative z-10 my-4 space-y-2.5">
+            <h4 className="text-2xl sm:text-3xl font-black leading-tight text-white tracking-tight">
+              {tripName}
+            </h4>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-xl bg-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-100 border border-emerald-400/40 backdrop-blur-xs flex items-center gap-1.5">
+                <span>📍</span>
+                <span>{destination || (locale === "bn" ? "বাংলাদেশ" : "Bangladesh")}</span>
+              </span>
+              <span className="rounded-xl bg-white/15 px-3 py-1 text-xs font-bold text-white border border-white/20 backdrop-blur-xs flex items-center gap-1.5">
+                <span>👥</span>
+                <span>
+                  {locale === "bn"
+                    ? `${members.length} জন ভ্রমণসঙ্গী`
+                    : `${members.length} Members`}
                 </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {members.slice(0, 10).map((m, idx) => (
-                    <span
-                      key={idx}
-                      className="rounded-lg bg-black/25 px-2 py-0.5 text-xs font-medium text-white border border-white/10"
-                    >
-                      {m.emoji ?? "🎒"} {m.displayName}
-                    </span>
-                  ))}
-                  {members.length > 10 ? (
-                    <span className="rounded-lg bg-black/25 px-2 py-0.5 text-xs font-medium text-emerald-200 border border-white/10">
-                      +{members.length - 10} {locale === "bn" ? "জন" : "more"}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
+              </span>
+              <span className="rounded-xl bg-amber-500/25 px-3 py-1 text-xs font-bold text-amber-200 border border-amber-400/30 backdrop-blur-xs flex items-center gap-1.5">
+                <span>🎒</span>
+                <span>{locale === "bn" ? "গ্রুপ ট্রিপ" : "Group Trip"}</span>
+              </span>
+            </div>
+          </div>
 
+          {/* Middle Content: Itinerary highlights OR Branded Tagline Banner */}
+          <div className="relative z-10 my-3.5">
             {itineraryHighlights.length > 0 ? (
-              <div className="space-y-1 pt-1">
+              <div className="rounded-2xl bg-black/25 border border-white/15 p-3.5 sm:p-4 space-y-2 backdrop-blur-xs">
                 <span className="text-[11px] font-bold text-emerald-200 block">
                   🗺️ {locale === "bn" ? "ভ্রমণ পরিকল্পনা:" : "Itinerary Highlights:"}
                 </span>
-                <ul className="space-y-1 text-xs text-white/90">
+                <ul className="space-y-1.5 text-xs text-white/95">
                   {itineraryHighlights.slice(0, 3).map((item, idx) => (
-                    <li key={idx} className="truncate flex items-center gap-1.5">
-                      <span className="text-emerald-300">•</span>
-                      <span>{item}</span>
+                    <li key={idx} className="truncate flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
+                      <span className="font-medium">{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-            ) : null}
+            ) : (
+              <div className="rounded-2xl bg-white/10 border border-white/20 p-3.5 sm:p-4 text-center backdrop-blur-xs space-y-1">
+                <p className="text-sm sm:text-base font-extrabold text-white flex items-center justify-center gap-1.5">
+                  <span>✨</span>
+                  <span>{BRAND.tagline[locale === "bn" ? "bn" : "en"]}</span>
+                </p>
+                <p className="text-xs text-emerald-200/90 font-medium">
+                  {locale === "bn"
+                    ? "বন্ধুদের সাথে সুন্দর মুহূর্ত ও খরচের নির্ঝঞ্ঝাট সমাধান"
+                    : "Effortless group travel planning & fair expense splitting"}
+                </p>
+              </div>
+            )}
           </div>
 
+          {/* Members Showcase */}
+          {members.length > 0 ? (
+            <div className="relative z-10 space-y-2 border-t border-white/20 pt-3">
+              <span className="text-[11px] font-bold text-emerald-200 block">
+                👥 {locale === "bn" ? `ভ্রমণসঙ্গী (${members.length} জন):` : `Members (${members.length}):`}
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {members.slice(0, 10).map((m, idx) => (
+                  <span
+                    key={idx}
+                    className="rounded-xl bg-black/30 border border-white/15 px-2.5 py-1 text-xs font-semibold text-white flex items-center gap-1.5 backdrop-blur-xs shadow-2xs"
+                  >
+                    <span>{m.emoji ?? "🎒"}</span>
+                    <span>{m.displayName}</span>
+                  </span>
+                ))}
+                {members.length > 10 ? (
+                  <span className="rounded-xl bg-black/30 border border-white/15 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                    +{members.length - 10} {locale === "bn" ? "জন" : "more"}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           {/* Footer */}
-          <div className="relative z-10 flex items-center justify-between border-t border-white/20 pt-2.5 text-[11px] text-emerald-100">
+          <div className="relative z-10 flex items-center justify-between border-t border-white/20 pt-2.5 mt-3 text-[11px] text-emerald-100/90">
             <span>
               {locale === "bn"
-                ? "🇧🇩 বন্ধুদের ট্যুর ও খরচের সহজ হিসাব"
-                : "🇧🇩 Group trip & expense splitting"}
+                ? `🇧🇩 ${BRAND.name.bn} • বন্ধুদের ট্যুর ও খরচের হিসাব`
+                : `🇧🇩 ${BRAND.name.en} • Group trip & expense splitting`}
             </span>
-            <span className="font-bold text-white">{getSiteUrl().host}</span>
+            <span className="font-bold text-white">
+              {getSiteUrl().host}
+            </span>
           </div>
         </div>
 

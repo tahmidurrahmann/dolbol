@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { env } from "@/lib/env";
 
 const BANGLA_SAMPLES: readonly string[] = [
-  "সুন্দরবন ভ্রমণ — মোট খরচ ৳১২,৫০০",
+  "সুন্দরবন ভ্রমণ | মোট খরচ ৳১২,৫০০",
   "কক্সবাজার",
   "শ্রীমঙ্গল",
   "দ্বিতীয় দিন",
 ];
 
 const ENGLISH_SAMPLE =
-  "Sundarbans Trip — Total Cost ৳12,500 (Cox's Bazar, Sreemangal, Day 2)";
+  "Sundarbans Trip | Total Cost ৳12,500 (Cox's Bazar, Sreemangal, Day 2)";
 
 export default function RenderTestPage() {
   if (env.NODE_ENV === "production") {

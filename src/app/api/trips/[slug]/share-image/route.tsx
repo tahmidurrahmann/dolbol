@@ -4,6 +4,7 @@ import { ImageResponse } from "next/og";
 import { NextResponse } from "next/server";
 import { BRAND } from "@/config/brand";
 import { db } from "@/lib/db";
+import { toBanglaDigits } from "@/lib/format";
 import { buildPublicTripSummary } from "@/lib/share-and-export";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -76,15 +77,25 @@ export async function GET(
   }
 
   const destinationText =
-    summary.destination ?? summary.topVotedDestination ?? "Bangladesh";
-  const memberNamesPreview = summary.members
-    .slice(0, 8)
-    .map((m) => m.displayName)
-    .join(" • ");
+    summary.destination ?? summary.topVotedDestination ?? "বাংলাদেশ";
+
+  // Clean, Satori-safe numeric date format to prevent broken Bengali conjuncts
+  let safeDateLabel: string | null = null;
+  if (trip.startDate && trip.endDate) {
+    const sD = new Date(trip.startDate);
+    const eD = new Date(trip.endDate);
+    safeDateLabel = `${toBanglaDigits(sD.getDate())}/${toBanglaDigits(sD.getMonth() + 1)}/${toBanglaDigits(sD.getFullYear())} — ${toBanglaDigits(eD.getDate())}/${toBanglaDigits(eD.getMonth() + 1)}/${toBanglaDigits(eD.getFullYear())}`;
+  } else if (trip.startDate) {
+    const sD = new Date(trip.startDate);
+    safeDateLabel = `${toBanglaDigits(sD.getDate())}/${toBanglaDigits(sD.getMonth() + 1)}/${toBanglaDigits(sD.getFullYear())}`;
+  } else if (trip.endDate) {
+    const eD = new Date(trip.endDate);
+    safeDateLabel = `${toBanglaDigits(eD.getDate())}/${toBanglaDigits(eD.getMonth() + 1)}/${toBanglaDigits(eD.getFullYear())}`;
+  }
 
   const firstItineraryItems = summary.itineraryDays
     .flatMap((d) =>
-      d.items.map((item) => `Day ${d.dayNumber}: ${item.title}`),
+      d.items.map((item) => `দিন ${toBanglaDigits(d.dayNumber)}: ${item.title}`),
     )
     .slice(0, 3);
 
@@ -97,7 +108,7 @@ export async function GET(
           justifyContent: "space-between",
           width: "100%",
           height: "100%",
-          backgroundColor: "#0f6b4a",
+          backgroundColor: "#064e3b",
           padding: "36px",
           fontFamily: "Noto Sans Bengali, sans-serif",
         }}
@@ -110,141 +121,272 @@ export async function GET(
             width: "100%",
             height: "100%",
             backgroundColor: "#ffffff",
-            borderRadius: "24px",
-            padding: "44px 48px",
-            color: "#111c16",
+            borderRadius: "32px",
+            padding: "40px 48px",
+            color: "#0f172a",
+            border: "3px solid #10b981",
           }}
         >
           {/* Top Header */}
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "12px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontSize: 26,
-                    color: "#0f6b4a",
-                    fontWeight: 700,
-                    letterSpacing: "-0.5px",
-                  }}
-                >
-                  🌴 {BRAND.name.bn}
-                </span>
-                <span
-                  style={{
-                    display: "flex",
-                    fontSize: 14,
-                    color: "#0f6b4a",
-                    fontWeight: 600,
-                    backgroundColor: "#e8f5ee",
-                    padding: "3px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid #c2e5d3",
-                  }}
-                >
-                  {getSiteUrl().host}
-                </span>
-              </div>
-              {summary.dateRangeLabel ? (
-                <span style={{ display: "flex", fontSize: 20, color: "#4a5d52" }}>
-                  {summary.dateRangeLabel}
-                </span>
-              ) : null}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: 28,
+                  color: "#065f46",
+                  fontWeight: 800,
+                }}
+              >
+                🌴 {BRAND.name.bn}
+              </span>
+              <span
+                style={{
+                  display: "flex",
+                  fontSize: 15,
+                  color: "#065f46",
+                  fontWeight: 700,
+                  backgroundColor: "#ecfdf5",
+                  padding: "4px 12px",
+                  borderRadius: "10px",
+                  border: "1.5px solid #a7f3d0",
+                }}
+              >
+                {getSiteUrl().host}
+              </span>
             </div>
+            {safeDateLabel ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: "#166534",
+                  backgroundColor: "#f0fdf4",
+                  border: "1.5px solid #bbf7d0",
+                  padding: "6px 16px",
+                  borderRadius: "12px",
+                }}
+              >
+                {`🗓️ ${safeDateLabel}`}
+              </div>
+            ) : null}
+          </div>
 
+          {/* Trip Title & Highlights Row */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              marginTop: "8px",
+            }}
+          >
             <div
               style={{
                 display: "flex",
-                fontSize: 48,
-                fontWeight: 700,
-                color: "#111c16",
-                marginBottom: "10px",
+                fontSize: 44,
+                fontWeight: 900,
+                color: "#0f172a",
               }}
             >
               {summary.name}
             </div>
 
-            {destinationText ? (
-              <div
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <span
                 style={{
                   display: "flex",
-                  fontSize: 26,
-                  color: "#0f6b4a",
-                  fontWeight: 700,
                   alignItems: "center",
-                  gap: "8px",
+                  gap: "6px",
+                  fontSize: 19,
+                  color: "#065f46",
+                  fontWeight: 700,
+                  backgroundColor: "#ecfdf5",
+                  padding: "6px 16px",
+                  borderRadius: "12px",
+                  border: "1.5px solid #6ee7b7",
                 }}
               >
-                <span>📍</span>
-                <span>{destinationText}</span>
-              </div>
-            ) : null}
+                {`📍 ${destinationText}`}
+              </span>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: 18,
+                  color: "#1e40af",
+                  fontWeight: 700,
+                  backgroundColor: "#eff6ff",
+                  padding: "6px 16px",
+                  borderRadius: "12px",
+                  border: "1.5px solid #bfdbfe",
+                }}
+              >
+                {`👥 ${toBanglaDigits(summary.memberCount)} জন ভ্রমণসঙ্গী`}
+              </span>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: 18,
+                  color: "#92400e",
+                  fontWeight: 700,
+                  backgroundColor: "#fef3c7",
+                  padding: "6px 16px",
+                  borderRadius: "12px",
+                  border: "1.5px solid #fde68a",
+                }}
+              >
+                🎒 গ্রুপ ট্রিপ
+              </span>
+            </div>
           </div>
 
-          {/* Middle Itinerary Preview (if any) */}
+          {/* Middle Itinerary Preview or Branded Travel Banner */}
           {firstItineraryItems.length > 0 ? (
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: "#eef3f0",
-                borderRadius: "16px",
-                padding: "20px 24px",
-                gap: "6px",
+                backgroundColor: "#f8fafc",
+                border: "1.5px solid #e2e8f0",
+                borderRadius: "18px",
+                padding: "18px 24px",
+                gap: "8px",
               }}
             >
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#059669",
+                  marginBottom: "2px",
+                }}
+              >
+                🗺️ ভ্রমণ পরিকল্পনা:
+              </div>
               {firstItineraryItems.map((line) => (
                 <div
                   key={line}
                   style={{
                     display: "flex",
-                    fontSize: 22,
-                    color: "#111c16",
+                    fontSize: 20,
+                    fontWeight: 600,
+                    color: "#1e293b",
                   }}
                 >
                   {`• ${line}`}
                 </div>
               ))}
             </div>
-          ) : null}
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#f0fdf4",
+                borderRadius: "20px",
+                border: "2px dashed #86efac",
+                padding: "22px 28px",
+                gap: "6px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 24,
+                  fontWeight: 800,
+                  color: "#166534",
+                  gap: "8px",
+                }}
+              >
+                <span>✨</span>
+                <span>{BRAND.tagline.bn}</span>
+              </div>
+              <div style={{ display: "flex", fontSize: 17, color: "#4b5563" }}>
+                বন্ধুদের সাথে সুন্দর মুহূর্ত ও খরচের হিসাব
+              </div>
+            </div>
+          )}
 
-          {/* Bottom Members Bar */}
+          {/* Bottom Members Bar with Individual Emoji Chips */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              borderTop: "2px solid #d5e0da",
-              paddingTop: "20px",
+              borderTop: "2px solid #e2e8f0",
+              paddingTop: "16px",
+              gap: "10px",
             }}
           >
             <div
               style={{
                 display: "flex",
-                fontSize: 18,
-                color: "#4a5d52",
-                fontWeight: 600,
-                marginBottom: "6px",
+                fontSize: 17,
+                fontWeight: 700,
+                color: "#475569",
               }}
             >
-              {`👥 Members (${summary.memberCount}):`}
+              {`👥 ভ্রমণসঙ্গী (${toBanglaDigits(summary.memberCount)} জন):`}
             </div>
             <div
               style={{
                 display: "flex",
-                fontSize: 24,
-                fontWeight: 700,
-                color: "#111c16",
+                flexWrap: "wrap",
+                gap: "10px",
               }}
             >
-              {memberNamesPreview}
+              {summary.members.slice(0, 8).map((m, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    backgroundColor: "#f8fafc",
+                    border: "1.5px solid #cbd5e1",
+                    borderRadius: "12px",
+                    padding: "6px 14px",
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: "#1e293b",
+                  }}
+                >
+                  <span>{m.emoji}</span>
+                  <span>{m.displayName}</span>
+                </div>
+              ))}
+              {summary.members.length > 8 ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: "#f1f5f9",
+                    borderRadius: "12px",
+                    padding: "6px 14px",
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: "#059669",
+                  }}
+                >
+                  {`+${toBanglaDigits(summary.members.length - 8)} জন`}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

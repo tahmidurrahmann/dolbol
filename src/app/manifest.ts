@@ -3,7 +3,7 @@ import { BRAND } from "@/config/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${BRAND.name.bn} — ${BRAND.descriptor.bn}`,
+    name: `${BRAND.name.bn} | ${BRAND.descriptor.bn}`,
     short_name: BRAND.name.bn,
     description: BRAND.tagline.bn,
     start_url: "/",

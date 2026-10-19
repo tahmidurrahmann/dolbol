@@ -8,6 +8,7 @@ import {
   toBanglaDigits,
   type SupportedLocale,
 } from "@/lib/format";
+import { banglaToAsciiDigits } from "@/lib/names";
 
 export interface MemberListItem {
   id: string;
@@ -79,6 +80,9 @@ export function MembersListCard({
   const [isResetting, setIsResetting] = useState(false);
 
   const transactionsSet = new Set(membersWithTransactions);
+  const isCreatorPinValid =
+    !creatorNeedsPin ||
+    /^\d{4,6}$/.test(banglaToAsciiDigits(creatorPin.trim()));
 
   const handleConfirmDelete = async () => {
     if (!pendingDelete || isDeleting) return;
@@ -310,7 +314,7 @@ export function MembersListCard({
               </button>
               <button
                 type="button"
-                disabled={isResetting || (creatorNeedsPin && !creatorPin.trim())}
+                disabled={isResetting || !isCreatorPinValid}
                 onClick={handleConfirmResetDevices}
                 className="inline-flex min-h-[36px] sm:min-h-[38px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl bg-amber-600 px-3 sm:px-4 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
               >
@@ -390,7 +394,7 @@ export function MembersListCard({
               </button>
               <button
                 type="button"
-                disabled={isDeleting || (creatorNeedsPin && !creatorPin.trim())}
+                disabled={isDeleting || !isCreatorPinValid}
                 onClick={handleConfirmDelete}
                 className="inline-flex min-h-[36px] sm:min-h-[38px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-3 sm:px-4 text-xs font-bold text-white shadow-xs hover:bg-rose-700 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
               >

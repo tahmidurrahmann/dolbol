@@ -192,17 +192,17 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
         <p className="text-xs text-neutral-400">💡 {labels.friendsNamesHint}</p>
 
         {detectedFriends.length > 0 && (
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50/60 p-3 sm:p-3.5 space-y-2 dark:border-emerald-500/30 dark:bg-emerald-950/20 transition-all">
-            <div className="flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
+          <div className="rounded-2xl border border-emerald-500/25 bg-emerald-50/80 p-3 sm:p-3.5 space-y-2 transition-all">
+            <div className="flex items-center justify-between text-xs font-bold text-emerald-900">
               <span className="flex items-center gap-1.5">
-                <span>✨</span>
+                <span aria-hidden="true">✨</span>
                 <span>
                   {locale === "bn"
                     ? `${toBanglaDigits(detectedFriends.length)} জন বন্ধু যুক্ত হবেন:`
                     : `${detectedFriends.length} ${detectedFriends.length === 1 ? "friend" : "friends"} recognized:`}
                 </span>
               </span>
-              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-200">
                 {locale === "bn" ? "গেস্ট মেম্বার" : "Guest members"}
               </span>
             </div>
@@ -211,16 +211,16 @@ export function NewTripForm({ locale, labels }: NewTripFormProps) {
               {detectedFriends.map((friendName, idx) => (
                 <span
                   key={`${friendName}-${idx}`}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-fg)] shadow-2xs dark:bg-neutral-900"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/80 bg-white px-2.5 py-1 text-xs font-bold text-gray-900 shadow-2xs"
                 >
-                  <span>🎒</span>
+                  <span aria-hidden="true">🎒</span>
                   <span>{friendName}</span>
                 </span>
               ))}
             </div>
 
             {isCreatorInFriends && (
-              <p className="text-[11px] text-emerald-700 dark:text-emerald-300 pt-0.5">
+              <p className="text-[11px] font-medium text-emerald-800 pt-0.5">
                 ℹ️{" "}
                 {locale === "bn"
                   ? `${creatorName} ইতিমধ্যে ট্রিপের ক্রিয়েটর হিসেবে আছেন, তাই আলাদা গেস্ট লাগবে না।`
