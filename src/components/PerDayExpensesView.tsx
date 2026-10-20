@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteExpenseAction } from "@/app/trips/actions";
 import { formatDate, formatTaka, type SupportedLocale } from "@/lib/format";
+import { useOfflineStatus } from "@/lib/offline";
 import {
   type DayExpenseGroup,
   type ExpenseCategoryValue,
@@ -57,6 +58,7 @@ export function PerDayExpensesView({
   labels,
 }: PerDayExpensesViewProps) {
   const router = useRouter();
+  const { isOffline } = useOfflineStatus();
   const memberById = new Map(members.map((m) => [m.id, m]));
   const [pendingDelete, setPendingDelete] = useState<{
     id: string;
@@ -281,16 +283,31 @@ export function PerDayExpensesView({
 
                         return (
                           <div className="flex items-center justify-end gap-2 border-t border-[var(--color-border)]/60 pt-2.5">
-                            <Link
-                              href={`/trips/${slug}?editExpense=${exp.id}#expense-form`}
-                              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-1 text-xs font-bold text-gray-700 hover:bg-gray-50 active:scale-98 transition-all shadow-2xs"
-                            >
-                              <span>✏️</span>
-                              <span>{labels.editButton}</span>
-                            </Link>
+                            {isOffline ? (
+                              <span
+                                title="ইন্টারনেট লাগবে"
+                                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-400 opacity-70 cursor-not-allowed select-none"
+                              >
+                                <span>✏️</span>
+                                <span>{labels.editButton}</span>
+                                <span className="text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-md font-bold">
+                                  ইন্টারনেট লাগবে
+                                </span>
+                              </span>
+                            ) : (
+                              <Link
+                                href={`/trips/${slug}?editExpense=${exp.id}#expense-form`}
+                                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-1 text-xs font-bold text-gray-700 hover:bg-gray-50 active:scale-98 transition-all shadow-2xs"
+                              >
+                                <span>✏️</span>
+                                <span>{labels.editButton}</span>
+                              </Link>
+                            )}
 
                             <button
                               type="button"
+                              disabled={isOffline}
+                              title={isOffline ? "ইন্টারনেট লাগবে" : labels.deleteButton}
                               onClick={() =>
                                 setPendingDelete({
                                   id: exp.id,
@@ -298,7 +315,11 @@ export function PerDayExpensesView({
                                   amount: exp.amount,
                                 })
                               }
-                              className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-rose-200 bg-rose-50/50 px-3.5 py-1 text-xs font-bold text-rose-700 hover:bg-rose-100/70 active:scale-98 transition-all cursor-pointer"
+                              className={`inline-flex min-h-[36px] items-center gap-1 rounded-full border border-rose-200 bg-rose-50/50 px-3.5 py-1 text-xs font-bold text-rose-700 transition-all ${
+                                isOffline
+                                  ? "opacity-40 cursor-not-allowed pointer-events-none"
+                                  : "hover:bg-rose-100/70 active:scale-98 cursor-pointer"
+                              }`}
                             >
                               <span>🗑️</span>
                               <span>{labels.deleteButton}</span>

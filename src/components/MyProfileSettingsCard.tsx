@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { updateMyProfileAction } from "@/app/trips/actions";
+import { RemoveOfflineDataButton } from "@/components/RemoveOfflineDataButton";
 import { SelectField } from "@/components/SelectField";
 import { toBanglaDigits } from "@/lib/format";
 import { banglaToAsciiDigits } from "@/lib/names";
@@ -237,6 +238,11 @@ export function MyProfileSettingsCard({
             )}
           </button>
         </form>
+
+        <div className="pt-3 border-t border-[var(--color-border)]/60 flex items-center justify-between text-xs text-neutral-500 flex-wrap gap-2">
+          <span>{isBn ? "ডিভাইস ক্যাশ ও অফলাইন ডেটা:" : "Offline cache on this device:"}</span>
+          <RemoveOfflineDataButton locale={locale} />
+        </div>
       </div>
     </div>
   );

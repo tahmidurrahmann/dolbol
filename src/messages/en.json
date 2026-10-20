@@ -162,6 +162,12 @@
     "pinFieldLabel": "PIN (optional)",
     "saveProfileButton": "Save changes",
     "savingProfileButton": "Saving...",
+    "offlineBannerPrefix": "Offline: Last updated",
+    "offlineReadOnlyBadge": "Read-only",
+    "offlineInternetRequired": "Internet required",
+    "offlineInternetRequiredDesc": "Internet required, changes cannot be saved offline.",
+    "offlineDataClearButton": "Remove offline data",
+    "offlineDataClearSuccess": "✓ Offline data removed from this device",
     "devicesCountLabel": "device(s)",
     "lastClaimedPrefix": "Last:"
   },

@@ -9,6 +9,7 @@ import type { ExistingExpenseSummary } from "@/components/ExpenseFormCard";
 import type { ParsedExpenseDraft } from "@/lib/ai-parser";
 import { formatTaka, toBanglaDigits } from "@/lib/format";
 import type { ExpenseCategoryValue, MemberInput } from "@/lib/money";
+import { useOfflineStatus } from "@/lib/offline";
 
 export interface AiExpenseParserLabels {
   cardTitle: string;
@@ -122,6 +123,7 @@ export function AiExpenseParserCard({
   locale = "bn",
 }: AiExpenseParserCardProps) {
   const router = useRouter();
+  const { isOffline } = useOfflineStatus();
   const [rawText, setRawText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [loading, setLoading] = useState(false);
@@ -172,7 +174,10 @@ export function AiExpenseParserCard({
           const parsed = JSON.parse(saved);
           if (parsed && typeof parsed === "object") {
             let restored = false;
-            if (typeof parsed.rawText === "string" && parsed.rawText.trim().length > 0) {
+            if (
+              typeof parsed.rawText === "string" &&
+              parsed.rawText.trim().length > 0
+            ) {
               setRawText(parsed.rawText);
               restored = true;
             }
@@ -579,7 +584,8 @@ export function AiExpenseParserCard({
     lastParsedText !== null &&
     rawText.trim() === lastParsedText;
 
-  const isParseButtonDisabled = loading || !rawText.trim() || isPromptUnchanged;
+  const isParseButtonDisabled =
+    isOffline || loading || !rawText.trim() || isPromptUnchanged;
 
   return (
     <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-xs">
@@ -591,7 +597,8 @@ export function AiExpenseParserCard({
         <p className="text-sm text-neutral-400">{labels.cardSubtitle}</p>
       </div>
 
-      {draftRestoredNotice && (rawText.trim().length > 0 || items.length > 0) ? (
+      {draftRestoredNotice &&
+      (rawText.trim().length > 0 || items.length > 0) ? (
         <div className="flex items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50/90 px-3.5 py-2 text-xs font-semibold text-amber-950 shadow-2xs animate-in fade-in">
           <div className="flex items-center gap-1.5 truncate">
             <span>💾</span>
@@ -731,6 +738,15 @@ export function AiExpenseParserCard({
             >
               ✕
             </button>
+          </div>
+        ) : null}
+
+        {isOffline ? (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-center text-xs font-bold text-amber-900">
+            ⚠️{" "}
+            {locale === "bn"
+              ? "ইন্টারনেট লাগবে, অফলাইনে এআই প্রসেস করা সম্ভব নয়"
+              : "Internet required, AI cannot parse offline"}
           </div>
         ) : null}
 
@@ -1084,7 +1100,7 @@ export function AiExpenseParserCard({
               type="submit"
               variant="primary"
               fullWidth={false}
-              disabled={isSubmitDisabled}
+              disabled={isOffline || isSubmitDisabled}
               className="min-h-[44px] font-bold whitespace-nowrap shrink-0 w-full min-[425px]:w-auto px-5 sm:px-6"
             >
               {submitting

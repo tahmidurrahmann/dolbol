@@ -29,8 +29,10 @@ import { ItineraryCard } from "@/components/ItineraryCard";
 import { MembersListCard } from "@/components/MembersListCard";
 import { MyProfileSettingsCard } from "@/components/MyProfileSettingsCard";
 import { NewDeviceNoticeBanner } from "@/components/NewDeviceNoticeBanner";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
 import { RecentTripTracker } from "@/components/RecentTripTracker";
+import { RemoveOfflineDataButton } from "@/components/RemoveOfflineDataButton";
 import { SelectField } from "@/components/SelectField";
 import { SettlementsCard } from "@/components/SettlementsCard";
 import { ShareAndExportCard } from "@/components/ShareAndExportCard";
@@ -341,6 +343,9 @@ export default async function TripPage({
             </span>
           </div>
         </div>
+
+        {/* Offline indicator if opening joined trip while offline */}
+        <OfflineBanner locale={locale} />
 
         {errorMessage ? (
           <ErrorMessageBanner
@@ -832,6 +837,9 @@ export default async function TripPage({
         />
       ) : null}
 
+      {/* Offline banner when user is offline or viewing cached trip */}
+      <OfflineBanner locale={locale} />
+
       {/* Header Card */}
       <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-white p-4 sm:p-6 shadow-xs">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -862,11 +870,14 @@ export default async function TripPage({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl border border-[var(--color-border)] shadow-2xs">
-            <span className="text-base">{currentMember.emoji ?? "🎒"}</span>
-            <span className="font-extrabold whitespace-nowrap">
-              {currentMember.displayName}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <RemoveOfflineDataButton locale={locale} />
+            <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl border border-[var(--color-border)] shadow-2xs">
+              <span className="text-base">{currentMember.emoji ?? "🎒"}</span>
+              <span className="font-extrabold whitespace-nowrap">
+                {currentMember.displayName}
+              </span>
+            </div>
           </div>
         </div>
 

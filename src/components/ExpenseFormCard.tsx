@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { DatePickerField } from "@/components/DatePickerField";
 import { SelectField } from "@/components/SelectField";
 import { formatTaka, type SupportedLocale } from "@/lib/format";
+import { useOfflineStatus } from "@/lib/offline";
 import type {
   ExpenseCategoryValue,
   MemberInput,
@@ -108,6 +109,7 @@ export function ExpenseFormCard({
   locale = "bn",
   labels,
 }: ExpenseFormCardProps) {
+  const { isOffline } = useOfflineStatus();
   const [isManualOpen, setIsManualOpen] = useState<boolean>(
     Boolean(editingExpense),
   );
@@ -192,21 +194,33 @@ export function ExpenseFormCard({
           const parsed = JSON.parse(saved);
           if (parsed && typeof parsed === "object") {
             let restored = false;
-            if (typeof parsed.titleStr === "string" && parsed.titleStr.trim().length > 0) {
+            if (
+              typeof parsed.titleStr === "string" &&
+              parsed.titleStr.trim().length > 0
+            ) {
               setTitleStr(parsed.titleStr);
               restored = true;
             }
-            if (typeof parsed.amountStr === "string" && parsed.amountStr.trim().length > 0) {
+            if (
+              typeof parsed.amountStr === "string" &&
+              parsed.amountStr.trim().length > 0
+            ) {
               setAmountStr(parsed.amountStr);
               restored = true;
             }
             if (parsed.categoryVal) setCategoryVal(parsed.categoryVal);
             if (parsed.dateStr) setDateStr(parsed.dateStr);
-            if (parsed.paidByVal && members.some((m) => m.id === parsed.paidByVal)) {
+            if (
+              parsed.paidByVal &&
+              members.some((m) => m.id === parsed.paidByVal)
+            ) {
               setPaidByVal(parsed.paidByVal);
             }
             if (parsed.splitType) setSplitType(parsed.splitType);
-            if (Array.isArray(parsed.selectedIds) && parsed.selectedIds.length > 0) {
+            if (
+              Array.isArray(parsed.selectedIds) &&
+              parsed.selectedIds.length > 0
+            ) {
               setSelectedIds(parsed.selectedIds);
             }
             if (parsed.exactValues) setExactValues(parsed.exactValues);
@@ -433,7 +447,9 @@ export function ExpenseFormCard({
         )}
       </div>
 
-      {manualDraftRestored && !editingExpense && (titleStr.trim() || amountStr.trim()) ? (
+      {manualDraftRestored &&
+      !editingExpense &&
+      (titleStr.trim() || amountStr.trim()) ? (
         <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50/90 px-3.5 py-2 text-xs font-semibold text-amber-950 shadow-2xs animate-in fade-in">
           <div className="flex items-center gap-1.5 truncate">
             <span>💾</span>
@@ -664,7 +680,9 @@ export function ExpenseFormCard({
                       className="sr-only"
                     />
                     <span className="shrink-0">{m.emoji ?? "🎒"}</span>
-                    <span className="truncate max-w-[130px] min-[360px]:max-w-[180px]">{m.displayName}</span>
+                    <span className="truncate max-w-[130px] min-[360px]:max-w-[180px]">
+                      {m.displayName}
+                    </span>
                   </label>
                 );
               })}
@@ -677,7 +695,9 @@ export function ExpenseFormCard({
               </p>
             ) : null}
 
-            <p className="text-xs text-neutral-400 leading-relaxed">💡 {labels.leftoverNote}</p>
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              💡 {labels.leftoverNote}
+            </p>
           </div>
         ) : null}
 
@@ -722,7 +742,9 @@ export function ExpenseFormCard({
                           : "border-[var(--color-border)] bg-white text-[var(--color-fg)] hover:bg-[var(--color-border)]"
                       }`}
                     >
-                      <span className="shrink-0 text-xs min-[340px]:text-sm">{icon}</span>
+                      <span className="shrink-0 text-xs min-[340px]:text-sm">
+                        {icon}
+                      </span>
                       <span className="break-words hyphens-auto">{text}</span>
                     </button>
                   ))}
@@ -869,11 +891,7 @@ export function ExpenseFormCard({
             <>
               <input type="hidden" name="category" value={categoryVal} />
               <input type="hidden" name="expenseDate" value={dateStr} />
-              <input
-                type="hidden"
-                name="note"
-                value={noteStr}
-              />
+              <input type="hidden" name="note" value={noteStr} />
             </>
           )}
         </div>
@@ -907,8 +925,18 @@ export function ExpenseFormCard({
           </div>
         ) : null}
 
+        {isOffline ? (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-center text-xs font-bold text-amber-900">
+            ⚠️{" "}
+            {locale === "bn"
+              ? "ইন্টারনেট লাগবে, অফলাইনে নতুন খরচ সেভ করা যাবে না"
+              : "Internet required, cannot save expenses offline"}
+          </div>
+        ) : null}
+
         <Button
           type="submit"
+          disabled={isOffline}
           variant="primary"
           className="w-full min-h-[50px] text-base font-extrabold transition-all"
         >

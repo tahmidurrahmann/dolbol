@@ -18,7 +18,7 @@ export function LanguageToggle({ currentLocale }: LanguageToggleProps) {
   function handleSwitch(target: SupportedLocale) {
     if (target === currentLocale || isPending) return;
 
-    // Set cookies synchronously on the client — Next.js reads these on the next render
+    // Set cookies synchronously on the client. Next.js reads these on the next render
     document.cookie = `${LOCALE_COOKIE_NAME}=${target}; path=/; max-age=31536000; SameSite=Lax`;
     document.cookie = `NEXT_LOCALE=${target}; path=/; max-age=31536000; SameSite=Lax`;
     try {

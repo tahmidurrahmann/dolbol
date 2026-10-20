@@ -5,6 +5,7 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { Container } from "@/components/Container";
 import { Header } from "@/components/Header";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { Analytics } from "@vercel/analytics/next";
 import { BRAND } from "@/config/brand";
 import { ACTIVE_LANDING_META } from "@/config/seo";
@@ -111,6 +112,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
             <Container className="flex flex-1 flex-col">
               {children}
               <Analytics />
+              <ServiceWorkerRegister />
             </Container>
           </main>
           <footer className="border-t border-[var(--color-border)] py-5">

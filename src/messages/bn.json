@@ -162,6 +162,12 @@
     "pinFieldLabel": "পিন (ঐচ্ছিক)",
     "saveProfileButton": "সেভ করুন",
     "savingProfileButton": "সেভ হচ্ছে...",
+    "offlineBannerPrefix": "অফলাইন: শেষবার আপডেট",
+    "offlineReadOnlyBadge": "রিড-অনলি মোড",
+    "offlineInternetRequired": "ইন্টারনেট লাগবে",
+    "offlineInternetRequiredDesc": "ইন্টারনেট লাগবে, অফলাইনে নতুন খরচ বা পরিবর্তন সেভ করা সম্ভব নয়।",
+    "offlineDataClearButton": "অফলাইন ডেটা মুছুন",
+    "offlineDataClearSuccess": "✓ এই ডিভাইসের অফলাইন ডেটা মুছে ফেলা হয়েছে",
     "devicesCountLabel": "টি ডিভাইস",
     "lastClaimedPrefix": "সর্বশেষ:"
   },

@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/Button";
 import { SelectField } from "@/components/SelectField";
 import { formatDate, formatTaka, type SupportedLocale } from "@/lib/format";
+import { useOfflineStatus } from "@/lib/offline";
 import type { MemberInput, SettlementRecordInput } from "@/lib/money";
 
 interface SettlementsCardLabels {
@@ -50,6 +51,7 @@ export function SettlementsCard({
   const activeSettlements = settlements.filter((s) => !s.deletedAt);
   const defaultReceiverId =
     members.find((m) => m.id !== currentMemberId)?.id ?? currentMemberId;
+  const { isOffline } = useOfflineStatus();
 
   const [pendingDelete, setPendingDelete] = useState<{
     id: string;
@@ -152,7 +154,16 @@ export function SettlementsCard({
             </div>
           </div>
 
-          <Button type="submit" variant="primary">
+          {isOffline ? (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-center text-xs font-bold text-amber-900">
+              ⚠️{" "}
+              {locale === "bn"
+                ? "ইন্টারনেট লাগবে, অফলাইনে পরিশোধ রেকর্ড করা যাবে না"
+                : "Internet required, cannot record settlement offline"}
+            </div>
+          ) : null}
+
+          <Button type="submit" variant="primary" disabled={isOffline}>
             {labels.recordSettlementButton}
           </Button>
         </form>
