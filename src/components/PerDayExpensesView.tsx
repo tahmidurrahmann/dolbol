@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteExpenseAction } from "@/app/trips/actions";
-import { formatDate, formatTaka, type SupportedLocale } from "@/lib/format";
+import { formatDate, formatTaka, toBanglaDigits, type SupportedLocale } from "@/lib/format";
 import { useOfflineStatus } from "@/lib/offline";
+import { useOutbox } from "@/lib/use-outbox";
 import {
   type DayExpenseGroup,
   type ExpenseCategoryValue,
@@ -59,6 +60,7 @@ export function PerDayExpensesView({
 }: PerDayExpensesViewProps) {
   const router = useRouter();
   const { isOffline } = useOfflineStatus();
+  const { ops, discardOp } = useOutbox(slug);
   const memberById = new Map(members.map((m) => [m.id, m]));
   const [pendingDelete, setPendingDelete] = useState<{
     id: string;
@@ -93,6 +95,102 @@ export function PerDayExpensesView({
           <span>{labels.perDayTitle}</span>
         </h2>
       </div>
+
+      {ops.length > 0 ? (
+        <div className="space-y-3 rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/60 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-sky-200 pb-2.5">
+            <h3 className="text-sm font-extrabold text-sky-950 flex items-center gap-1.5">
+              <span>🕒</span>
+              <span>
+                {locale === "bn"
+                  ? "অপেক্ষমাণ অফলাইন খরচ (আউটবক্স)"
+                  : "Pending Offline Expenses (Outbox)"}
+              </span>
+              <span className="rounded-full bg-sky-200 px-2 py-0.5 text-[11px] font-black text-sky-900">
+                {locale === "bn" ? toBanglaDigits(ops.length) : ops.length}
+              </span>
+            </h3>
+            <span className="text-xs text-sky-800 font-semibold">
+              {locale === "bn"
+                ? "ইন্টারনেট পেলে স্বয়ংক্রিয়ভাবে সিঙ্ক হবে"
+                : "Will sync automatically when connected"}
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {ops.map((op) => {
+              const payer = memberById.get(op.payload.paidById);
+              const isRejected = op.status === "rejected";
+
+              return (
+                <div
+                  key={op.opId}
+                  className={`rounded-xl border p-3 shadow-2xs transition-all ${
+                    isRejected
+                      ? "border-rose-300 bg-rose-50/90 text-rose-950"
+                      : "border-sky-200 bg-white text-gray-900"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm">
+                          {op.payload.title}
+                        </span>
+                        {isRejected ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-rose-200 px-2 py-0.5 text-[10px] font-extrabold text-rose-900">
+                            ⚠️ {locale === "bn" ? "প্রত্যাখ্যাত" : "Rejected"}
+                            {op.lastError ? ` (${op.lastError})` : ""}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-900 border border-amber-300">
+                            🕒 {locale === "bn" ? "অপেক্ষমাণ" : "Pending"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+                        <span>
+                          {labels.paidByPrefix} {payer?.emoji ?? "🎒"}{" "}
+                          {payer?.displayName ?? op.payload.paidById}
+                        </span>
+                        <span>•</span>
+                        <span>{op.payload.expenseDate}</span>
+                        {op.payload.splitType !== "EQUAL" ? (
+                          <>
+                            <span>•</span>
+                            <span className="font-semibold text-neutral-600">
+                              {op.payload.splitType}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-black text-[var(--color-primary)]">
+                        {formatTaka(op.payload.amount, locale)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => discardOp(op.opId)}
+                        className="inline-flex min-h-[32px] items-center gap-1 rounded-xl border border-rose-200 bg-white px-2.5 py-1 text-xs font-bold text-rose-700 hover:bg-rose-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                        title={
+                          locale === "bn"
+                            ? "আউটবক্স থেকে মুছে ফেলুন"
+                            : "Discard from outbox"
+                        }
+                      >
+                        <span>🗑️</span>
+                        <span>{locale === "bn" ? "মুছে ফেলুন" : "Discard"}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {dayGroups.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 px-4 py-8 text-center text-sm font-medium text-[var(--color-fg-muted)]">

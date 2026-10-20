@@ -168,6 +168,11 @@
     "offlineInternetRequiredDesc": "Internet required, changes cannot be saved offline.",
     "offlineDataClearButton": "Remove offline data",
     "offlineDataClearSuccess": "✓ Offline data removed from this device",
+    "outboxPendingLabel": "Pending",
+    "outboxSyncNow": "Sync now",
+    "outboxSyncing": "Syncing...",
+    "unsyncedPreview": "Unsynced preview",
+    "outboxDiscard": "Discard",
     "devicesCountLabel": "device(s)",
     "lastClaimedPrefix": "Last:"
   },

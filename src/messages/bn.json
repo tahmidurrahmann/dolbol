@@ -168,6 +168,11 @@
     "offlineInternetRequiredDesc": "ইন্টারনেট লাগবে, অফলাইনে নতুন খরচ বা পরিবর্তন সেভ করা সম্ভব নয়।",
     "offlineDataClearButton": "অফলাইন ডেটা মুছুন",
     "offlineDataClearSuccess": "✓ এই ডিভাইসের অফলাইন ডেটা মুছে ফেলা হয়েছে",
+    "outboxPendingLabel": "অপেক্ষমাণ",
+    "outboxSyncNow": "এখনই সিঙ্ক করুন",
+    "outboxSyncing": "সিঙ্ক হচ্ছে...",
+    "unsyncedPreview": "অসিঙ্কড প্রিভিউ",
+    "outboxDiscard": "মুছে ফেলুন",
     "devicesCountLabel": "টি ডিভাইস",
     "lastClaimedPrefix": "সর্বশেষ:"
   },

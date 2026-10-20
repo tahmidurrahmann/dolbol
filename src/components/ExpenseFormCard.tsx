@@ -8,6 +8,7 @@ import { DatePickerField } from "@/components/DatePickerField";
 import { SelectField } from "@/components/SelectField";
 import { formatTaka, type SupportedLocale } from "@/lib/format";
 import { useOfflineStatus } from "@/lib/offline";
+import { enqueueOp } from "@/lib/outbox";
 import type {
   ExpenseCategoryValue,
   MemberInput,
@@ -110,6 +111,7 @@ export function ExpenseFormCard({
   labels,
 }: ExpenseFormCardProps) {
   const { isOffline } = useOfflineStatus();
+  const [offlineSuccessNotice, setOfflineSuccessNotice] = useState<string | null>(null);
   const [isManualOpen, setIsManualOpen] = useState<boolean>(
     Boolean(editingExpense),
   );
@@ -366,7 +368,7 @@ export function ExpenseFormCard({
   const showDuplicateWarning =
     Boolean(matchingDuplicate) || forceShowDuplicateConfirm;
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     setTouched({ title: true, amount: true });
     if (
       titleStr.trim().length === 0 ||
@@ -378,6 +380,86 @@ export function ExpenseFormCard({
       e.preventDefault();
       return;
     }
+
+    if (isOffline) {
+      // Offline edit of already-synced expenses is blocked
+      if (editingExpense) {
+        e.preventDefault();
+        return;
+      }
+
+      // Offline add of NEW expense -> enqueue to Outbox!
+      e.preventDefault();
+
+      const expenseId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `exp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+      const opId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `op-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+      const exactShares =
+        splitType === "EXACT"
+          ? members
+              .map((m) => ({
+                memberId: m.id,
+                amount: Math.trunc(toAsciiNumber(exactValues[m.id] ?? "0")),
+              }))
+              .filter((s) => s.amount > 0)
+          : undefined;
+
+      const percentShares =
+        splitType === "PERCENT"
+          ? members
+              .map((m) => ({
+                memberId: m.id,
+                percent: toAsciiNumber(percentValues[m.id] ?? "0"),
+              }))
+              .filter((s) => s.percent > 0)
+          : undefined;
+
+      try {
+        await enqueueOp({
+          opId,
+          tripSlug: slug,
+          type: "expense.create",
+          payload: {
+            id: expenseId,
+            title: titleStr.trim(),
+            amount: totalAmount,
+            category: categoryVal,
+            expenseDate: dateStr, // User-entered date, never sync time!
+            paidById: paidByVal,
+            splitType,
+            participantIds: splitType === "EQUAL" ? selectedIds : undefined,
+            exactShares,
+            percentShares,
+            note: noteStr.trim() || undefined,
+          },
+          createdAt: new Date().toISOString(),
+          status: "pending",
+          attempts: 0,
+        });
+
+        clearManualDraft();
+        setTitleStr("");
+        setAmountStr("");
+        setNoteStr("");
+        setOfflineSuccessNotice(
+          locale === "bn"
+            ? "✓ অফলাইনে সংরক্ষিত হয়েছে (অপেক্ষমাণ আউটবক্স)"
+            : "✓ Saved offline (pending outbox)",
+        );
+        setTimeout(() => setOfflineSuccessNotice(null), 5000);
+      } catch (err) {
+        console.error("Failed to enqueue offline expense:", err);
+      }
+      return;
+    }
+
     clearManualDraft();
   }
 
@@ -925,24 +1007,39 @@ export function ExpenseFormCard({
           </div>
         ) : null}
 
-        {isOffline ? (
+        {isOffline && editingExpense ? (
           <div className="rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-center text-xs font-bold text-amber-900">
             ⚠️{" "}
             {locale === "bn"
-              ? "ইন্টারনেট লাগবে, অফলাইনে নতুন খরচ সেভ করা যাবে না"
-              : "Internet required, cannot save expenses offline"}
+              ? "ইন্টারনেট লাগবে — পূর্বে সেভ করা খরচ এডিট করতে ইন্টারনেট সংযোগ প্রয়োজন"
+              : "Internet required — already saved expenses cannot be edited offline"}
+          </div>
+        ) : isOffline ? (
+          <div className="rounded-xl border border-sky-300 bg-sky-50 p-2.5 text-center text-xs font-bold text-sky-900">
+            📡{" "}
+            {locale === "bn"
+              ? "অফলাইন মোড — নতুন খরচ আপনার ডিভাইসের আউটবক্সে জমা থাকবে এবং সংযোগ পেলে স্বয়ংক্রিয়ভাবে সিঙ্ক হবে"
+              : "Offline mode — new expense will be stored in your device's outbox and synced automatically when online"}
+          </div>
+        ) : null}
+
+        {offlineSuccessNotice ? (
+          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-center text-xs font-bold text-emerald-800 animate-in fade-in">
+            {offlineSuccessNotice}
           </div>
         ) : null}
 
         <Button
           type="submit"
-          disabled={isOffline}
+          disabled={isOffline && Boolean(editingExpense)}
           variant="primary"
-          className="w-full min-h-[50px] text-base font-extrabold transition-all"
+          className="w-full min-h-[50px] text-base font-extrabold transition-all cursor-pointer"
         >
           {editingExpense
             ? `✓ ${labels.updateExpenseButton}`
-            : `+ ${labels.saveExpenseButton}`}
+            : isOffline
+              ? `💾 ${locale === "bn" ? "অফলাইনে সেভ করুন" : "Save offline"}`
+              : `+ ${labels.saveExpenseButton}`}
         </Button>
       </form>
     </div>

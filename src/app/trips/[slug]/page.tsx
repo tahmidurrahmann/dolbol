@@ -30,6 +30,7 @@ import { MembersListCard } from "@/components/MembersListCard";
 import { MyProfileSettingsCard } from "@/components/MyProfileSettingsCard";
 import { NewDeviceNoticeBanner } from "@/components/NewDeviceNoticeBanner";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { OutboxSyncBanner } from "@/components/OutboxSyncBanner";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
 import { RecentTripTracker } from "@/components/RecentTripTracker";
 import { RemoveOfflineDataButton } from "@/components/RemoveOfflineDataButton";
@@ -346,6 +347,7 @@ export default async function TripPage({
 
         {/* Offline indicator if opening joined trip while offline */}
         <OfflineBanner locale={locale} />
+        <OutboxSyncBanner slug={trip.slug} locale={locale} />
 
         {errorMessage ? (
           <ErrorMessageBanner
@@ -839,6 +841,7 @@ export default async function TripPage({
 
       {/* Offline banner when user is offline or viewing cached trip */}
       <OfflineBanner locale={locale} />
+      <OutboxSyncBanner slug={trip.slug} locale={locale} />
 
       {/* Header Card */}
       <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-white p-4 sm:p-6 shadow-xs">
@@ -1088,10 +1091,14 @@ export default async function TripPage({
             <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 lg:items-start">
               {/* Balances Card */}
               <BalancesCard
+                slug={trip.slug}
                 locale={locale}
                 totalTripSpend={totalTripSpend}
                 balances={balances}
                 simplifiedDebts={simplifiedDebts}
+                members={memberInputs}
+                serverExpenses={expenseInputs}
+                settlements={settlementInputs}
                 labels={{
                   balancesTitle: tMoney("balancesTitle"),
                   totalTripSpend: tMoney("totalTripSpend"),
