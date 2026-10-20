@@ -38,24 +38,24 @@ export function TripTabsContainer({
     [],
   );
 
-  // Auto-refetch when user switches browser tab or window gains focus
+  // Auto-refetch only when online and user switches back to this browser tab
   useEffect(() => {
     function handleSync() {
-      if (document.visibilityState === "visible") {
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.onLine &&
+        document.visibilityState === "visible"
+      ) {
         router.refresh();
       }
     }
 
-    window.addEventListener("focus", handleSync);
+    // Do NOT listen to window "focus" on mobile: scrolling past the viewport threshold
+    // collapses/expands the mobile address bar, triggering window focus and causing scroll jumps!
     document.addEventListener("visibilitychange", handleSync);
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        router.refresh();
-      }
-    }, 15000);
+    const interval = setInterval(handleSync, 30000);
 
     return () => {
-      window.removeEventListener("focus", handleSync);
       document.removeEventListener("visibilitychange", handleSync);
       clearInterval(interval);
     };

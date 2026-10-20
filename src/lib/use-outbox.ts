@@ -82,7 +82,11 @@ export function useOutbox(tripSlug: string): UseOutboxReturn {
 
       // 3. Document visibility change
       const handleVisibilityChange = () => {
-        if (document.visibilityState === "visible") {
+        if (
+          document.visibilityState === "visible" &&
+          typeof navigator !== "undefined" &&
+          navigator.onLine
+        ) {
           triggerSync();
         }
       };
