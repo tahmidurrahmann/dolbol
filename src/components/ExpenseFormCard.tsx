@@ -448,6 +448,14 @@ export function ExpenseFormCard({
         setTitleStr("");
         setAmountStr("");
         setNoteStr("");
+        setCategoryVal("FOOD");
+        setSplitType("EQUAL");
+        setSelectedIds(members.map((m) => m.id));
+        setExactValues({});
+        setPercentValues({});
+        setShowMoreOptions(false);
+        setTouched({});
+        setIsManualOpen(false);
         setOfflineSuccessNotice(
           locale === "bn"
             ? "✓ অফলাইনে সংরক্ষিত হয়েছে (অপেক্ষমাণ আউটবক্স)"
@@ -466,19 +474,29 @@ export function ExpenseFormCard({
   // Collapsed state: single clean button
   if (!isManualOpen && !editingExpense) {
     return (
-      <button
-        type="button"
-        onClick={() => setIsManualOpen(true)}
-        className="w-full flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 px-3 min-[360px]:px-4 text-xs min-[360px]:text-sm font-bold text-[var(--color-primary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-muted)] transition-all shadow-xs active:scale-[0.99] text-center"
-      >
-        <span className="shrink-0 text-base">✍️</span>
-        <span className="leading-snug break-words">
-          {labels.manualFormToggle ??
-            (locale === "bn"
-              ? "ফর্ম ব্যবহার করে খরচ লিখুন"
-              : "Add expense using form")}
-        </span>
-      </button>
+      <div className="space-y-2">
+        {offlineSuccessNotice ? (
+          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-center text-xs font-bold text-emerald-800 animate-in fade-in">
+            {offlineSuccessNotice}
+          </div>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            setTouched({});
+            setIsManualOpen(true);
+          }}
+          className="w-full flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 px-3 min-[360px]:px-4 text-xs min-[360px]:text-sm font-bold text-[var(--color-primary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-muted)] transition-all shadow-xs active:scale-[0.99] text-center"
+        >
+          <span className="shrink-0 text-base">✍️</span>
+          <span className="leading-snug break-words">
+            {labels.manualFormToggle ??
+              (locale === "bn"
+                ? "ফর্ম ব্যবহার করে খরচ লিখুন"
+                : "Add expense using form")}
+          </span>
+        </button>
+      </div>
     );
   }
 
@@ -511,7 +529,10 @@ export function ExpenseFormCard({
         ) : (
           <button
             type="button"
-            onClick={() => setIsManualOpen(false)}
+            onClick={() => {
+              setTouched({});
+              setIsManualOpen(false);
+            }}
             aria-label={
               labels.manualFormClose ??
               (locale === "bn" ? "ফর্ম বন্ধ করুন" : "Close form")
@@ -551,6 +572,7 @@ export function ExpenseFormCard({
               setSelectedIds(members.map((m) => m.id));
               setExactValues({});
               setPercentValues({});
+              setTouched({});
               clearManualDraft();
             }}
             className="shrink-0 text-xs font-bold text-amber-900 hover:text-red-700 underline cursor-pointer"
