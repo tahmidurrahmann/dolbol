@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { SupportedLocale } from "@/lib/format";
 import { useRecentTrips } from "@/lib/recent-trips";
 
@@ -36,8 +37,15 @@ export function BackToTripBar({ locale, className = "" }: BackToTripBarProps) {
         aria-label={tooltipText}
         className="pointer-events-auto group flex items-center gap-1.5 min-[360px]:gap-2 rounded-full border-2 border-white/95 bg-gradient-to-br from-[#0b724f] via-emerald-600 to-teal-700 text-white px-2.5 min-[360px]:px-3.5 py-2 min-[360px]:py-2.5 shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-md ring-4 ring-emerald-500/20"
       >
-        <span className="flex size-7 min-[360px]:size-8 items-center justify-center rounded-full bg-white/20 text-base min-[360px]:text-lg shadow-2xs group-hover:scale-110 transition-transform shrink-0">
-          🌴
+        <span className="flex size-7 min-[360px]:size-8 items-center justify-center rounded-full bg-white/20 shadow-2xs group-hover:scale-110 transition-transform shrink-0">
+          <Image
+            src="/brand/logo-mark-on-dark.svg"
+            alt=""
+            width={20}
+            height={20}
+            className="size-5 min-[360px]:size-5.5 shrink-0"
+            aria-hidden="true"
+          />
         </span>
 
         <div className="flex flex-col text-left leading-tight max-w-[90px] min-[360px]:max-w-[125px] sm:max-w-[160px] truncate">

@@ -8,14 +8,14 @@
 export const LANDING_META_OPTIONS = {
   option1: {
     bn: {
-      title: "দলবল | বন্ধুদের ট্যুরের খরচের হিসাব ও ভাগাভাগি",
+      title: "দলবল: বন্ধুদের সাথে ট্রিপের খরচের হিসাব",
       description:
-        "লগইন ছাড়াই বন্ধুদের সাথে ট্যুরের খরচ ভাগ করুন। বাংলায় খরচ লিখলেই দলবল নিমেষেই হিসাব করে দেখাবে কে কাকে কত দেবে।",
+        "ট্রিপের খরচ বাংলা বা Banglish-এ লিখুন, AI আলাদা আলাদা খরচ বানাবে, আর কে কাকে কত দেবে এক নজরে দেখুন। লগইন লাগে না।",
     },
     en: {
-      title: "Dolbol | Group Trip Expense Splitter & Settle Up",
+      title: "Dolbol: Split trip costs with friends",
       description:
-        "Split group travel costs with friends without any login. Add expenses naturally and instantly see who owes whom in whole BDT.",
+        "Type trip expenses in Bangla or Banglish, let AI split them into separate costs, and see who owes whom. No login needed.",
     },
   },
   option2: {

@@ -3,16 +3,44 @@ import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ErrorMessageBanner } from "@/components/ErrorMessageBanner";
 import { NewTripForm } from "@/components/NewTripForm";
+import { BRAND } from "@/config/brand";
 import type { SupportedLocale } from "@/lib/format";
+import { getSiteUrl } from "@/lib/site-url";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("createTrip");
+  const locale = (await getLocale()) as SupportedLocale;
+  const brandName = BRAND.name[locale === "bn" ? "bn" : "en"];
+  const fullTitle = `${t("title")} | ${brandName}`;
+  const description = t("subtitle");
+  const ogImageUrl = getSiteUrl("/og/og-home-v1.png").toString();
+
   return {
-    title: t("title"),
-    description: t("subtitle"),
+    title: {
+      absolute: fullTitle,
+    },
+    description,
     robots: {
       index: false,
       follow: false,
+    },
+    openGraph: {
+      title: fullTitle,
+      description,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: brandName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description,
+      images: [ogImageUrl],
     },
   };
 }

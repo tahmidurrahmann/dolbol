@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { BRAND } from "@/config/brand";
 import { HeaderNav } from "@/components/HeaderNav";
@@ -19,12 +20,14 @@ export async function Header() {
             aria-label={`${BRAND.name[isBn ? "bn" : "en"]} - ${isBn ? "হোমপেজ" : "Homepage"}`}
             className="group flex items-center gap-2 sm:gap-2.5 font-black text-gray-900 transition-colors hover:text-[var(--color-primary)]"
           >
-            <span
-              aria-hidden="true"
-              className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0b724f] to-emerald-700 text-base sm:text-xl text-white shadow-2xs transition-transform group-hover:scale-105 shrink-0"
-            >
-              🌴
-            </span>
+            <Image
+              src="/brand/logo.svg"
+              alt={BRAND.name[isBn ? "bn" : "en"]}
+              width={40}
+              height={40}
+              priority
+              className="size-[36px] sm:size-[40px] rounded-xl shrink-0 shadow-2xs transition-transform group-hover:scale-105"
+            />
             <div className="flex flex-col leading-tight">
               <span className="text-sm sm:text-lg font-black tracking-tight text-gray-900">
                 {BRAND.name[isBn ? "bn" : "en"]}

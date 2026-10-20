@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
-  if (env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" || env.NODE_ENV === "production") {
     notFound();
   }
 

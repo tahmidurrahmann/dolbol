@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { clearOpsForTrip } from "@/lib/outbox";
 import { CACHE_PREFIX } from "@/lib/sw-routing";
 
 /**
@@ -32,6 +33,62 @@ export function useOfflineStatus() {
   }, []);
 
   return { isOffline, lastOnlineTime };
+}
+
+/**
+ * Removes cached HTML navigation pages for THIS trip only from Service Worker runtime cache.
+ * Leaves static caches, assets, and other trips' cached pages untouched.
+ */
+export async function clearTripRuntimeCache(tripSlug: string): Promise<number> {
+  if (typeof window === "undefined" || !("caches" in window)) {
+    return 0;
+  }
+
+  let deletedCount = 0;
+  const cacheNames = await caches.keys();
+  for (const name of cacheNames) {
+    if (name.startsWith(CACHE_PREFIX) && name.includes("runtime")) {
+      const cache = await caches.open(name);
+      const requests = await cache.keys();
+      for (const req of requests) {
+        try {
+          const baseOrigin =
+            typeof window !== "undefined" && window.location
+              ? window.location.origin
+              : "http://localhost";
+          const url = new URL(req.url, baseOrigin);
+          if (
+            url.pathname === `/trips/${tripSlug}` ||
+            url.pathname.startsWith(`/trips/${tripSlug}/`)
+          ) {
+            const success = await cache.delete(req);
+            if (success) {
+              deletedCount++;
+            }
+          }
+        } catch {
+          // ignore malformed URLs
+        }
+      }
+    }
+  }
+
+  return deletedCount;
+}
+
+/**
+ * Clears offline data for THIS trip only:
+ * 1. Runtime page cache for this trip in CacheStorage
+ * 2. Unsynced/pending outbox operations for this trip in IndexedDB
+ *
+ * Leaves other trips, static caches, session cookie, and recent-trips list untouched.
+ */
+export async function clearTripOfflineData(tripSlug: string): Promise<{
+  cachedPagesDeleted: number;
+}> {
+  const cachedPagesDeleted = await clearTripRuntimeCache(tripSlug);
+  await clearOpsForTrip(tripSlug);
+  return { cachedPagesDeleted };
 }
 
 /**

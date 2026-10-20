@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { type SupportedLocale, toBanglaDigits } from "@/lib/format";
 import { buildPublicTripSummary } from "@/lib/share-and-export";
 import { getSiteUrl } from "@/lib/site-url";
+import { sanitizeTripTitleForMeta } from "@/lib/sanitize-meta";
 
 interface PublicSummaryPageProps {
   params: Promise<{ slug: string }>;
@@ -22,36 +23,81 @@ export async function generateMetadata({
     select: { name: true, destination: true },
   });
 
+  const locale = (await getLocale()) as SupportedLocale;
+  const isBn = locale === "bn";
+  const brandName = BRAND.name[isBn ? "bn" : "en"];
+  const t = await getTranslations({ locale, namespace: "seo" });
+  const ogImageUrl = getSiteUrl("/og/og-home-v1.png").toString();
+
   if (!trip) {
+    const fallbackTitle = `${t("summaryFallbackTitle")} | ${brandName}`;
+    const description = t("summaryDesc");
     return {
-      title: BRAND.name.en,
+      title: {
+        absolute: fallbackTitle,
+      },
+      description,
       robots: {
         index: false,
         follow: false,
       },
+      openGraph: {
+        title: fallbackTitle,
+        description,
+        images: [
+          {
+            url: ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: brandName,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: fallbackTitle,
+        description,
+        images: [ogImageUrl],
+      },
     };
   }
 
-  const title = trip.destination
-    ? `${trip.name} (${trip.destination}) | Trip Summary`
-    : `${trip.name} | Trip Summary`;
+  const sanitizedName = sanitizeTripTitleForMeta(
+    trip.name,
+    40,
+    t("summaryFallbackTitle"),
+    locale,
+  );
+  const titleCore = t("summaryTitle", { tripName: sanitizedName });
+  const fullTitle = `${titleCore} | ${brandName}`;
+  const description = t("summaryDesc");
 
   return {
-    title,
+    title: {
+      absolute: fullTitle,
+    },
+    description,
     robots: {
       index: false,
       follow: false,
     },
     openGraph: {
-      title,
+      title: fullTitle,
+      description,
       images: [
         {
-          url: getSiteUrl(`/api/trips/${slug}/share-image`).toString(),
+          url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: trip.name,
+          alt: sanitizedName,
         },
       ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description,
+      images: [ogImageUrl],
     },
   };
 }
@@ -135,7 +181,6 @@ export default async function PublicTripSummaryPage({
           {/* Trip Overview Card */}
           <div className="space-y-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">🌴</span>
               <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
                 {summary.name}
               </h1>

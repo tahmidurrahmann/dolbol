@@ -114,9 +114,14 @@ export async function getCurrentMemberForTrip(
 export async function getCurrentMemberAndSessionForTrip(
   tripId: string,
 ): Promise<{ member: Member; session: MemberSession } | null> {
-  const cookieStore = await cookies();
+  let rawToken: string | undefined;
 
-  const rawToken = cookieStore.get(getTripSessionCookieName(tripId))?.value;
+  try {
+    const cookieStore = await cookies();
+    rawToken = cookieStore.get(getTripSessionCookieName(tripId))?.value;
+  } catch {
+    return null;
+  }
 
   if (!rawToken) {
     return null;

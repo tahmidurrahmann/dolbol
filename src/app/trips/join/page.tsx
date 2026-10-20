@@ -9,21 +9,27 @@ import type { SupportedLocale } from "@/lib/format";
 import { getSiteUrl } from "@/lib/site-url";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("joinByLink");
   const locale = (await getLocale()) as SupportedLocale;
-  const brandName = BRAND.name[locale === "bn" ? "bn" : "en"];
-  const ogImageUrl = getSiteUrl("/og-image.png").toString();
+  const isBn = locale === "bn";
+  const brandName = BRAND.name[isBn ? "bn" : "en"];
+  const t = await getTranslations({ locale, namespace: "seo" });
+  const titleCore = t("joinTripFallbackTitle");
+  const fullTitle = `${titleCore} | ${brandName}`;
+  const description = t("joinTripDescBase");
+  const ogImageUrl = getSiteUrl("/og/og-invite-v1.png").toString();
 
   return {
-    title: t("title"),
-    description: t("subtitle"),
+    title: {
+      absolute: fullTitle,
+    },
+    description,
     robots: {
       index: false,
       follow: false,
     },
     openGraph: {
-      title: `${t("title")} | ${brandName}`,
-      description: t("subtitle"),
+      title: fullTitle,
+      description,
       images: [
         {
           url: ogImageUrl,
@@ -35,8 +41,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: `${t("title")} | ${brandName}`,
-      description: t("subtitle"),
+      title: fullTitle,
+      description,
       images: [ogImageUrl],
     },
   };

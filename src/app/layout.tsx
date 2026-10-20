@@ -34,6 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const meta = ACTIVE_LANDING_META[isBn ? "bn" : "en"];
   const ogLocale = isBn ? "bn_BD" : "en_US";
   const siteUrl = getSiteUrl();
+  const ogImageUrl = getSiteUrl("/og/og-home-v1.png").toString();
 
   return {
     metadataBase: siteUrl,
@@ -55,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: ogLocale,
       images: [
         {
-          url: "/og-image.png",
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: brandName,
@@ -66,7 +67,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
-      images: ["/og-image.png"],
+      images: [ogImageUrl],
     },
     other: {
       google: "notranslate",

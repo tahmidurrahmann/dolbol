@@ -20,7 +20,7 @@ const FREEZE_POINTS = [
 export default async function DevExpenseDemoPage({
   searchParams,
 }: DevDemoPageProps) {
-  if (env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" || env.NODE_ENV === "production") {
     notFound();
   }
 

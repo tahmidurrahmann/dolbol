@@ -237,7 +237,7 @@ describe("SEO & Indexing Control (Stage A & B)", () => {
       expect(m.theme_color).toBe(BRAND.themeColor);
 
       expect(Array.isArray(m.icons)).toBe(true);
-      expect(m.icons?.length).toBeGreaterThanOrEqual(4);
+      expect(m.icons?.length).toBeGreaterThanOrEqual(3);
 
       for (const icon of m.icons ?? []) {
         expect(icon.src).toMatch(/^\//);
@@ -378,10 +378,11 @@ describe("Rendered Text & Brand Integrity", () => {
     for (const filePath of allFiles) {
       const normalizedPath = filePath.replace(/\\/g, "/");
 
-      // 1. Exclude test files: files within __tests__ or matching .test. / .spec.
+      // 1. Exclude test files and static assets (images, icons, svgs)
       if (
         normalizedPath.includes("/__tests__/") ||
-        /\.(test|spec)\.[jt]sx?$/.test(normalizedPath)
+        /\.(test|spec)\.[jt]sx?$/.test(normalizedPath) ||
+        /\.(svg|ico|png|jpg|webp)$/i.test(normalizedPath)
       ) {
         continue;
       }

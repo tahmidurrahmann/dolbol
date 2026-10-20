@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -7,12 +9,52 @@ import { BackToTripBar } from "@/components/BackToTripBar";
 import { RecentTripsList } from "@/components/RecentTripsList";
 import type { SupportedLocale } from "@/lib/format";
 import { buildLandingJsonLd, serializeJsonLd } from "@/lib/json-ld";
+import { getSiteUrl } from "@/lib/site-url";
 
 const ExpenseExplainerDemo = dynamic(() =>
   import("@/components/ExpenseExplainerDemo").then(
     (mod) => mod.ExpenseExplainerDemo,
   ),
 );
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = (await getLocale()) as SupportedLocale;
+  const isBn = locale === "bn";
+  const brandName = BRAND.name[isBn ? "bn" : "en"];
+  const t = await getTranslations({ locale, namespace: "seo" });
+  const title = t("homeTitle");
+  const description = t("homeDescription");
+  const ogImageUrl = getSiteUrl("/og/og-home-v1.png").toString();
+
+  return {
+    title: {
+      absolute: title,
+    },
+    description,
+    openGraph: {
+      type: "website",
+      siteName: brandName,
+      title,
+      description,
+      url: getSiteUrl("/").toString(),
+      locale: isBn ? "bn_BD" : "en_US",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: brandName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImageUrl],
+    },
+  };
+}
 
 export default async function HomePage() {
   const t = await getTranslations("app");
@@ -24,7 +66,16 @@ export default async function HomePage() {
   const steps = [
     {
       num: bn ? "১" : "1",
-      icon: "🌴",
+      icon: (
+        <Image
+          src="/brand/logo-mark-light.svg"
+          alt=""
+          width={28}
+          height={28}
+          className="size-7 shrink-0 inline-block align-middle"
+          aria-hidden="true"
+        />
+      ),
       title: bn ? "ট্রিপ খুলুন ও বন্ধুদের নাম দিন" : "Create a trip",
       body: bn
         ? "লগইন বা সাইন-আপ ছাড়া শুধু ট্রিপের নাম এবং বন্ধুদের নাম দিয়ে এক ক্লিকে ট্রিপ তৈরি করুন।"

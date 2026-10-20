@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { SupportedLocale } from "@/lib/format";
 import {
   formatLastOpened,
@@ -46,7 +47,14 @@ export function RecentTripsList({ locale, labels }: RecentTripsListProps) {
             aria-hidden="true"
             className="flex size-7 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-base"
           >
-            🌴
+            <Image
+              src="/brand/logo-mark-light.svg"
+              alt=""
+              width={20}
+              height={20}
+              className="size-5 shrink-0"
+              aria-hidden="true"
+            />
           </span>
           <p className="text-base sm:text-lg font-black text-[var(--color-fg)]">
             {labels.sectionTitle}

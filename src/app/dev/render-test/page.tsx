@@ -13,7 +13,7 @@ const ENGLISH_SAMPLE =
   "Sundarbans Trip | Total Cost ৳12,500 (Cox's Bazar, Sreemangal, Day 2)";
 
 export default function RenderTestPage() {
-  if (env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" || env.NODE_ENV === "production") {
     notFound();
   }
 

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -33,7 +34,7 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { OutboxSyncBanner } from "@/components/OutboxSyncBanner";
 import { PerDayExpensesView } from "@/components/PerDayExpensesView";
 import { RecentTripTracker } from "@/components/RecentTripTracker";
-import { RemoveOfflineDataButton } from "@/components/RemoveOfflineDataButton";
+import { ClearTripOfflineDataLink } from "@/components/ClearTripOfflineDataLink";
 import { SelectField } from "@/components/SelectField";
 import { SettlementsCard } from "@/components/SettlementsCard";
 import { ShareAndExportCard } from "@/components/ShareAndExportCard";
@@ -43,6 +44,7 @@ import { TripTabsContainer } from "@/components/TripTabsContainer";
 import { BRAND } from "@/config/brand";
 import { db } from "@/lib/db";
 import { getSiteUrl } from "@/lib/site-url";
+import { sanitizeTripTitleForMeta } from "@/lib/sanitize-meta";
 import {
   formatDate,
   formatTaka,
@@ -152,76 +154,8 @@ function isSessionCreatedUnder24Hours(sessionCreatedAt?: Date | null): boolean {
   return Date.now() - sessionCreatedAt.getTime() < 24 * 60 * 60 * 1000;
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const { slug } = await params;
-  const trip = await db.trip.findUnique({
-    where: { slug },
-    select: { name: true, destination: true },
-  });
-
-  const locale = (await getLocale()) as SupportedLocale;
-  const brandName = BRAND.name[locale === "bn" ? "bn" : "en"];
-
-  if (!trip) {
-    return {
-      title: locale === "bn" ? "ট্রিপে যোগ দিন" : "Join Trip",
-      robots: {
-        index: false,
-        follow: false,
-      },
-    };
-  }
-
-  const destinationPart = trip.destination ? ` - ${trip.destination}` : "";
-  const pageTitle = `${trip.name}${destinationPart}`;
-  const fullTitle = `${pageTitle} | ${brandName}`;
-  const description =
-    locale === "bn"
-      ? `${trip.name} ট্রিপের খরচ ভাগাভাগি ও হিসাব করার জন্য ইনভাইট লিংক।`
-      : `Invitation link to join ${trip.name} to track and split expenses.`;
-  const ogImageUrl = getSiteUrl("/og-image.png").toString();
-
-  return {
-    title: pageTitle,
-    description,
-    robots: {
-      index: false,
-      follow: false,
-    },
-    openGraph: {
-      title: fullTitle,
-      description,
-      images: [
-        {
-          url: ogImageUrl,
-          width: 1200,
-          height: 630,
-          alt: trip.name,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: fullTitle,
-      description,
-      images: [ogImageUrl],
-    },
-  };
-}
-
-export default async function TripPage({
-  params,
-  searchParams,
-}: TripPageProps) {
-  const { slug } = await params;
-  const { error, editExpense, newTrip, pinSaved } = await searchParams;
-  const locale = (await getLocale()) as SupportedLocale;
-
-  const trip = await db.trip.findUnique({
+export const getTripData = cache(async (slug: string) => {
+  return db.trip.findUnique({
     where: { slug },
     include: {
       members: {
@@ -258,12 +192,132 @@ export default async function TripPage({
       },
     },
   });
+});
+
+export const getMemberSession = cache(async (tripId: string) => {
+  return getCurrentMemberAndSessionForTrip(tripId);
+});
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const trip = await getTripData(slug);
+
+  const locale = (await getLocale()) as SupportedLocale;
+  const isBn = locale === "bn";
+  const brandName = BRAND.name[isBn ? "bn" : "en"];
+  const t = await getTranslations({ locale, namespace: "seo" });
+  const ogImageUrl = getSiteUrl("/og/og-invite-v1.png").toString();
+
+  if (!trip) {
+    const fallbackTitle = `${t("joinTripFallbackTitle")} | ${brandName}`;
+    const description = t("joinTripDescBase");
+    return {
+      title: {
+        absolute: fallbackTitle,
+      },
+      description,
+      robots: {
+        index: false,
+        follow: false,
+      },
+      openGraph: {
+        title: fallbackTitle,
+        description,
+        images: [
+          {
+            url: ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: brandName,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: fallbackTitle,
+        description,
+        images: [ogImageUrl],
+      },
+    };
+  }
+
+  const sessionInfo = await getMemberSession(trip.id);
+  const isMember = Boolean(sessionInfo?.member);
+
+  const sanitizedName = sanitizeTripTitleForMeta(
+    trip.name,
+    40,
+    "",
+    locale,
+  );
+  const sanitizedDestination = trip.destination
+    ? sanitizeTripTitleForMeta(trip.destination, 40, "", locale)
+    : "";
+
+  let titleCore: string;
+  if (isMember) {
+    titleCore = sanitizedName || t("tripFallbackTitle");
+  } else {
+    titleCore = sanitizedName
+      ? t("joinTripTitle", { tripName: sanitizedName })
+      : t("joinTripFallbackTitle");
+  }
+
+  const fullTitle = `${titleCore} | ${brandName}`;
+
+  const description = sanitizedDestination
+    ? t("joinTripDescWithDest", { destination: sanitizedDestination })
+    : t("joinTripDescBase");
+
+  return {
+    title: {
+      absolute: fullTitle,
+    },
+    description,
+    robots: {
+      index: false,
+      follow: false,
+    },
+    openGraph: {
+      title: fullTitle,
+      description,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: sanitizedName || brandName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: fullTitle,
+      description,
+      images: [ogImageUrl],
+    },
+  };
+}
+
+export default async function TripPage({
+  params,
+  searchParams,
+}: TripPageProps) {
+  const { slug } = await params;
+  const { error, editExpense, newTrip, pinSaved } = await searchParams;
+  const locale = (await getLocale()) as SupportedLocale;
+
+  const trip = await getTripData(slug);
 
   if (!trip) {
     redirect("/trips/join");
   }
 
-  const sessionInfo = await getCurrentMemberAndSessionForTrip(trip.id);
+  const sessionInfo = await getMemberSession(trip.id);
   const currentMember = sessionInfo?.member ?? null;
   const currentSession = sessionInfo?.session ?? null;
   const tWho = await getTranslations("whoAreYou");
@@ -874,7 +928,6 @@ export default async function TripPage({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <RemoveOfflineDataButton locale={locale} />
             <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl border border-[var(--color-border)] shadow-2xs">
               <span className="text-base">{currentMember.emoji ?? "🎒"}</span>
               <span className="font-extrabold whitespace-nowrap">
@@ -1521,6 +1574,28 @@ export default async function TripPage({
           </div>
         }
       />
+
+      <div className="pt-6 pb-2 flex justify-center">
+        <ClearTripOfflineDataLink
+          tripSlug={trip.slug}
+          locale={locale}
+          labels={{
+            linkText: tTrip("clearOfflineDataLink"),
+            confirmDesc: tTrip("clearOfflineDataConfirmDesc"),
+            clearButton: tTrip("clearOfflineDataClearButton"),
+            clearingButton: tTrip("clearOfflineDataClearingButton"),
+            cancelButton: tTrip("clearOfflineDataCancelButton"),
+            unsyncedWarning: tTrip("clearOfflineDataUnsyncedWarning", {
+              count: "{count}",
+            }),
+            syncNowButton: tTrip("clearOfflineDataSyncNowButton"),
+            syncingButton: tTrip("clearOfflineDataSyncingButton"),
+            clearAnywayButton: tTrip("clearOfflineDataClearAnywayButton"),
+            secondConfirmTitle: tTrip("clearOfflineDataSecondConfirmTitle"),
+            successMessage: tTrip("clearOfflineDataSuccess"),
+          }}
+        />
+      </div>
     </section>
   );
 }

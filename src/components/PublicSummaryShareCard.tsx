@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import { BRAND } from "@/config/brand";
+import { BRAND, DOLBOL_LOGO_DATA_URI } from "@/config/brand";
 import { type SupportedLocale, toBanglaDigits } from "@/lib/format";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -106,7 +106,14 @@ export function PublicSummaryShareCard({
         <div className="relative z-10 flex items-start justify-between gap-3 border-b border-white/20 pb-3 sm:pb-3.5">
           <div className="flex items-center gap-2 sm:gap-2.5">
             <span className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-1.5">
-              <span>🌴</span>
+              <img
+                src={DOLBOL_LOGO_DATA_URI}
+                alt=""
+                width={24}
+                height={24}
+                className="size-6 rounded-md shrink-0 inline-block align-middle"
+                aria-hidden="true"
+              />
               <span>{BRAND.name[locale]}</span>
             </span>
             <span className="rounded-lg bg-white/15 px-2 py-0.5 text-[11px] font-bold text-emerald-200 border border-white/10">

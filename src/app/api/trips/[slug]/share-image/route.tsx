@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { NextResponse } from "next/server";
-import { BRAND } from "@/config/brand";
+import { BRAND, DOLBOL_LOGO_DATA_URI } from "@/config/brand";
 import { db } from "@/lib/db";
 import { toBanglaDigits } from "@/lib/format";
 import { buildPublicTripSummary } from "@/lib/share-and-export";
@@ -136,17 +136,37 @@ export async function GET(
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span
+              <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  fontSize: 28,
-                  color: "#065f46",
-                  fontWeight: 800,
+                  gap: "10px",
                 }}
               >
-                🌴 {BRAND.name.bn}
-              </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={DOLBOL_LOGO_DATA_URI}
+                  alt={BRAND.name.bn}
+                  width={34}
+                  height={34}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 8,
+                  }}
+                />
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: 28,
+                    color: "#065f46",
+                    fontWeight: 800,
+                  }}
+                >
+                  {BRAND.name.bn}
+                </span>
+              </div>
               <span
                 style={{
                   display: "flex",
