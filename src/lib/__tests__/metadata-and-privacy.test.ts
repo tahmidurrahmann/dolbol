@@ -2,6 +2,8 @@ import { readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
+process.env.NEXT_PUBLIC_SITE_URL = "https://dolbol.app";
+
 vi.mock("@/lib/env", () => ({
   env: {
     DATABASE_URL: "postgresql://postgres:test@localhost:5432/test?schema=public",
@@ -82,9 +84,14 @@ const countGraphemes = (str: string, locale = "bn") =>
 
 const getFirstOgImage = (images: unknown) => {
   if (Array.isArray(images) && images.length > 0) {
-    return images[0] as { url: string | URL; width?: number; height?: number } | string;
+    return images[0] as
+      | { url: string | URL; width?: number; height?: number; alt?: string; type?: string }
+      | string;
   }
-  return images as { url: string | URL; width?: number; height?: number } | string | undefined;
+  return images as
+    | { url: string | URL; width?: number; height?: number; alt?: string; type?: string }
+    | string
+    | undefined;
 };
 
 describe("Metadata, Privacy, and Social Preview Suite", () => {
@@ -104,6 +111,32 @@ describe("Metadata, Privacy, and Social Preview Suite", () => {
 
     it("verifies public/og/og-invite-v1.png exists, is exactly 1200x630, and is < 300 KB", () => {
       const invitePath = join(process.cwd(), "public/og/og-invite-v1.png");
+      const stat = statSync(invitePath);
+      expect(stat.isFile()).toBe(true);
+      expect(stat.size).toBeLessThan(300 * 1024); // < 300 KB
+
+      const buffer = readFileSync(invitePath);
+      const width = buffer.readUInt32BE(16);
+      const height = buffer.readUInt32BE(20);
+      expect(width).toBe(1200);
+      expect(height).toBe(630);
+    });
+
+    it("verifies public/og/og-invite-v2.png exists, is exactly 1200x630, and is < 300 KB", () => {
+      const invitePath = join(process.cwd(), "public/og/og-invite-v2.png");
+      const stat = statSync(invitePath);
+      expect(stat.isFile()).toBe(true);
+      expect(stat.size).toBeLessThan(300 * 1024); // < 300 KB
+
+      const buffer = readFileSync(invitePath);
+      const width = buffer.readUInt32BE(16);
+      const height = buffer.readUInt32BE(20);
+      expect(width).toBe(1200);
+      expect(height).toBe(630);
+    });
+
+    it("verifies public/og/og-invite-v3.png exists, is exactly 1200x630, and is < 300 KB", () => {
+      const invitePath = join(process.cwd(), "public/og/og-invite-v3.png");
       const stat = statSync(invitePath);
       expect(stat.isFile()).toBe(true);
       expect(stat.size).toBeLessThan(300 * 1024); // < 300 KB
@@ -330,19 +363,19 @@ describe("Metadata, Privacy, and Social Preview Suite", () => {
       expect(actualUrl).toBe(expectedUrl);
     });
 
-    it("assigns og-invite-v1.png to /trips/join", async () => {
+    it("assigns og-invite-v2.png to /trips/join", async () => {
       vi.mocked(getLocale).mockResolvedValue("bn");
       vi.mocked(getTranslations).mockImplementation(makeMockGetTranslations("bn") as any);
 
       const meta = await generateJoinMetadata();
       const img = getFirstOgImage(meta.openGraph?.images);
       expect(img).toBeDefined();
-      const expectedUrl = getSiteUrl("/og/og-invite-v1.png").toString();
+      const expectedUrl = getSiteUrl("/og/og-invite-v2.png").toString();
       const actualUrl = typeof img === "object" ? String(img?.url) : String(img);
       expect(actualUrl).toBe(expectedUrl);
     });
 
-    it("assigns og-invite-v1.png to /trips/[slug]", async () => {
+    it("assigns og-invite-v2.png to /trips/[slug]", async () => {
       vi.mocked(getLocale).mockResolvedValue("bn");
       vi.mocked(getTranslations).mockImplementation(makeMockGetTranslations("bn") as any);
 
@@ -356,7 +389,7 @@ describe("Metadata, Privacy, and Social Preview Suite", () => {
       });
       const img = getFirstOgImage(meta.openGraph?.images);
       expect(img).toBeDefined();
-      const expectedUrl = getSiteUrl("/og/og-invite-v1.png").toString();
+      const expectedUrl = getSiteUrl("/og/og-invite-v2.png").toString();
       const actualUrl = typeof img === "object" ? String(img?.url) : String(img);
       expect(actualUrl).toBe(expectedUrl);
     });
@@ -420,6 +453,12 @@ describe("Metadata, Privacy, and Social Preview Suite", () => {
 
       // 1. OpenGraph properties required by Facebook External Hit
       expect(meta.openGraph).toBeDefined();
+      if (meta.openGraph && "type" in meta.openGraph) {
+        expect(meta.openGraph.type).toBe("website");
+      }
+      if (meta.openGraph && "siteName" in meta.openGraph) {
+        expect(meta.openGraph.siteName).toBe(BRAND.name.bn);
+      }
       expect(meta.openGraph?.title).toContain("বান্দরবান ভ্রমণ ২০২৬ ট্রিপে যোগ দিন");
       expect(meta.openGraph?.title).toContain(BRAND.name.bn);
       expect(meta.openGraph?.description).toContain("বান্দরবান ট্রিপে আপনাকে ডাকা হয়েছে।");
@@ -428,7 +467,7 @@ describe("Metadata, Privacy, and Social Preview Suite", () => {
       const firstImage = getFirstOgImage(meta.openGraph?.images);
       expect(firstImage).toBeDefined();
       const imageUrl = typeof firstImage === "object" ? String(firstImage?.url) : String(firstImage);
-      expect(imageUrl).toMatch(/^https?:\/\/.*\/og\/og-invite-v1\.png$/);
+      expect(imageUrl).toMatch(/^https?:\/\/.*\/og\/og-invite-v2\.png$/);
 
       // 2. Twitter Card properties required by WhatsApp / Twitter
       expect(meta.twitter).toBeDefined();
@@ -438,6 +477,69 @@ describe("Metadata, Privacy, and Social Preview Suite", () => {
       expect(meta.twitter?.title).toBe(meta.openGraph?.title);
       expect(meta.twitter?.description).toBe(meta.openGraph?.description);
       expect(meta.twitter?.images).toEqual([imageUrl]);
+    });
+
+    it("verifies absolute https URLs, dimensions, and size for all three route types", async () => {
+      vi.mocked(getLocale).mockResolvedValue("bn");
+      vi.mocked(getTranslations).mockImplementation(makeMockGetTranslations("bn") as any);
+
+      // Route type 1: Trip invite / join (/trips/[slug] and /trips/join)
+      vi.mocked(db.trip.findUnique).mockResolvedValueOnce({
+        name: "কক্সবাজার ট্যুর",
+        destination: "কক্সবাজার",
+      } as any);
+      const tripMeta = await generateTripMetadata({
+        params: Promise.resolve({ slug: "cox-bazar" }),
+      });
+      const joinMeta = await generateJoinMetadata();
+
+      for (const meta of [tripMeta, joinMeta]) {
+        const ogImg = getFirstOgImage(meta.openGraph?.images);
+        expect(ogImg).toBeDefined();
+        const ogUrl = typeof ogImg === "object" ? String(ogImg?.url) : String(ogImg);
+        expect(ogUrl).toMatch(/^https:\/\/.+\/og\/og-invite-v2\.png$/);
+        if (typeof ogImg === "object") {
+          expect(ogImg?.width).toBe(1200);
+          expect(ogImg?.height).toBe(630);
+          expect(ogImg?.alt).toBe(BRAND.name.bn);
+        }
+        expect(meta.twitter?.images).toEqual([ogUrl]);
+      }
+
+      // Route type 2: Trip summary (/trips/[slug]/summary)
+      vi.mocked(db.trip.findUnique).mockResolvedValueOnce({
+        name: "কক্সবাজার ট্যুর",
+        destination: "কক্সবাজার",
+      } as any);
+      const summaryMeta = await generateSummaryMetadata({
+        params: Promise.resolve({ slug: "cox-bazar" }),
+      });
+      const summaryOgImg = getFirstOgImage(summaryMeta.openGraph?.images);
+      expect(summaryOgImg).toBeDefined();
+      const summaryOgUrl = typeof summaryOgImg === "object" ? String(summaryOgImg?.url) : String(summaryOgImg);
+      expect(summaryOgUrl).toMatch(/^https:\/\/.+\/og\/og-home-v1\.png$/);
+      if (typeof summaryOgImg === "object") {
+        expect(summaryOgImg?.width).toBe(1200);
+        expect(summaryOgImg?.height).toBe(630);
+        expect(summaryOgImg?.alt).toBe(BRAND.name.bn);
+      }
+      expect(summaryMeta.twitter?.images).toEqual([summaryOgUrl]);
+
+      // Route type 3: Home / new trip (/ and /trips/new)
+      const homeMeta = await generateHomeMetadata();
+      const newMeta = await generateNewMetadata();
+      for (const meta of [homeMeta, newMeta]) {
+        const ogImg = getFirstOgImage(meta.openGraph?.images);
+        expect(ogImg).toBeDefined();
+        const ogUrl = typeof ogImg === "object" ? String(ogImg?.url) : String(ogImg);
+        expect(ogUrl).toMatch(/^https:\/\/.+\/og\/og-home-v1\.png$/);
+        if (typeof ogImg === "object") {
+          expect(ogImg?.width).toBe(1200);
+          expect(ogImg?.height).toBe(630);
+          expect(ogImg?.alt).toBe(BRAND.name.bn);
+        }
+        expect(meta.twitter?.images).toEqual([ogUrl]);
+      }
     });
   });
 

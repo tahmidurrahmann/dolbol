@@ -208,9 +208,10 @@ export async function generateMetadata({
 
   const locale = (await getLocale()) as SupportedLocale;
   const isBn = locale === "bn";
-  const brandName = BRAND.name[isBn ? "bn" : "en"];
+  const tApp = await getTranslations({ locale, namespace: "app" });
+  const brandName = tApp("name");
   const t = await getTranslations({ locale, namespace: "seo" });
-  const ogImageUrl = getSiteUrl("/og/og-invite-v1.png").toString();
+  const ogImageUrl = getSiteUrl("/og/og-invite-v2.png").toString();
 
   if (!trip) {
     const fallbackTitle = `${t("joinTripFallbackTitle")} | ${brandName}`;
@@ -225,14 +226,19 @@ export async function generateMetadata({
         follow: false,
       },
       openGraph: {
+        type: "website",
+        siteName: brandName,
         title: fallbackTitle,
         description,
+        url: getSiteUrl(`/trips/${slug}`).toString(),
+        locale: isBn ? "bn_BD" : "en_US",
         images: [
           {
             url: ogImageUrl,
             width: 1200,
             height: 630,
             alt: brandName,
+            type: "image/png",
           },
         ],
       },
@@ -283,14 +289,19 @@ export async function generateMetadata({
       follow: false,
     },
     openGraph: {
+      type: "website",
+      siteName: brandName,
       title: fullTitle,
       description,
+      url: getSiteUrl(`/trips/${slug}`).toString(),
+      locale: isBn ? "bn_BD" : "en_US",
       images: [
         {
           url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: sanitizedName || brandName,
+          alt: brandName,
+          type: "image/png",
         },
       ],
     },

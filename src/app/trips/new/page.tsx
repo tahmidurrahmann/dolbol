@@ -10,7 +10,9 @@ import { getSiteUrl } from "@/lib/site-url";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("createTrip");
   const locale = (await getLocale()) as SupportedLocale;
-  const brandName = BRAND.name[locale === "bn" ? "bn" : "en"];
+  const isBn = locale === "bn";
+  const tApp = await getTranslations({ locale, namespace: "app" });
+  const brandName = tApp("name");
   const fullTitle = `${t("title")} | ${brandName}`;
   const description = t("subtitle");
   const ogImageUrl = getSiteUrl("/og/og-home-v1.png").toString();
@@ -25,14 +27,19 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: false,
     },
     openGraph: {
+      type: "website",
+      siteName: brandName,
       title: fullTitle,
       description,
+      url: getSiteUrl("/trips/new").toString(),
+      locale: isBn ? "bn_BD" : "en_US",
       images: [
         {
           url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: brandName,
+          type: "image/png",
         },
       ],
     },

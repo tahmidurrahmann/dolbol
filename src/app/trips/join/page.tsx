@@ -11,12 +11,13 @@ import { getSiteUrl } from "@/lib/site-url";
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as SupportedLocale;
   const isBn = locale === "bn";
-  const brandName = BRAND.name[isBn ? "bn" : "en"];
+  const tApp = await getTranslations({ locale, namespace: "app" });
+  const brandName = tApp("name");
   const t = await getTranslations({ locale, namespace: "seo" });
   const titleCore = t("joinTripFallbackTitle");
   const fullTitle = `${titleCore} | ${brandName}`;
   const description = t("joinTripDescBase");
-  const ogImageUrl = getSiteUrl("/og/og-invite-v1.png").toString();
+  const ogImageUrl = getSiteUrl("/og/og-invite-v2.png").toString();
 
   return {
     title: {
@@ -28,14 +29,19 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: false,
     },
     openGraph: {
+      type: "website",
+      siteName: brandName,
       title: fullTitle,
       description,
+      url: getSiteUrl("/trips/join").toString(),
+      locale: isBn ? "bn_BD" : "en_US",
       images: [
         {
           url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: brandName,
+          type: "image/png",
         },
       ],
     },
