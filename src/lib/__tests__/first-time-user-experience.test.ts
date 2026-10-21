@@ -109,5 +109,25 @@ describe("First-Time User Experience & Onboarding", () => {
       expect(bnMessages.money.manualFormToggle).toBe("form দিয়ে যোগ করুন");
       expect(enMessages.money.manualFormToggle).toBe("Add using form instead");
     });
+
+    it("labels demo toggle as 'How expense works' / 'খরচ কীভাবে কাজ করে' in message files", () => {
+      expect(bnMessages.expenseDemo.howExpenseWorks).toBe("খরচ কীভাবে কাজ করে");
+      expect(enMessages.expenseDemo.howExpenseWorks).toBe("How expense works");
+    });
+  });
+
+  describe("Explainer demo toggle on trip page", () => {
+    it("renders ExpenseDemoToggle collapsed on initial load to save vertical space for new users", () => {
+      const { readFileSync } = require("fs");
+      const { join } = require("path");
+      const tripPageContent = readFileSync(
+        join(process.cwd(), "src/app/trips/[slug]/page.tsx"),
+        "utf-8"
+      );
+      // Ensures the demo starts collapsed behind ExpenseDemoToggle
+      expect(tripPageContent).toContain("<ExpenseDemoToggle");
+      // Ensures raw ExpenseExplainerDemo is not rendered directly in the trip page
+      expect(tripPageContent).not.toContain("<ExpenseExplainerDemo");
+    });
   });
 });

@@ -7,11 +7,19 @@ import type { ExpenseExplainerDemoProps } from "@/components/ExpenseExplainerDem
 
 interface ExpenseDemoToggleProps {
   locale: "bn" | "en";
-  labels?: ExpenseExplainerDemoProps["labels"];
+  labels?: ExpenseExplainerDemoProps["labels"] & {
+    howExpenseWorks?: string;
+    howItWorks?: string;
+  };
 }
 
 export function ExpenseDemoToggle({ locale, labels }: ExpenseDemoToggleProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const toggleLabel =
+    labels?.howExpenseWorks ??
+    labels?.howItWorks ??
+    (locale === "bn" ? "খরচ কীভাবে কাজ করে" : "How expense works");
 
   if (!isOpen) {
     return (
@@ -19,10 +27,10 @@ export function ExpenseDemoToggle({ locale, labels }: ExpenseDemoToggleProps) {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 hover:bg-[#e8f5ee] hover:border-emerald-300 hover:text-[#0b724f] transition-all cursor-pointer shadow-2xs"
+          className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-3.5 py-1.5 text-xs font-bold text-gray-700 hover:bg-[#e8f5ee] hover:border-emerald-300 hover:text-[#0b724f] transition-all cursor-pointer shadow-2xs active:scale-95"
         >
           <span>▶</span>
-          <span>{locale === "bn" ? "কীভাবে কাজ করে?" : "How it works?"}</span>
+          <span>{toggleLabel}</span>
         </button>
       </div>
     );
@@ -32,7 +40,7 @@ export function ExpenseDemoToggle({ locale, labels }: ExpenseDemoToggleProps) {
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2 px-1 min-w-0">
         <span className="text-xs font-bold text-neutral-500 truncate">
-          {locale === "bn" ? "কীভাবে কাজ করে?" : "How it works?"}
+          {toggleLabel}
         </span>
         <button
           type="button"

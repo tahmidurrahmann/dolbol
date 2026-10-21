@@ -402,7 +402,8 @@
   "expenseDemo": {
     "badge": "Example",
     "ariaLabel": "10-second animation showing how to add and split expenses using AI",
-    "howItWorks": "How it works?",
+    "howItWorks": "How expense works",
+    "howExpenseWorks": "How expense works",
     "tryYourself": "Try it yourself",
     "pause": "Pause animation",
     "play": "Play animation",

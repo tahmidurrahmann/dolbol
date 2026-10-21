@@ -53,7 +53,7 @@ export function TripOnboardingChecklist({
   return (
     <div
       data-testid="onboarding-checklist-card"
-      className="space-y-3.5 sm:space-y-4 rounded-3xl border-2 border-[var(--color-primary)]/30 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/40 p-4 sm:p-5 shadow-xs"
+      className="space-y-3.5 sm:space-y-4 rounded-3xl border-2 border-[var(--color-primary)]/30 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/40 p-3.5 min-[360px]:p-4 sm:p-5 shadow-xs"
     >
       <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-2.5 sm:pb-3">
         <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export function TripOnboardingChecklist({
         {/* Step 1: Invite Friends (বন্ধুদের ডাকুন) */}
         <div
           data-testid="onboarding-step-1"
-          className={`space-y-2.5 rounded-2xl border p-3 sm:p-3.5 transition-all ${
+          className={`space-y-2.5 rounded-2xl border p-2.5 min-[360px]:p-3 sm:p-3.5 transition-all ${
             isStep1Done
               ? "border-emerald-200 bg-emerald-50/40"
               : "border-[var(--color-border)] bg-white shadow-2xs"

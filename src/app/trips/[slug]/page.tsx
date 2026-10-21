@@ -22,7 +22,6 @@ import {
   type ExistingExpenseSummary,
   ExpenseFormCard,
 } from "@/components/ExpenseFormCard";
-import { ExpenseExplainerDemo } from "@/components/ExpenseExplainerDemo";
 import { ExpenseDemoToggle } from "@/components/ExpenseDemoToggle";
 import { ErrorMessageBanner } from "@/components/ErrorMessageBanner";
 import { InviteFriendsCard } from "@/components/InviteFriendsCard";
@@ -343,6 +342,7 @@ export default async function TripPage({
   const tPlan = await getTranslations("planning");
   const tShare = await getTranslations("shareExport");
   const tErr = await getTranslations("errors");
+  const tDemo = await getTranslations("expenseDemo");
 
   const errorMessage =
     error && ERROR_KEYS.has(error as ErrorKey) ? tErr(error as ErrorKey) : null;
@@ -1005,12 +1005,13 @@ export default async function TripPage({
             >
               {!isLocked ? (
                 <div id="expense-box" className="space-y-5 lg:col-span-5">
-                  {/* Explainer Demo: Full when 0 expenses; collapsed toggle when >0 expenses */}
-                  {expenseInputs.length === 0 ? (
-                    <ExpenseExplainerDemo locale={locale} mode="trip" />
-                  ) : (
-                    <ExpenseDemoToggle locale={locale} />
-                  )}
+                  {/* Explainer Demo: Collapsed toggle, expands only when user clicks */}
+                  <ExpenseDemoToggle
+                    locale={locale}
+                    labels={{
+                      howExpenseWorks: tDemo("howExpenseWorks"),
+                    }}
+                  />
 
                   {/* AI Expense Parser Card */}
                   <AiExpenseParserCard
