@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { BRAND } from "@/config/brand";
-import { BackToTripBar } from "@/components/BackToTripBar";
 import { RecentTripsList } from "@/components/RecentTripsList";
 import type { SupportedLocale } from "@/lib/format";
 import { buildLandingJsonLd, serializeJsonLd } from "@/lib/json-ld";
@@ -184,9 +183,6 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: jsonLdScript }}
       />
       <div className="mx-auto flex w-full max-w-[1208px] flex-col gap-5 sm:gap-8 py-2 sm:py-6">
-        {/* Floating Back to Trip Widget (0px layout height, fixed on side like chat button) */}
-        <BackToTripBar locale={locale as SupportedLocale} />
-
         {/* 1. Your trips section (if recent trips exist) */}
         <RecentTripsList
           locale={locale as SupportedLocale}

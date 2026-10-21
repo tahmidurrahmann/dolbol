@@ -87,50 +87,55 @@ export function CreatorPinPromptModal({
           </div>
         </div>
 
-        {/* Clear explainer box answering "r pin er kaj ki" */}
-        <div className="rounded-2xl border-2 border-emerald-500/25 bg-emerald-50/75 p-3.5 sm:p-4 space-y-2.5 text-xs text-emerald-950 shadow-2xs">
-          <div className="font-extrabold flex items-center gap-2 text-xs sm:text-sm text-emerald-900">
+        {/* Collapsible explainer box answering "r pin er kaj ki" */}
+        <details className="group rounded-2xl border border-emerald-500/25 bg-emerald-50/75 p-3 sm:p-3.5 text-xs text-emerald-950 shadow-2xs transition-all">
+          <summary className="font-extrabold flex items-center gap-2 text-xs sm:text-sm text-emerald-900 cursor-pointer list-none select-none">
             <span
               aria-hidden="true"
-              className="flex size-6 items-center justify-center rounded-lg bg-emerald-200/80 text-sm"
+              className="flex size-6 items-center justify-center rounded-lg bg-emerald-200/80 text-sm shrink-0"
             >
               💡
             </span>
-            <span>
+            <span className="flex-1">
               {labels.explainerTitle ??
-                (isBn ? "পিনের কাজ কী? কেন প্রয়োজন?" : "What is this PIN for?")}
+                (isBn ? "পিন কীসের জন্য?" : "What is the PIN for?")}
             </span>
+            <span className="text-xs text-emerald-700 transition-transform group-open:rotate-180">
+              ▼
+            </span>
+          </summary>
+          <div className="pt-2.5 space-y-2">
+            {labels.explainerIntro ? (
+              <p className="text-[11px] sm:text-xs text-emerald-800 leading-relaxed font-medium">
+                {labels.explainerIntro}
+              </p>
+            ) : null}
+            <ul className="space-y-1.5 text-[11px] sm:text-xs text-emerald-900 font-medium">
+              <li className="flex items-start gap-2">
+                <span className="shrink-0 text-sm" aria-hidden="true">
+                  👑
+                </span>
+                <span>
+                  {labels.explainerControl ??
+                    (isBn
+                      ? "আয়োজক নিয়ন্ত্রণ: ট্রিপ লক করা বা সদস্য মুছতে অন্য কেউ পারবে না।"
+                      : "Organizer controls: Prevents others from locking the trip or deleting members.")}
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="shrink-0 text-sm" aria-hidden="true">
+                  📱
+                </span>
+                <span>
+                  {labels.explainerRecovery ??
+                    (isBn
+                      ? "ডিভাইস বদল: ফোন বদলালে বা ব্রাউজার হিস্ট্রি মুছে গেলেও এই পিন দিয়ে ক্রিয়েটর হিসেবে ফেরত আসতে পারবেন।"
+                      : "Device switch: Reclaim your creator access if you switch phones or clear browser data.")}
+                </span>
+              </li>
+            </ul>
           </div>
-          {labels.explainerIntro ? (
-            <p className="text-[11px] sm:text-xs text-emerald-800 leading-relaxed font-medium">
-              {labels.explainerIntro}
-            </p>
-          ) : null}
-          <ul className="space-y-2 text-[11px] sm:text-xs text-emerald-900 font-medium">
-            <li className="flex items-start gap-2">
-              <span className="shrink-0 text-sm" aria-hidden="true">
-                👑
-              </span>
-              <span>
-                {labels.explainerControl ??
-                  (isBn
-                    ? "ক্রিয়েটর ক্ষমতা রক্ষা: অন্য কেউ যাতে ট্রিপ লক করতে বা সদস্য মুছতে না পারে।"
-                    : "Creator controls: Prevents others from locking the trip or deleting members.")}
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="shrink-0 text-sm" aria-hidden="true">
-                📱
-              </span>
-              <span>
-                {labels.explainerRecovery ??
-                  (isBn
-                    ? "ডিভাইস রিকভারি: ফোন বদলালে বা ব্রাউজার ডেটা মুছে গেলেও এই পিন দিয়ে ক্রিয়েটর হিসেবে ফেরত আসতে পারবেন।"
-                    : "Device recovery: Reclaim your creator access if you switch phones or clear browser data.")}
-              </span>
-            </li>
-          </ul>
-        </div>
+        </details>
 
         <form
           action={updateMyProfileAction}

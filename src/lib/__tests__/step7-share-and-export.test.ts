@@ -142,9 +142,9 @@ describe("buildDailyCostSheetData & CSV/HTML export", () => {
       locale: "en",
       categoryLabels: {
         TRANSPORT: "Transport",
-        HOTEL: "Hotel",
+        HOTEL: "Stay",
         FOOD: "Food",
-        TICKET: "Ticket",
+        TICKET: "Tickets",
         OTHER: "Other",
       },
     });

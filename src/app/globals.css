@@ -31,6 +31,8 @@
 }
 
 :root {
+  --header-height: 60px;
+  --add-expense-scroll-margin: calc(var(--header-height) + 8px);
   --color-bg: #f5f7f6;
   --color-surface: #ffffff;
   --color-surface-muted: #ebf1ee;

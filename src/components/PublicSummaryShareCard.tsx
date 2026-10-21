@@ -88,9 +88,6 @@ export function PublicSummaryShareCard({
           <span>🖼️</span>
           <span>{labels.heading}</span>
         </h2>
-        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-          {locale === "bn" ? "✓ এইচডি কোয়ালিটি" : "✓ HD Quality"}
-        </span>
       </div>
 
       {/* The Capturable Card with Full Native Bengali Typography */}

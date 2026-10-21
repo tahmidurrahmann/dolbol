@@ -11,7 +11,7 @@ export async function Header() {
   const isBn = locale === "bn";
 
   return (
-    <header className="sticky top-0 z-30 w-full">
+    <header className="sticky top-0 z-30 w-full min-h-[var(--header-height)]">
       <div className="mx-auto w-full max-w-[1208px] px-2.5 py-1.5">
         <HeaderNav>
           {/* Logo & Brand */}

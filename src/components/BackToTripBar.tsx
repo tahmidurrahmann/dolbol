@@ -29,7 +29,7 @@ export function BackToTripBar({ locale, className = "" }: BackToTripBarProps) {
 
   return (
     <div
-      className={`pointer-events-none fixed right-2.5 min-[360px]:right-3.5 lg:right-5 top-1/2 -translate-y-1/2 z-40 select-none ${className}`}
+      className={`pointer-events-none fixed right-3.5 bottom-6 sm:right-6 sm:bottom-6 z-40 select-none ${className}`}
     >
       <Link
         href={`/trips/${mostRecent.slug}`}

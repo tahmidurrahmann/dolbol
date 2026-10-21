@@ -40,6 +40,11 @@ import { SettlementsCard } from "@/components/SettlementsCard";
 import { ShareAndExportCard } from "@/components/ShareAndExportCard";
 import { SoftPinPromptCard } from "@/components/SoftPinPromptCard";
 import { TripDatesCard } from "@/components/TripDatesCard";
+import { TripOnboardingChecklist } from "@/components/TripOnboardingChecklist";
+import {
+  shouldShowOnboardingChecklist,
+  shouldShowSummaryCards,
+} from "@/lib/onboarding";
 import { TripTabsContainer } from "@/components/TripTabsContainer";
 import { BRAND } from "@/config/brand";
 import { db } from "@/lib/db";
@@ -948,22 +953,13 @@ export default async function TripPage({
           </div>
         </div>
 
-        {/* 2 Stat Cards: Shown in header on desktop (>= 1000px), on mobile moved into Expenses tab */}
-        <div className="hidden min-[1000px]:block pt-3 border-t border-[var(--color-border)]">
-          {statCardsNode}
-        </div>
+        {/* 2 Stat Cards: Shown in header on desktop (>= 1000px) when 2+ members and 1+ expenses */}
+        {shouldShowSummaryCards(joinedMembersCount, expenseInputs.length) ? (
+          <div className="hidden min-[1000px]:block pt-3 border-t border-[var(--color-border)]">
+            {statCardsNode}
+          </div>
+        ) : null}
       </div>
-
-      {/* Prominent Invite Friends Card at TOP for desktop only if < 2 joined members */}
-      {joinedMembersCount < 2 ? (
-        <div className="hidden min-[1000px]:block">
-          <InviteFriendsCard
-            slug={trip.slug}
-            tripName={trip.name}
-            locale={locale}
-          />
-        </div>
-      ) : null}
 
       {/* Tabs Container: খরচ (Expenses), হিসাব (Who owes whom), প্ল্যান (Plan), বন্ধুরা (Friends) */}
       <TripTabsContainer
@@ -971,8 +967,34 @@ export default async function TripPage({
         initialTab={editExpense ? "expenses" : "expenses"}
         expensesSlot={
           <div className="space-y-5">
-            {/* Mobile-only Stat Cards (< 1000px, displayed inside Expenses tab) */}
-            <div className="min-[1000px]:hidden">{statCardsNode}</div>
+            {/* Onboarding Checklist for first-time users */}
+            {shouldShowOnboardingChecklist(
+              joinedMembersCount,
+              expenseInputs.length,
+            ) ? (
+              <TripOnboardingChecklist
+                slug={trip.slug}
+                tripName={trip.name}
+                destination={trip.destination}
+                locale={locale}
+                joinedMembersCount={joinedMembersCount}
+                expenseCount={expenseInputs.length}
+                labels={{
+                  title: tTrip("onboardingChecklistTitle"),
+                  stepInvite: tTrip("onboardingStepInvite"),
+                  stepExpense: tTrip("onboardingStepExpense"),
+                  stepSettle: tTrip("onboardingStepSettle"),
+                }}
+              />
+            ) : null}
+
+            {/* Mobile-only Stat Cards (< 1000px, displayed inside Expenses tab when 2+ members and 1+ expenses) */}
+            {shouldShowSummaryCards(
+              joinedMembersCount,
+              expenseInputs.length,
+            ) ? (
+              <div className="min-[1000px]:hidden">{statCardsNode}</div>
+            ) : null}
 
             <div
               className={
@@ -1156,6 +1178,7 @@ export default async function TripPage({
               {/* Balances Card */}
               <BalancesCard
                 slug={trip.slug}
+                tripName={trip.name}
                 locale={locale}
                 totalTripSpend={totalTripSpend}
                 balances={balances}
@@ -1168,6 +1191,7 @@ export default async function TripPage({
                   totalTripSpend: tMoney("totalTripSpend"),
                   whoOwesWhomTitle: tMoney("whoOwesWhomTitle"),
                   allSettled: tMoney("allSettled"),
+                  whoOwesWhomNeedFriends: tMoney("whoOwesWhomNeedFriends"),
                   owesArrow: tMoney("owesArrow"),
                   memberBalancesSub: tMoney("memberBalancesSub"),
                   colMember: tMoney("colMember"),

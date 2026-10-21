@@ -139,9 +139,6 @@ export function ShareAndExportCard({
             <span>🖼️</span>
             <span>{labels.shareImageHeading}</span>
           </h3>
-          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-            {locale === "bn" ? "✓ বাংলা ফন্ট সাপোর্ট" : "✓ Bangla Font Support"}
-          </span>
         </div>
 
         {/* Live HTML Preview Card */}

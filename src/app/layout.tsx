@@ -93,6 +93,11 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     >
       <head>
         <meta name="google" content="notranslate" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if(typeof window!=="undefined"&&(location.hostname==="localhost"||location.hostname==="127.0.0.1")){if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(function(regs){for(var i=0;i<regs.length;i++){regs[i].unregister();}});};if("caches" in window){caches.keys().then(function(names){for(var i=0;i<names.length;i++){if(names[i].indexOf("app-cache-")===0){caches.delete(names[i]);}}});}}`,
+          }}
+        />
       </head>
       <body
         translate="no"

@@ -191,35 +191,40 @@ export function MyProfileSettingsCard({
               )}
             </div>
 
-            {/* Prominent Explainer Box answering 'r pin er kaj ki' */}
-            <div className="rounded-2xl border-2 border-emerald-500/25 bg-emerald-50/75 p-3.5 sm:p-4 text-emerald-950 space-y-2.5 shadow-2xs">
-              <div className="flex items-center gap-2 font-extrabold text-xs sm:text-sm text-emerald-900">
+            {/* Collapsible Explainer Box answering 'r pin er kaj ki' */}
+            <details className="group rounded-2xl border border-emerald-500/25 bg-emerald-50/75 p-3 sm:p-3.5 text-emerald-950 shadow-2xs transition-all">
+              <summary className="flex items-center gap-2 font-extrabold text-xs sm:text-sm text-emerald-900 cursor-pointer list-none select-none">
                 <span
                   aria-hidden="true"
-                  className="flex size-6 items-center justify-center rounded-lg bg-emerald-200/80 text-sm"
+                  className="flex size-6 items-center justify-center rounded-lg bg-emerald-200/80 text-sm shrink-0"
                 >
                   💡
                 </span>
-                <span>{labels.explainerTitle}</span>
+                <span className="flex-1">{labels.explainerTitle}</span>
+                <span className="text-xs text-emerald-700 transition-transform group-open:rotate-180">
+                  ▼
+                </span>
+              </summary>
+              <div className="pt-2.5 space-y-2">
+                <p className="text-[11px] sm:text-xs text-emerald-800 leading-relaxed font-medium">
+                  {labels.explainerIntro}
+                </p>
+                <ul className="space-y-1.5 text-[11px] sm:text-xs text-emerald-900 font-medium">
+                  <li className="flex items-start gap-2">
+                    <span className="shrink-0 text-sm" aria-hidden="true">
+                      🛡️
+                    </span>
+                    <span>{labels.explainerSecurity}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="shrink-0 text-sm" aria-hidden="true">
+                      📱
+                    </span>
+                    <span>{labels.explainerRecovery}</span>
+                  </li>
+                </ul>
               </div>
-              <p className="text-[11px] sm:text-xs text-emerald-800 leading-relaxed font-medium">
-                {labels.explainerIntro}
-              </p>
-              <ul className="space-y-2 text-[11px] sm:text-xs text-emerald-900 font-medium">
-                <li className="flex items-start gap-2">
-                  <span className="shrink-0 text-sm" aria-hidden="true">
-                    🛡️
-                  </span>
-                  <span>{labels.explainerSecurity}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="shrink-0 text-sm" aria-hidden="true">
-                    📱
-                  </span>
-                  <span>{labels.explainerRecovery}</span>
-                </li>
-              </ul>
-            </div>
+            </details>
           </div>
 
           <button

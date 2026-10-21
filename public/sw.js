@@ -21,36 +21,54 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((name) => {
-            // Delete caches belonging to this app from older builds
-            if (
-              name.startsWith(CACHE_PREFIX) &&
-              name !== STATIC_CACHE &&
-              name !== RUNTIME_CACHE
-            ) {
-              return caches.delete(name);
-            }
-            return null;
-          }),
+    (async () => {
+      // In local development (localhost / 127.0.0.1), purge all caches and unregister
+      if (
+        self.location.hostname === "localhost" ||
+        self.location.hostname === "127.0.0.1"
+      ) {
+        const keys = await caches.keys();
+        await Promise.all(
+          keys
+            .filter((name) => name.startsWith(CACHE_PREFIX))
+            .map((name) => caches.delete(name)),
         );
-      })
-      .then(() => self.clients.claim()),
+        await self.registration.unregister();
+        return;
+      }
+
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map((name) => {
+          // Delete caches belonging to this app from older builds
+          if (
+            name.startsWith(CACHE_PREFIX) &&
+            name !== STATIC_CACHE &&
+            name !== RUNTIME_CACHE
+          ) {
+            return caches.delete(name);
+          }
+          return null;
+        }),
+      );
+      await self.clients.claim();
+    })(),
   );
 });
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
 
+  // Rule 0: NEVER intercept or cache requests in local development (localhost / 127.0.0.1)
+  const url = new URL(req.url);
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return;
+  }
+
   // Rule 1: Only handle GET requests. NEVER intercept POST/PUT/PATCH/DELETE.
   if (req.method !== "GET") {
     return;
   }
-
-  const url = new URL(req.url);
 
   // Rule 2: NEVER cache /api/*
   if (url.pathname.startsWith("/api/")) {

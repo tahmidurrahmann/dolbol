@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { SupportedLocale } from "@/lib/format";
+import { scrollToAddExpense } from "@/lib/scroll-to-add-expense";
 
 interface TripTabsContainerProps {
   locale: SupportedLocale;
@@ -119,10 +120,7 @@ export function TripTabsContainer({
     const handleJump = () => {
       selectTab("expenses");
       setTimeout(() => {
-        const el = document.getElementById("expense-box");
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        scrollToAddExpense();
       }, 50);
     };
 
@@ -170,8 +168,7 @@ export function TripTabsContainer({
                 type="button"
                 onClick={() => {
                   if (activeTab === tab.id && tab.id === "expenses") {
-                    const el = document.getElementById("expense-box");
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    scrollToAddExpense();
                   } else {
                     selectTab(tab.id);
                     window.scrollTo({ top: 0, behavior: "smooth" });

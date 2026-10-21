@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { formatTaka, type SupportedLocale } from "@/lib/format";
+import { InviteFriendsCard } from "@/components/InviteFriendsCard";
 import {
   computeExpenseShares,
   computeMemberBalances,
@@ -29,10 +30,12 @@ interface BalancesCardLabels {
   statusGets: string;
   statusOwes: string;
   statusEven: string;
+  whoOwesWhomNeedFriends?: string;
 }
 
 interface BalancesCardProps {
   slug?: string;
+  tripName?: string;
   locale: SupportedLocale;
   totalTripSpend: number;
   balances: MemberBalance[];
@@ -45,6 +48,7 @@ interface BalancesCardProps {
 
 export function BalancesCard({
   slug,
+  tripName,
   locale,
   totalTripSpend,
   balances,
@@ -167,7 +171,30 @@ export function BalancesCard({
           <span>⚡</span>
           <span>{labels.whoOwesWhomTitle}</span>
         </h3>
-        {activeView.simplifiedDebts.length === 0 ? (
+        {(members?.length ?? 0) < 2 ? (
+          <div
+            data-testid="who-owes-whom-empty-need-friends"
+            className="space-y-3 rounded-2xl bg-[var(--color-surface-muted)]/50 border border-dashed border-[var(--color-border)] p-4 sm:p-5 text-center shadow-2xs"
+          >
+            <p className="text-2xl">👥</p>
+            <p className="text-sm font-semibold text-[var(--color-fg)]">
+              {labels.whoOwesWhomNeedFriends ??
+                (locale === "bn"
+                  ? "বন্ধুরা যোগ দিলে এখানে কে কাকে কত দেবে দেখা যাবে"
+                  : "When friends join, see who owes whom here")}
+            </p>
+            {slug ? (
+              <div className="pt-1">
+                <InviteFriendsCard
+                  slug={slug}
+                  tripName={tripName ?? ""}
+                  locale={locale}
+                  compact={true}
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : activeView.simplifiedDebts.length === 0 ? (
           <div className="rounded-2xl bg-[var(--color-surface-muted)]/50 border border-dashed border-[var(--color-border)] px-4 py-8 text-center text-sm font-medium text-neutral-400 shadow-2xs">
             <p className="text-2xl mb-1">🤝</p>
             <p>{labels.allSettled}</p>

@@ -10,6 +10,7 @@ import type { ParsedExpenseDraft } from "@/lib/ai-parser";
 import { formatTaka, toBanglaDigits } from "@/lib/format";
 import type { ExpenseCategoryValue, MemberInput } from "@/lib/money";
 import { useOfflineStatus } from "@/lib/offline";
+import { scrollToAddExpense } from "@/lib/scroll-to-add-expense";
 
 export interface AiExpenseParserLabels {
   cardTitle: string;
@@ -588,7 +589,11 @@ export function AiExpenseParserCard({
     isOffline || loading || !rawText.trim() || isPromptUnchanged;
 
   return (
-    <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6 shadow-xs">
+    <div
+      id="ai-expense-card"
+      style={{ scrollMarginTop: "var(--add-expense-scroll-margin, 68px)" }}
+      className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6 shadow-xs scroll-mt-[var(--add-expense-scroll-margin,68px)]"
+    >
       <div className="space-y-1">
         <h2 className="text-lg font-bold text-[var(--color-fg)] flex items-center gap-2">
           <span>✨</span>
@@ -631,7 +636,7 @@ export function AiExpenseParserCard({
             id="ai-expense-input"
             name="rawExpenseText"
             aria-label={labels.cardTitle}
-            rows={3}
+            rows={2}
             required
             maxLength={1500}
             value={rawText}
@@ -650,7 +655,7 @@ export function AiExpenseParserCard({
                 ? "যেমন: সকালের নাস্তা ২৫০, সিএনজি ভাড়া ৪৫০ (করিম দিল), রাতের ডিনার ১২০০"
                 : "e.g.: shokaler nasta 250, CNG fare 450 (Karim paid), rater dinner 1200")
             }
-            className="w-full bg-transparent text-base text-[var(--color-fg)] placeholder:text-neutral-400 placeholder:leading-relaxed focus:outline-none resize-y min-h-[95px] leading-relaxed"
+            className="w-full bg-transparent text-base text-[var(--color-fg)] placeholder:text-neutral-400 placeholder:leading-relaxed focus:outline-none resize-y min-h-[68px] sm:min-h-[90px] leading-relaxed"
           />
 
           {/* Bottom helper bar inside input container - fully responsive with no truncation */}
@@ -671,7 +676,7 @@ export function AiExpenseParserCard({
                   setErrorMsg(null);
                   if (submitSuccessMsg) setSubmitSuccessMsg(null);
                   if (items.length === 0) clearAiDraft();
-                  textareaRef.current?.focus();
+                  scrollToAddExpense();
                 }}
                 className="self-end sm:self-auto inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer shrink-0"
                 title={
@@ -684,31 +689,6 @@ export function AiExpenseParserCard({
                   (locale === "bn" ? "মুছে ফেলুন" : "Clear")}
               </button>
             ) : null}
-          </div>
-        </div>
-
-        {/* Quick realistic example chips */}
-        <div className="space-y-1.5">
-          <span className="block text-xs font-bold text-neutral-600">
-            {labels.tryExamplesLabel}
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {samplePrompts.map((sample) => (
-              <button
-                key={sample.id}
-                type="button"
-                onClick={() => {
-                  setRawText(sample.text);
-                  if (justParsed) setJustParsed(false);
-                  setErrorMsg(null);
-                  if (submitSuccessMsg) setSubmitSuccessMsg(null);
-                  textareaRef.current?.focus();
-                }}
-                className="rounded-full border border-gray-200/90 bg-[#f4f7f5] px-3 py-1 text-left text-xs font-semibold text-gray-700 hover:bg-[#e8f5ee] hover:border-emerald-300 hover:text-emerald-900 transition-all cursor-pointer shadow-2xs whitespace-pre-line"
-              >
-                &ldquo;{sample.displayText}&rdquo;
-              </button>
-            ))}
           </div>
         </div>
 
@@ -750,6 +730,7 @@ export function AiExpenseParserCard({
           </div>
         ) : null}
 
+        {/* Submit Button: Directly under textarea container and ABOVE example chips */}
         <Button
           type="submit"
           variant="primary"
@@ -762,6 +743,31 @@ export function AiExpenseParserCard({
                 (locale === "bn" ? "✓ যুক্ত হয়েছে" : "✓ Added")
               : labels.parseButton}
         </Button>
+
+        {/* Quick realistic example chips */}
+        <div className="space-y-1.5 pt-1">
+          <span className="block text-xs font-bold text-neutral-600">
+            {labels.tryExamplesLabel}
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {samplePrompts.map((sample) => (
+              <button
+                key={sample.id}
+                type="button"
+                onClick={() => {
+                  setRawText(sample.text);
+                  if (justParsed) setJustParsed(false);
+                  setErrorMsg(null);
+                  if (submitSuccessMsg) setSubmitSuccessMsg(null);
+                  scrollToAddExpense();
+                }}
+                className="rounded-full border border-gray-200/90 bg-[#f4f7f5] px-3 py-1 text-left text-xs font-semibold text-gray-700 hover:bg-[#e8f5ee] hover:border-emerald-300 hover:text-emerald-900 transition-all cursor-pointer shadow-2xs whitespace-pre-line"
+              >
+                &ldquo;{sample.displayText}&rdquo;
+              </button>
+            ))}
+          </div>
+        </div>
       </form>
 
       {/* Confirm UI: Multi-item editable rows list (NEVER auto-saves) */}
@@ -995,7 +1001,11 @@ export function AiExpenseParserCard({
                           value: m.id,
                           label: m.displayName,
                           icon: m.emoji ?? "🎒",
-                          badge: m.isGuest ? "Guest" : undefined,
+                          badge: m.isGuest
+                            ? locale === "bn"
+                              ? "গেস্ট"
+                              : "Guest"
+                            : undefined,
                         }))}
                       />
                     </div>

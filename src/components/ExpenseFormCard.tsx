@@ -471,10 +471,10 @@ export function ExpenseFormCard({
     clearManualDraft();
   }
 
-  // Collapsed state: single clean button
+  // Collapsed state: small toggle link, closed by default
   if (!isManualOpen && !editingExpense) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 pt-1 text-center sm:text-left">
         {offlineSuccessNotice ? (
           <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-center text-xs font-bold text-emerald-800 animate-in fade-in">
             {offlineSuccessNotice}
@@ -486,14 +486,14 @@ export function ExpenseFormCard({
             setTouched({});
             setIsManualOpen(true);
           }}
-          className="w-full flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 px-3 min-[360px]:px-4 text-xs min-[360px]:text-sm font-bold text-[var(--color-primary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-muted)] transition-all shadow-xs active:scale-[0.99] text-center"
+          className="inline-flex min-h-[44px] items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-neutral-500 hover:text-[var(--color-primary)] hover:underline transition-colors cursor-pointer"
         >
-          <span className="shrink-0 text-base">✍️</span>
-          <span className="leading-snug break-words">
+          <span>✍️</span>
+          <span>
             {labels.manualFormToggle ??
               (locale === "bn"
-                ? "ফর্ম ব্যবহার করে খরচ লিখুন"
-                : "Add expense using form")}
+                ? "form দিয়ে যোগ করুন"
+                : "Add using form instead")}
           </span>
         </button>
       </div>
@@ -735,7 +735,11 @@ export function ExpenseFormCard({
               value: m.id,
               label: m.displayName,
               icon: m.emoji ?? "🎒",
-              badge: m.isGuest ? "Guest" : undefined,
+              badge: m.isGuest
+                ? locale === "bn"
+                  ? "গেস্ট"
+                  : "Guest"
+                : undefined,
             }))}
           />
         </div>

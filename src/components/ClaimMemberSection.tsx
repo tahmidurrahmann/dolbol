@@ -86,7 +86,7 @@ export function ClaimMemberSection({
                   </span>
                   {member.hasPin ? (
                     <span
-                      title="PIN protected"
+                      title={locale === "bn" ? "পিন সুরক্ষিত" : "PIN protected"}
                       className="text-xs text-[var(--color-fg-muted)] shrink-0"
                     >
                       🔒

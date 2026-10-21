@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { formatTaka } from "@/lib/format";
+import { scrollToAddExpense } from "@/lib/scroll-to-add-expense";
 
 export interface ExpenseExplainerDemoProps {
   locale?: "bn" | "en";
@@ -282,8 +283,7 @@ export function ExpenseExplainerDemo({
         input.value = demoText;
       }
       input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.focus();
-      input.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrollToAddExpense();
     }
   };
 

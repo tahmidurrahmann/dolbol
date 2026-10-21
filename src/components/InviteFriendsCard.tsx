@@ -139,14 +139,27 @@ export function InviteFriendsCard({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 pt-1">
+        <div
+          className={`grid ${hasWebShare ? "grid-cols-3" : "grid-cols-2"} gap-2 pt-1`}
+        >
+          {hasWebShare ? (
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-[#18201a] px-3 py-2 text-xs font-black text-white shadow-2xs hover:bg-[#253229] active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <span>📤</span>
+              <span>{bn ? "শেয়ার" : "Share"}</span>
+            </button>
+          ) : null}
+
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-emerald-300/80 bg-gradient-to-r from-emerald-50 via-[#f0fbf4] to-teal-50 px-3.5 py-2 text-xs font-black text-[#0f6b4a] shadow-2xs hover:border-emerald-400 hover:from-emerald-100/90 hover:to-teal-100/90 hover:shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            className="group flex min-h-[42px] items-center justify-center gap-1.5 rounded-full border border-emerald-300/80 bg-gradient-to-r from-emerald-50 via-[#f0fbf4] to-teal-50 px-3 py-2 text-xs font-black text-[#0f6b4a] shadow-2xs hover:border-emerald-400 hover:from-emerald-100/90 hover:to-teal-100/90 hover:shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >
-            <span className="flex size-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700 text-xs transition-transform group-hover:scale-110">
+            <span className="flex size-4.5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700 text-xs transition-transform group-hover:scale-110">
               💬
             </span>
             <span className="tracking-tight">WhatsApp</span>
@@ -157,9 +170,9 @@ export function InviteFriendsCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleMessengerClick}
-            className="group flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-blue-300/80 bg-gradient-to-r from-blue-50 via-[#f0f6ff] to-indigo-50 px-3.5 py-2 text-xs font-black text-[#0b57d0] shadow-2xs hover:border-blue-400 hover:from-blue-100/90 hover:to-indigo-100/90 hover:shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            className="group flex min-h-[42px] items-center justify-center gap-1.5 rounded-full border border-blue-300/80 bg-gradient-to-r from-blue-50 via-[#f0f6ff] to-indigo-50 px-3 py-2 text-xs font-black text-[#0b57d0] shadow-2xs hover:border-blue-400 hover:from-blue-100/90 hover:to-indigo-100/90 hover:shadow-xs active:scale-[0.98] transition-all cursor-pointer"
           >
-            <span className="flex size-5 items-center justify-center rounded-full bg-blue-500/15 text-blue-700 text-xs transition-transform group-hover:scale-110">
+            <span className="flex size-4.5 items-center justify-center rounded-full bg-blue-500/15 text-blue-700 text-xs transition-transform group-hover:scale-110">
               ⚡
             </span>
             <span className="tracking-tight">Messenger</span>
