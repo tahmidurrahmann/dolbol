@@ -14,9 +14,9 @@ interface InviteFriendsCardProps {
 
 const emptySubscribe = () => () => {};
 
-// Shared button base: 44px tap target, labels never truncated.
+// Shared button base: 38px/42px tap target, labels truncate cleanly on 320px screens.
 const actionBase =
-  "flex min-h-[44px] items-center justify-center gap-1.5 rounded-full px-2 min-[360px]:px-3 py-2 text-xs sm:text-sm font-black whitespace-nowrap shadow-2xs active:scale-[0.98] transition-all cursor-pointer";
+  "min-w-0 flex min-h-[38px] min-[360px]:min-h-[42px] items-center justify-center gap-1 min-[360px]:gap-1.5 rounded-full px-1.5 min-[360px]:px-2.5 sm:px-3 py-1.5 text-[11px] min-[360px]:text-xs font-black shadow-2xs active:scale-[0.98] transition-all cursor-pointer";
 
 interface ShareActionsProps {
   bn: boolean;
@@ -42,30 +42,29 @@ function ShareActions({
   onMessengerClick,
 }: ShareActionsProps) {
   return (
-    // Under 480px: Share on its own row, WhatsApp + Messenger side by side.
-    // 480px and up: all three in one row.
-    <div className="grid grid-cols-2 min-[480px]:grid-cols-3 gap-2 pt-1 w-full">
+    // Single row of 3 buttons, fully responsive on >=320px viewports
+    <div className="grid grid-cols-3 gap-1 min-[360px]:gap-2 pt-1 w-full">
       {hasWebShare ? (
         <button
           type="button"
           onClick={onNativeShare}
-          className={`${actionBase} col-span-2 min-[480px]:col-span-1 bg-[#18201a] text-white hover:bg-[#253229]`}
+          className={`${actionBase} bg-[#18201a] text-white hover:bg-[#253229]`}
         >
-          <span aria-hidden="true" className="shrink-0 text-sm">
+          <span aria-hidden="true" className="shrink-0 text-xs min-[360px]:text-sm">
             📤
           </span>
-          <span>{bn ? "শেয়ার" : "Share"}</span>
+          <span className="truncate">{bn ? "শেয়ার" : "Share"}</span>
         </button>
       ) : (
         <button
           type="button"
           onClick={onCopy}
-          className={`${actionBase} col-span-2 min-[480px]:col-span-1 border border-gray-300 bg-white text-gray-800 hover:bg-gray-50`}
+          className={`${actionBase} border border-gray-300 bg-white text-gray-800 hover:bg-gray-50`}
         >
-          <span aria-hidden="true" className="shrink-0 text-sm">
+          <span aria-hidden="true" className="shrink-0 text-xs min-[360px]:text-sm">
             📋
           </span>
-          <span>
+          <span className="truncate">
             {copied
               ? bn
                 ? "কপি হয়েছে!"
@@ -85,11 +84,11 @@ function ShareActions({
       >
         <span
           aria-hidden="true"
-          className="flex size-5 items-center justify-center rounded-full bg-emerald-500/15 text-xs shrink-0 transition-transform group-hover:scale-110"
+          className="flex size-3.5 min-[360px]:size-5 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] min-[360px]:text-xs shrink-0 transition-transform group-hover:scale-110"
         >
           💬
         </span>
-        <span>WhatsApp</span>
+        <span className="truncate tracking-tight">WhatsApp</span>
       </a>
 
       <a
@@ -102,11 +101,11 @@ function ShareActions({
       >
         <span
           aria-hidden="true"
-          className="flex size-5 items-center justify-center rounded-full bg-blue-500/15 text-xs shrink-0 transition-transform group-hover:scale-110"
+          className="flex size-3.5 min-[360px]:size-5 items-center justify-center rounded-full bg-blue-500/15 text-[10px] min-[360px]:text-xs shrink-0 transition-transform group-hover:scale-110"
         >
           ⚡
         </span>
-        <span>Messenger</span>
+        <span className="truncate tracking-tight">Messenger</span>
       </a>
     </div>
   );

@@ -130,4 +130,41 @@ describe("First-Time User Experience & Onboarding", () => {
       expect(tripPageContent).not.toContain("<ExpenseExplainerDemo");
     });
   });
+
+  describe("Trip page header responsiveness & compact layout", () => {
+    const { readFileSync } = require("fs");
+    const { join } = require("path");
+    const tripPageContent = readFileSync(
+      join(process.cwd(), "src/app/trips/[slug]/page.tsx"),
+      "utf-8"
+    );
+
+    it("uses compact padding and margins on mobile for the header card", () => {
+      expect(tripPageContent).toContain(
+        "p-2.5 min-[360px]:p-3.5 sm:p-5 shadow-xs"
+      );
+      expect(tripPageContent).toContain("space-y-2 sm:space-y-3");
+    });
+
+    it("renders trip name and user/creator badge together in Row 1 to restrict mobile to at most 2 rows", () => {
+      // Row 1 container with justify-between
+      expect(tripPageContent).toContain(
+        'className="flex items-center justify-between gap-2 min-w-0 w-full"'
+      );
+      // Small user/creator emoji
+      expect(tripPageContent).toContain(
+        'className="text-xs sm:text-sm shrink-0 leading-none"'
+      );
+      // Compact rounded-full user badge
+      expect(tripPageContent).toContain(
+        "px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-[var(--color-border)]"
+      );
+    });
+
+    it("renders destination and dates in Row 2 below Row 1", () => {
+      expect(tripPageContent).toContain("trip.destination || tripDateRangeLabel");
+      expect(tripPageContent).toContain("📍 {trip.destination}");
+      expect(tripPageContent).toContain("🗓️ {tripDateRangeLabel}");
+    });
+  });
 });

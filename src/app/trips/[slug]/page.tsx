@@ -861,7 +861,7 @@ export default async function TripPage({
   }
 
   return (
-    <section className="space-y-5 py-2 pb-24 min-[1000px]:pb-4">
+    <section className="space-y-3.5 sm:space-y-5 py-1 sm:py-2 pb-24 min-[1000px]:pb-4">
       <RecentTripTracker
         slug={trip.slug}
         tripName={trip.name}
@@ -913,49 +913,55 @@ export default async function TripPage({
       <OfflineBanner locale={locale} />
       <OutboxSyncBanner slug={trip.slug} locale={locale} />
 
-      {/* Header Card */}
-      <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-white p-4 sm:p-6 shadow-xs">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xl sm:text-2xl">🌴</span>
-              <h1 className="text-xl sm:text-3xl font-black text-[var(--color-fg)] tracking-tight">
-                {trip.name}
-              </h1>
-              {isLocked ? (
-                <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900 border border-amber-300">
-                  🔒 {tTrip("lockedBadge")}
-                </span>
-              ) : null}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-[var(--color-fg-muted)]">
-              {trip.destination ? (
-                <span className="inline-flex items-center gap-1 font-semibold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
-                  📍 {trip.destination}
-                </span>
-              ) : null}
-              {tripDateRangeLabel ? (
-                <span className="inline-flex items-center gap-1 font-medium bg-[var(--color-surface-muted)] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
-                  🗓️ {tripDateRangeLabel}
-                </span>
-              ) : null}
-            </div>
+      {/* Header Card: Compact, 2-row max on mobile, small user icon */}
+      <div className="space-y-2 sm:space-y-3 rounded-2xl min-[360px]:rounded-3xl border border-[var(--color-border)] bg-white p-2.5 min-[360px]:p-3.5 sm:p-5 shadow-xs">
+        {/* Row 1: Trip Name (with Lock if locked) + User/Creator Pill */}
+        <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+            <span className="text-lg sm:text-2xl shrink-0" aria-hidden="true">🌴</span>
+            <h1
+              className="text-base min-[360px]:text-lg sm:text-2xl lg:text-3xl font-black text-[var(--color-fg)] tracking-tight truncate"
+              title={trip.name}
+            >
+              {trip.name}
+            </h1>
+            {isLocked ? (
+              <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-amber-900 border border-amber-300">
+                🔒 {tTrip("lockedBadge")}
+              </span>
+            ) : null}
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl border border-[var(--color-border)] shadow-2xs">
-              <span className="text-base">{currentMember.emoji ?? "🎒"}</span>
-              <span className="font-extrabold whitespace-nowrap">
-                {currentMember.displayName}
-              </span>
-            </div>
+          {/* User/Creator badge: small icon, compact padding, single line */}
+          <div className="shrink-0 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-bold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-[var(--color-border)] shadow-2xs">
+            <span className="text-xs sm:text-sm shrink-0 leading-none" aria-hidden="true">
+              {currentMember.emoji ?? "🎒"}
+            </span>
+            <span className="font-extrabold max-w-[85px] min-[360px]:max-w-[120px] sm:max-w-[160px] truncate whitespace-nowrap">
+              {currentMember.displayName}
+            </span>
           </div>
         </div>
 
+        {/* Row 2: Destination & Start/End Dates (max 2 rows on mobile) */}
+        {trip.destination || tripDateRangeLabel ? (
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] min-[360px]:text-xs text-[var(--color-fg-muted)] pt-0.5">
+            {trip.destination ? (
+              <span className="inline-flex items-center gap-1 font-semibold text-[var(--color-fg)] bg-[var(--color-surface-muted)] px-1.5 min-[360px]:px-2 py-0.5 rounded-md truncate max-w-[150px] min-[360px]:max-w-[220px]">
+                📍 {trip.destination}
+              </span>
+            ) : null}
+            {tripDateRangeLabel ? (
+              <span className="inline-flex items-center gap-1 font-medium bg-[var(--color-surface-muted)] px-1.5 min-[360px]:px-2 py-0.5 rounded-md truncate">
+                🗓️ {tripDateRangeLabel}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
         {/* 2 Stat Cards: Shown in header on desktop (>= 1000px) when 2+ members and 1+ expenses */}
         {shouldShowSummaryCards(joinedMembersCount, expenseInputs.length) ? (
-          <div className="hidden min-[1000px]:block pt-3 border-t border-[var(--color-border)]">
+          <div className="hidden min-[1000px]:block pt-2.5 sm:pt-3 border-t border-[var(--color-border)]">
             {statCardsNode}
           </div>
         ) : null}
